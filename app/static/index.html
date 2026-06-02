@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PPT Agent Studio</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" id="rail">
+      <div class="brand">
+        <div class="brand-mark">PA</div>
+        <div class="brand-copy">
+          <h1>PPT Agent Studio</h1>
+          <p>模板驱动的 PPT 生成工作台</p>
+        </div>
+        <button id="collapse-rail" class="icon-btn" type="button" title="折叠侧边栏">‹</button>
+      </div>
+
+      <nav class="nav">
+        <button class="tab active" data-tab="workspace" type="button">
+          <span class="tab-icon">工</span>
+          <span class="tab-title">工作台</span>
+          <span class="tab-sub">参数、对话、生成</span>
+        </button>
+        <button class="tab" data-tab="templates" type="button">
+          <span class="tab-icon">模</span>
+          <span class="tab-title">模板库</span>
+          <span class="tab-sub">上传、AI 标准化、管理</span>
+        </button>
+        <button class="tab" data-tab="settings" type="button">
+          <span class="tab-icon">AI</span>
+          <span class="tab-title">AI 配置</span>
+          <span class="tab-sub">模型、接口、密钥</span>
+        </button>
+      </nav>
+
+      <div class="rail-note">
+        <strong>当前状态</strong>
+        <span id="rail-status">等待项目</span>
+      </div>
+    </aside>
+
+    <section class="surface">
+      <header class="topbar">
+        <div>
+          <h2 id="page-title">PPT 工作台</h2>
+          <p id="page-subtitle">先配置参数，再通过对话生成和调整 PPT。</p>
+        </div>
+        <div class="top-actions">
+          <span id="plan-source" class="badge">未生成</span>
+          <a id="download-link-top" class="download-cta hidden" href="#" target="_blank" rel="noreferrer">下载 PPT</a>
+        </div>
+      </header>
+
+      <main class="main">
+        <section id="workspace" class="view active">
+          <div class="workspace">
+            <section class="panel setup-panel" id="setup-panel">
+              <div class="panel-head compact">
+                <div>
+                  <h3>参数</h3>
+                  <p>填好后可直接生成</p>
+                </div>
+                <button id="collapse-setup" class="ghost small" type="button">折叠</button>
+              </div>
+
+              <form id="project-form" class="stack">
+                <label>主题
+                  <input id="topic" required placeholder="例如：胶质瘤的康复治疗">
+                </label>
+                <label>模板
+                  <select id="template-id" required></select>
+                </label>
+                <label>页数
+                  <input id="slide-count" type="number" min="4" max="30" value="12">
+                </label>
+                <label>受众
+                  <input id="audience" placeholder="例如：神经外科 MDT 团队">
+                </label>
+                <label>表达风格
+                  <input id="tone" placeholder="例如：专业、克制、可执行">
+                </label>
+                <button type="submit">创建项目</button>
+              </form>
+
+              <div class="project-box">
+                <label>当前项目
+                  <select id="project-id"></select>
+                </label>
+                <button id="load-project-btn" class="ghost" type="button">加载</button>
+              </div>
+
+              <div class="primary-actions">
+                <button id="generate-btn" class="generate-main" type="button">生成 PPT</button>
+                <a id="download-link" class="download-inline disabled" href="#" target="_blank" rel="noreferrer">下载 PPT</a>
+              </div>
+              <p id="project-status" class="status"></p>
+            </section>
+
+            <section class="panel chat-panel">
+              <div class="chat-head">
+                <div>
+                  <h3>AI 对话</h3>
+                  <p id="chat-subtitle">消息会立即显示，生成过程会在这里持续反馈。</p>
+                </div>
+                <div id="activity-indicator" class="activity hidden">AI 正在处理...</div>
+              </div>
+
+              <div id="chat-log" class="chat-log"></div>
+
+              <div class="quick-actions">
+                <button class="chip" type="button" data-prompt="请把内容改得更专业，正文要有信息密度，避免空泛。">提高信息密度</button>
+                <button class="chip" type="button" data-prompt="请把每页控制为短标题加具体说明，适合直接汇报。">改成汇报口吻</button>
+                <button class="chip" type="button" data-prompt="请补充风险预警、随访指标和 MDT 分工。">补充风险与指标</button>
+              </div>
+
+              <form id="chat-form" class="composer">
+                <textarea id="chat-message" rows="4" placeholder="输入修改要求。按 Ctrl/Cmd + Enter 发送。"></textarea>
+                <div class="composer-footer">
+                  <span id="composer-hint">创建项目后即可对话。</span>
+                  <button id="send-btn" type="submit">发送</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section id="templates" class="view">
+          <div class="template-page">
+            <section class="panel upload-panel">
+              <div class="panel-head">
+                <div>
+                  <h3>上传模板</h3>
+                  <p>上传后会先本地解析，再由模板标准化 agent 调用 AI 识别版式角色。</p>
+                </div>
+              </div>
+              <form id="template-form" class="stack">
+                <label class="file-picker">
+                  <input type="file" id="template-file" accept=".pptx" required>
+                  <span id="file-picker-text">选择 PPTX 模板</span>
+                </label>
+                <button type="submit">上传并标准化</button>
+              </form>
+              <p id="template-upload-status" class="status"></p>
+            </section>
+
+            <section class="panel template-library">
+              <div class="panel-head">
+                <div>
+                  <h3>模板库</h3>
+                  <p>短 ID 用于识别；可导出标准化预览 PPT 检查套版效果。</p>
+                </div>
+                <button id="refresh-templates" class="ghost" type="button">刷新</button>
+              </div>
+              <div id="template-list" class="template-list"></div>
+            </section>
+
+            <section class="panel template-preview">
+              <div class="panel-head">
+                <div>
+                  <h3>标准化结果</h3>
+                  <p>显示 AI 识别的版式角色、页面路由和标准化说明。</p>
+                </div>
+              </div>
+              <div id="template-preview" class="template-preview-body">选择模板后显示标准化结果。</div>
+            </section>
+          </div>
+        </section>
+
+        <section id="settings" class="view">
+          <section class="panel settings-panel">
+            <div class="panel-head">
+              <div>
+                <h3>AI API 配置</h3>
+                <p>用于 PPT 内容生成、润色，以及上传模板后的 AI 标准化分析。</p>
+              </div>
+            </div>
+
+            <form id="settings-form" class="settings-form">
+              <label>Base URL
+                <input id="openai-base-url" placeholder="https://api.openai.com/v1">
+              </label>
+              <label>模型
+                <input id="openai-model" placeholder="gpt-4.1-mini">
+              </label>
+              <label>API Key
+                <input id="openai-api-key" type="password" placeholder="留空表示保留当前 Key">
+              </label>
+              <label class="check">
+                <input type="checkbox" id="clear-api-key">
+                清空已保存 API Key
+              </label>
+              <div class="settings-actions">
+                <button type="submit">保存配置</button>
+                <button id="test-ai-btn" class="ghost" type="button">测试 AI 连接</button>
+              </div>
+            </form>
+
+            <p id="settings-status" class="status"></p>
+            <p id="settings-hint" class="hint"></p>
+          </section>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

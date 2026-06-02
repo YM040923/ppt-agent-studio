@@ -1,0 +1,30 @@
+name: 测试
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: Python 单元测试
+    runs-on: windows-latest
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 运行测试
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: 检查前端脚本语法
+        run: node --check app\static\app.js
