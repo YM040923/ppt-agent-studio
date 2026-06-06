@@ -68,7 +68,7 @@ def _theme_from_prompt(prompt: str) -> dict[str, str]:
 
 
 def _slide_count_from_prompt(prompt: str) -> int:
-    match = re.search(r"\b(\d{1,2})\s*(?:slides?|pages?)\b|(\d{1,2})\s*[页張张]", prompt, flags=re.IGNORECASE)
+    match = re.search(r"\b(\d{1,3})\s*(?:slides?|pages?)\b|(\d{1,3})\s*[页張张]", prompt, flags=re.IGNORECASE)
     if not match:
         return 3
     value = int(match.group(1) or match.group(2))

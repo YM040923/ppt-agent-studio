@@ -70,6 +70,17 @@ def test_fallback_outline_planner_respects_requested_slide_count():
     assert outline["slides"][-1]["title"] == "Implementation roadmap"
 
 
+def test_fallback_outline_planner_caps_large_requested_slide_count():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline("Create a 100 page board strategy deck")
+
+    outline = asyncio.run(run())
+
+    assert len(outline["slides"]) == 30
+
+
 def test_fallback_outline_planner_derives_executive_consulting_theme():
     planner = FallbackOutlinePlanner()
 
