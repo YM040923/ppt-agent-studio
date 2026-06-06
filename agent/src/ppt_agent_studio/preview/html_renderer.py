@@ -40,6 +40,7 @@ def render_preview_document(deck: DeckSpec) -> str:
         "</head>\n"
         "<body>\n"
         f"{render_preview_html(deck)}\n"
+        f"{_preview_interaction_script()}\n"
         "</body>\n"
         "</html>"
     )
@@ -84,3 +85,32 @@ def _theme_color(deck: DeckSpec, key: str, fallback: str) -> str:
     if isinstance(value, str) and _HEX_COLOR.fullmatch(value.strip()):
         return value.strip()
     return fallback
+
+
+def _preview_interaction_script() -> str:
+    return """
+<script>
+(() => {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+  window.pptAgentPreview = {
+    slideCount: slides.length,
+    currentIndex: 0,
+    zoom: 1,
+    showSlide(index) {
+      const maxIndex = Math.max(slides.length - 1, 0);
+      this.currentIndex = clamp(Number(index) || 0, 0, maxIndex);
+      slides.forEach((slide, slideIndex) => {
+        slide.style.display = slideIndex === this.currentIndex ? 'block' : 'none';
+      });
+      window.scrollTo(0, 0);
+    },
+    setZoom(zoom) {
+      this.zoom = clamp(Number(zoom) || 1, 0.5, 2);
+      document.body.style.zoom = String(this.zoom);
+    }
+  };
+  window.pptAgentPreview.showSlide(0);
+  window.pptAgentPreview.setZoom(1);
+})();
+</script>""".strip()

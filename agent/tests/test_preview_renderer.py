@@ -56,6 +56,26 @@ def test_preview_document_wraps_deck_html_for_webview2():
     assert "font-family: Segoe UI" in document
 
 
+def test_preview_document_exposes_webview_interaction_api():
+    deck = DeckSpec(
+        deck_id="deck_controls",
+        title="Controls",
+        revision=1,
+        slides=[
+            SlideSpec(slide_id="s1", title="One", layout="cover", blocks=[]),
+            SlideSpec(slide_id="s2", title="Two", layout="content", blocks=[]),
+        ],
+    )
+
+    document = render_preview_document(deck)
+
+    assert "window.pptAgentPreview" in document
+    assert "slideCount" in document
+    assert "showSlide(index)" in document
+    assert "setZoom(zoom)" in document
+    assert "document.querySelectorAll('.slide')" in document
+
+
 def test_preview_document_applies_safe_theme_color_tokens():
     deck = DeckSpec(
         deck_id="deck_theme",
