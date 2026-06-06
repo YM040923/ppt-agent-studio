@@ -57,6 +57,8 @@ The response is a single `runtime.config` event. It includes `base_url`, `model`
 
 The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint and key presence.
 
+Runtime outline planning is selected through `PPT_AGENT_PLANNER`. The default is `fallback`, which keeps local development deterministic and offline. Set `PPT_AGENT_PLANNER=llm` and provide `OPENAI_API_KEY` to use the model-backed `LLMOutlinePlanner`; if the key is missing, the runtime keeps using the fallback planner instead of failing the desktop turn.
+
 ## Preview Pane
 
 The WinUI app hosts the live preview with the WebView2 control bundled through Windows App SDK. Do not add a separate `Microsoft.Web.WebView2` package reference unless a future Windows App SDK release explicitly requires it; the first scaffold verified that the extra package can conflict with WinUI runtime startup. The desktop app initializes WebView2 with `EnsureCoreWebView2Async` before calling `NavigateToString`.
@@ -76,9 +78,10 @@ The runtime uses OpenAI-compatible configuration keys:
 - `OPENAI_BASE_URL`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
+- `PPT_AGENT_PLANNER`
 
 This supports official OpenAI endpoints and third-party compatible providers without changing desktop code.
 
-`OpenAICompatibleChatClient` posts to `{OPENAI_BASE_URL}/chat/completions` with the configured model and bearer token. It accepts an injected `httpx.AsyncClient`, so runtime tests can use `httpx.MockTransport` and avoid real network calls or secret exposure. The deterministic MVP session does not call the live client yet; the client is the next boundary for replacing fallback planning with model-driven planning.
+`OpenAICompatibleChatClient` posts to `{OPENAI_BASE_URL}/chat/completions` with the configured model and bearer token. It accepts an injected `httpx.AsyncClient`, so runtime tests can use `httpx.MockTransport` and avoid real network calls or secret exposure. The `LLMOutlinePlanner` uses this client plus the core system prompt to request a JSON DeckSpec outline, while `FallbackOutlinePlanner` remains the default for offline MVP runs.
 
 The core system prompt is stored in `ppt_agent_studio.prompts`. It scopes the Agent to presentation work, requires DeckSpec-backed revisions, ties deck mutations to `preview.ready` and `pptx.ready`, and forbids revealing API keys or hidden configuration.

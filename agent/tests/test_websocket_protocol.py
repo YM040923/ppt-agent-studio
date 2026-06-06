@@ -1,7 +1,8 @@
 import asyncio
 import json
 
-from ppt_agent_studio.runtime.websocket_server import handle_client_message
+from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner
+from ppt_agent_studio.runtime.websocket_server import _build_outline_planner, handle_client_message
 
 
 def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
@@ -85,3 +86,30 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch):
         }
     }
     assert "secret-value" not in messages[0]
+
+
+def test_build_outline_planner_defaults_to_fallback(monkeypatch):
+    monkeypatch.delenv("PPT_AGENT_PLANNER", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    planner = _build_outline_planner()
+
+    assert isinstance(planner, FallbackOutlinePlanner)
+
+
+def test_build_outline_planner_uses_llm_when_enabled_and_key_present(monkeypatch):
+    monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
+
+    planner = _build_outline_planner()
+
+    assert isinstance(planner, LLMOutlinePlanner)
+
+
+def test_build_outline_planner_falls_back_when_llm_enabled_without_key(monkeypatch):
+    monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    planner = _build_outline_planner()
+
+    assert isinstance(planner, FallbackOutlinePlanner)

@@ -14,6 +14,8 @@ PPT Agent Studio is a Windows-native, presentation-focused AI Agent. It is inspi
 
 The first runtime increments include a deterministic local `AgentSession`. It accepts a user message, emits ordered Agent events, builds a starter `DeckSpec`, renders a full HTML preview document, and exposes a basic `pptx.export` tool. This gives the WinUI client a stable event contract before live model calls are added.
 
+The runtime now has a planner boundary. By default it uses the deterministic fallback planner. Set `PPT_AGENT_PLANNER=llm` together with a valid OpenAI-compatible API key to route outline planning through the model-backed planner.
+
 Each successful Agent turn exports an editable PPTX artifact before refreshing the preview. By default artifacts are written under `artifacts/decks`; set `PPT_AGENT_ARTIFACTS_DIR` to use a different local output directory.
 
 The WinUI app starts the local runtime automatically in development. To run the runtime manually for protocol testing:
@@ -55,6 +57,7 @@ Create `.env.local` or set environment variables locally:
 OPENAI_BASE_URL=https://your-provider.example/v1
 OPENAI_API_KEY=your-secret-key
 OPENAI_MODEL=your-compatible-model
+PPT_AGENT_PLANNER=llm
 ```
 
 Do not commit `.env.local`.
@@ -67,6 +70,6 @@ The runtime exposes a safe configuration probe over WebSocket:
 
 It reports the configured endpoint, model, and whether an API key is present without returning the key.
 
-The Python runtime includes an injectable OpenAI-compatible chat client for future live planning calls. The current Agent turn still uses the deterministic fallback planner so the MVP remains testable without a network call or API key.
+The Python runtime includes an injectable OpenAI-compatible chat client and an LLM outline planner. The default Agent turn still uses the deterministic fallback planner unless `PPT_AGENT_PLANNER=llm` and `OPENAI_API_KEY` are both configured, so the MVP remains testable without a network call or API key.
 
 The core Agent system prompt lives in `ppt_agent_studio.prompts` and scopes the assistant to presentation work, DeckSpec revisions, live preview updates, editable PPTX artifacts, and secret-safe configuration reporting.

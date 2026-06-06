@@ -3,10 +3,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 from collections.abc import Iterable
 from typing import Any
 
 from ppt_agent_studio.llm.config import OpenAICompatibleConfig
+from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner, OutlinePlanner
 from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.runtime.session import AgentSession
 
@@ -18,6 +20,13 @@ def _event_json(event: AgentEvent) -> str:
 def _error_json(message: str, seq: int = 1, session_id: str = "session") -> str:
     event = AgentEvent(seq=seq, session_id=session_id, type="error", payload={"message": message})
     return _event_json(event)
+
+
+def _build_outline_planner() -> OutlinePlanner:
+    planner_mode = os.getenv("PPT_AGENT_PLANNER", "fallback").strip().lower()
+    if planner_mode == "llm" and OpenAICompatibleConfig.from_env().has_api_key:
+        return LLMOutlinePlanner()
+    return FallbackOutlinePlanner()
 
 
 async def handle_client_message(raw_message: str) -> list[str]:
@@ -46,7 +55,7 @@ async def handle_client_message(raw_message: str) -> list[str]:
     payload = message.get("payload") if isinstance(message.get("payload"), dict) else {}
     text = str(payload.get("text") or "")
     deck_id = str(message.get("deck_id") or "deck")
-    session = AgentSession(session_id=session_id, deck_id=deck_id)
+    session = AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
 
     out: list[str] = []
     async for event in session.submit_user_message(text):

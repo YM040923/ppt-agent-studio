@@ -5,6 +5,7 @@ from pathlib import Path
 from collections.abc import AsyncIterator
 
 from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec
+from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, OutlinePlanner
 from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.tools.base import ToolRegistry
 from ppt_agent_studio.tools.deck_tools import build_default_registry
@@ -16,11 +17,13 @@ class AgentSession:
         session_id: str,
         deck_id: str,
         tool_registry: ToolRegistry | None = None,
+        outline_planner: OutlinePlanner | None = None,
         artifact_dir: str | os.PathLike[str] | None = None,
     ):
         self.session_id = session_id
         self.deck_id = deck_id
         self._tool_registry = tool_registry or build_default_registry()
+        self._outline_planner = outline_planner or FallbackOutlinePlanner()
         self._artifact_dir = Path(artifact_dir or os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks"))
         self._seq = 0
         self._deck_revision = 0
@@ -33,7 +36,7 @@ class AgentSession:
             return
 
         yield self._event("user.message", {"text": text})
-        outline = self._fallback_outline(text)
+        outline = await self._outline_planner.create_outline(text)
         yield self._event("plan.updated", {"outline": outline})
 
         self._deck_revision += 1
@@ -74,43 +77,6 @@ class AgentSession:
             deck_revision=self._deck_revision,
             payload=payload,
         )
-
-    @staticmethod
-    def _fallback_outline(prompt: str) -> dict[str, object]:
-        topic = prompt.removesuffix(".").strip()
-        return {
-            "deck_title": topic,
-            "slides": [
-                {
-                    "title": topic,
-                    "subtitle": "Executive presentation draft",
-                    "prototype_hint": "cover",
-                },
-                {
-                    "title": "Strategic context",
-                    "prototype_hint": "content",
-                    "points": [
-                        {
-                            "label": "Objective",
-                            "body": "Clarify the decision, audience, and expected business outcome.",
-                        },
-                        {
-                            "label": "Signal",
-                            "body": "Frame the core trend and why it matters now.",
-                        },
-                    ],
-                },
-                {
-                    "title": "Recommended path",
-                    "prototype_hint": "content",
-                    "bullets": [
-                        "Define the target operating model.",
-                        "Prioritize high-leverage use cases.",
-                        "Sequence rollout with measurable checkpoints.",
-                    ],
-                },
-            ],
-        }
 
     @staticmethod
     def _deck_from_payload(payload: object) -> DeckSpec:
