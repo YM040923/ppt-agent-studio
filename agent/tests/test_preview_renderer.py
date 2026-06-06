@@ -1,5 +1,5 @@
 from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec
-from ppt_agent_studio.preview.html_renderer import render_preview_html
+from ppt_agent_studio.preview.html_renderer import render_preview_document, render_preview_html
 
 
 def test_preview_html_escapes_text_and_renders_all_slides():
@@ -38,3 +38,19 @@ def test_preview_html_includes_revision_for_webview_diffing():
 
     assert 'data-deck-id="deck_004"' in html
     assert 'data-revision="9"' in html
+
+
+def test_preview_document_wraps_deck_html_for_webview2():
+    deck = DeckSpec(
+        deck_id="deck_005",
+        title="Ops",
+        revision=1,
+        slides=[SlideSpec(slide_id="s1", title="Ops", layout="cover", blocks=[])],
+    )
+
+    document = render_preview_document(deck)
+
+    assert document.startswith("<!doctype html>")
+    assert "<style>" in document
+    assert 'class="deck"' in document
+    assert "font-family: Segoe UI" in document

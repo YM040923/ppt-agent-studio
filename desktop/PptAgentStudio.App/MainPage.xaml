@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:PptAgentStudio_App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:PptAgentStudio_App.ViewModels"
     Loaded="Page_Loaded"
     mc:Ignorable="d">
@@ -85,25 +86,12 @@
                     <AppBarButton Icon="Zoom" Label="Zoom" />
                 </CommandBar>
 
-                <Border Grid.Row="1" Padding="24" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-                    <Grid>
-                        <Border
-                            MaxWidth="720"
-                            MaxHeight="405"
-                            Width="420"
-                            Height="236"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Background="White"
-                            CornerRadius="8"
-                            Padding="32">
-                            <StackPanel Spacing="16">
-                                <TextBlock Text="Board AI Strategy" FontSize="30" FontWeight="SemiBold" />
-                                <TextBlock Text="Live preview placeholder" FontSize="18" Foreground="#555555" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
+                <controls:WebView2
+                    x:Name="PreviewWebView"
+                    Grid.Row="1"
+                    Source="about:blank"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch" />
             </Grid>
         </Border>
     </Grid>
