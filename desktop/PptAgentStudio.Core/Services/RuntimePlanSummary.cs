@@ -2,7 +2,11 @@ using System.Text.Json;
 
 namespace PptAgentStudio_App.Services;
 
-public sealed record RuntimePlanSummary(string Title, int SlideCount, IReadOnlyList<string> FirstSteps)
+public sealed record RuntimePlanSummary(
+    string Title,
+    int SlideCount,
+    IReadOnlyList<string> FirstSteps,
+    string ActiveStepTitle = "")
 {
     public static RuntimePlanSummary FromPayload(JsonElement payload)
     {
@@ -18,33 +22,41 @@ public sealed record RuntimePlanSummary(string Title, int SlideCount, IReadOnlyL
             ? slideCountValue.GetInt32()
             : 0;
         var steps = new List<string>();
+        var activeStepTitle = "";
         if (plan.TryGetProperty("steps", out var stepsValue) && stepsValue.ValueKind == JsonValueKind.Array)
         {
             foreach (var step in stepsValue.EnumerateArray())
             {
-                if (steps.Count == 3)
+                var stepTitleText = step.TryGetProperty("title", out var stepTitle)
+                    ? stepTitle.GetString()
+                    : null;
+                if (string.IsNullOrWhiteSpace(stepTitleText))
                 {
-                    break;
+                    continue;
                 }
 
-                if (step.TryGetProperty("title", out var stepTitle))
+                if (steps.Count < 3)
                 {
-                    var value = stepTitle.GetString();
-                    if (!string.IsNullOrWhiteSpace(value))
-                    {
-                        steps.Add(value);
-                    }
+                    steps.Add(stepTitleText);
+                }
+
+                if (string.IsNullOrWhiteSpace(activeStepTitle)
+                    && step.TryGetProperty("status", out var status)
+                    && string.Equals(status.GetString(), "running", StringComparison.OrdinalIgnoreCase))
+                {
+                    activeStepTitle = stepTitleText;
                 }
             }
         }
 
-        return new RuntimePlanSummary(title, slideCount, steps);
+        return new RuntimePlanSummary(title, slideCount, steps, activeStepTitle);
     }
 
     public string ToChatMessage()
     {
         var slideText = SlideCount == 1 ? "1 slide" : $"{SlideCount} slides";
+        var activeStep = string.IsNullOrWhiteSpace(ActiveStepTitle) ? "" : $" Active: {ActiveStepTitle}.";
         var nextSteps = FirstSteps.Count == 0 ? "" : $" Next: {string.Join(", ", FirstSteps)}.";
-        return $"Plan ready: {Title} ({slideText}).{nextSteps}";
+        return $"Plan ready: {Title} ({slideText}).{activeStep}{nextSteps}";
     }
 }

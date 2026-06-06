@@ -18,7 +18,7 @@ public sealed class RuntimePlanSummaryTests
                 "steps": [
                   { "title": "Research context", "status": "pending" },
                   { "title": "Structure story", "status": "pending" },
-                  { "title": "Draft 3 slides", "status": "pending" },
+                  { "title": "Draft 3 slides", "status": "running" },
                   { "title": "Render preview", "status": "pending" }
                 ]
               }
@@ -32,6 +32,7 @@ public sealed class RuntimePlanSummaryTests
         CollectionAssert.AreEqual(
             new[] { "Research context", "Structure story", "Draft 3 slides" },
             summary.FirstSteps.ToArray());
+        Assert.AreEqual("Draft 3 slides", summary.ActiveStepTitle);
     }
 
     [TestMethod]
@@ -44,6 +45,20 @@ public sealed class RuntimePlanSummaryTests
 
         Assert.AreEqual(
             "Plan ready: AI Strategy (3 slides). Next: Research context, Structure story, Draft 3 slides.",
+            summary.ToChatMessage());
+    }
+
+    [TestMethod]
+    public void ToChatMessageIncludesActiveStepWhenPresent()
+    {
+        var summary = new RuntimePlanSummary(
+            Title: "AI Strategy",
+            SlideCount: 3,
+            FirstSteps: ["Research context", "Structure story", "Draft 3 slides"],
+            ActiveStepTitle: "Draft 3 slides");
+
+        Assert.AreEqual(
+            "Plan ready: AI Strategy (3 slides). Active: Draft 3 slides. Next: Research context, Structure story, Draft 3 slides.",
             summary.ToChatMessage());
     }
 }
