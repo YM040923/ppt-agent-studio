@@ -62,6 +62,10 @@ The WinUI app hosts the live preview with the WebView2 control bundled through W
 
 `DeckSpec` is the source of truth for preview and export. The Agent modifies DeckSpec through tools; the preview renderer and PPTX exporter both consume the same state to avoid drift between what the user sees and what gets exported.
 
+## Tool System
+
+The Python runtime exposes tool definitions through `ppt_agent_studio.tools`. `ToolRegistry` owns executable handlers and the core catalog defines MVP interfaces for deck creation, slide edits, preview rendering, PPTX export, research briefs, and theme application. The deterministic `AgentSession` already calls the registry for `deck.create_from_outline` and `preview.render_html`, which gives future ReAct/Tool Calling loops a stable execution boundary without changing the desktop event contract.
+
 ## OpenAI-Compatible Providers
 
 The runtime uses OpenAI-compatible configuration keys:

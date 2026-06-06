@@ -1,0 +1,102 @@
+import asyncio
+
+import pytest
+
+from ppt_agent_studio.tools.base import ToolDefinition, ToolRegistry, ToolResult
+from ppt_agent_studio.tools.catalog import core_tool_definitions
+from ppt_agent_studio.tools.deck_tools import build_default_registry
+
+
+def test_core_tool_catalog_lists_mvp_interfaces():
+    definitions = core_tool_definitions()
+    names = [definition.name for definition in definitions]
+
+    assert len(definitions) >= 8
+    assert len(names) == len(set(names))
+    assert {
+        "deck.create_from_outline",
+        "deck.update_slide",
+        "deck.add_slide",
+        "deck.remove_slide",
+        "preview.render_html",
+        "pptx.export",
+        "research.collect_brief",
+        "design.apply_theme",
+    }.issubset(set(names))
+    assert all(definition.input_schema.get("type") == "object" for definition in definitions)
+
+
+def test_tool_registry_rejects_duplicate_tools():
+    definition = ToolDefinition(
+        name="demo.echo",
+        description="Echo test arguments.",
+        input_schema={"type": "object"},
+    )
+    registry = ToolRegistry()
+    registry.register(definition, lambda args: ToolResult(payload=dict(args)))
+
+    with pytest.raises(ValueError, match="already registered"):
+        registry.register(definition, lambda args: ToolResult(payload=dict(args)))
+
+
+def test_tool_registry_runs_sync_and_async_handlers():
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.sync",
+            description="Return a synchronous result.",
+            input_schema={"type": "object"},
+        ),
+        lambda args: ToolResult(payload={"kind": "sync", "value": args["value"]}),
+    )
+
+    async def async_handler(args):
+        return ToolResult(payload={"kind": "async", "value": args["value"]})
+
+    registry.register(
+        ToolDefinition(
+            name="demo.async",
+            description="Return an asynchronous result.",
+            input_schema={"type": "object"},
+        ),
+        async_handler,
+    )
+
+    async def run():
+        return [
+            await registry.run("demo.sync", {"value": 1}),
+            await registry.run("demo.async", {"value": 2}),
+        ]
+
+    results = asyncio.run(run())
+
+    assert [result.payload for result in results] == [
+        {"kind": "sync", "value": 1},
+        {"kind": "async", "value": 2},
+    ]
+
+
+def test_default_registry_creates_deck_and_preview_html():
+    registry = build_default_registry()
+    outline = {
+        "deck_title": "AI Strategy",
+        "slides": [
+            {"title": "AI Strategy", "subtitle": "Board briefing", "prototype_hint": "cover"},
+            {"title": "Priorities", "bullets": ["Focus", "Sequence"], "prototype_hint": "content"},
+        ],
+    }
+
+    async def run():
+        deck_result = await registry.run(
+            "deck.create_from_outline",
+            {"outline": outline, "deck_id": "deck_001", "revision": 2},
+        )
+        preview_result = await registry.run("preview.render_html", {"deck": deck_result.payload["deck"]})
+        return deck_result, preview_result
+
+    deck_result, preview_result = asyncio.run(run())
+
+    assert deck_result.payload["deck"]["title"] == "AI Strategy"
+    assert deck_result.payload["deck"]["revision"] == 2
+    assert preview_result.payload["html"].startswith("<!doctype html>")
+    assert "AI Strategy" in preview_result.payload["html"]
