@@ -21,33 +21,6 @@ public sealed partial class MainPage : Page
     private readonly PreviewPaneState _previewPaneState = new();
     private bool _previewScriptReady;
 
-    private const string PreviewInteractionScript = """
-        (() => {
-          const slides = Array.from(document.querySelectorAll('.slide'));
-          const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
-          window.pptAgentPreview = {
-            slideCount: slides.length,
-            currentIndex: 0,
-            zoom: 1,
-            showSlide(index) {
-              const maxIndex = Math.max(slides.length - 1, 0);
-              this.currentIndex = clamp(Number(index) || 0, 0, maxIndex);
-              slides.forEach((slide, slideIndex) => {
-                slide.style.display = slideIndex === this.currentIndex ? 'block' : 'none';
-              });
-              window.scrollTo(0, 0);
-            },
-            setZoom(zoom) {
-              this.zoom = clamp(Number(zoom) || 1, 0.5, 2);
-              document.body.style.zoom = String(this.zoom);
-            }
-          };
-          window.pptAgentPreview.showSlide(0);
-          window.pptAgentPreview.setZoom(1);
-          return slides.length;
-        })()
-        """;
-
     public MainPage()
     {
         InitializeComponent();
@@ -143,7 +116,7 @@ public sealed partial class MainPage : Page
             return;
         }
 
-        var slideCountJson = await PreviewWebView.ExecuteScriptAsync(PreviewInteractionScript);
+        var slideCountJson = await PreviewWebView.ExecuteScriptAsync(PreviewInteractionScripts.Initialize);
         _previewPaneState.SetSlideCount(ParseScriptInt(slideCountJson));
         _previewScriptReady = true;
         await ApplyPreviewStateAsync();
