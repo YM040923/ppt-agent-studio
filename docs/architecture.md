@@ -78,3 +78,5 @@ The runtime uses OpenAI-compatible configuration keys:
 - `OPENAI_MODEL`
 
 This supports official OpenAI endpoints and third-party compatible providers without changing desktop code.
+
+`OpenAICompatibleChatClient` posts to `{OPENAI_BASE_URL}/chat/completions` with the configured model and bearer token. It accepts an injected `httpx.AsyncClient`, so runtime tests can use `httpx.MockTransport` and avoid real network calls or secret exposure. The deterministic MVP session does not call the live client yet; the client is the next boundary for replacing fallback planning with model-driven planning.
