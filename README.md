@@ -68,3 +68,5 @@ The runtime exposes a safe configuration probe over WebSocket:
 It reports the configured endpoint, model, and whether an API key is present without returning the key.
 
 The Python runtime includes an injectable OpenAI-compatible chat client for future live planning calls. The current Agent turn still uses the deterministic fallback planner so the MVP remains testable without a network call or API key.
+
+The core Agent system prompt lives in `ppt_agent_studio.prompts` and scopes the assistant to presentation work, DeckSpec revisions, live preview updates, editable PPTX artifacts, and secret-safe configuration reporting.

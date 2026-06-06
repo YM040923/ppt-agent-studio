@@ -80,3 +80,5 @@ The runtime uses OpenAI-compatible configuration keys:
 This supports official OpenAI endpoints and third-party compatible providers without changing desktop code.
 
 `OpenAICompatibleChatClient` posts to `{OPENAI_BASE_URL}/chat/completions` with the configured model and bearer token. It accepts an injected `httpx.AsyncClient`, so runtime tests can use `httpx.MockTransport` and avoid real network calls or secret exposure. The deterministic MVP session does not call the live client yet; the client is the next boundary for replacing fallback planning with model-driven planning.
+
+The core system prompt is stored in `ppt_agent_studio.prompts`. It scopes the Agent to presentation work, requires DeckSpec-backed revisions, ties deck mutations to `preview.ready` and `pptx.ready`, and forbids revealing API keys or hidden configuration.
