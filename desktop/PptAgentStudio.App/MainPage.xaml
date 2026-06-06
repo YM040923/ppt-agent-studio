@@ -33,7 +33,7 @@
             <Grid RowDefinitions="Auto,*,Auto" RowSpacing="12">
                 <StackPanel Spacing="4">
                     <TextBlock Text="Agent Workspace" Style="{StaticResource TitleTextBlockStyle}" />
-                    <TextBlock Text="{x:Bind ViewModel.SessionStatus, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{x:Bind ViewModel.SessionStatus, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
                 </StackPanel>
 
                 <ListView

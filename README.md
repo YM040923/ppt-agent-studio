@@ -29,6 +29,8 @@ Then run the desktop app:
 dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
 ```
 
+On startup the desktop app probes `runtime.config` and shows the configured model endpoint plus whether an API key is present. The key value is never displayed.
+
 ## Repository Layout
 
 ```text

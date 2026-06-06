@@ -55,6 +55,8 @@ The desktop app or a test client can ask for a redacted runtime configuration su
 
 The response is a single `runtime.config` event. It includes `base_url`, `model`, and `has_api_key`, but never returns the API key value.
 
+The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint and key presence.
+
 ## Preview Pane
 
 The WinUI app hosts the live preview with the WebView2 control bundled through Windows App SDK. Do not add a separate `Microsoft.Web.WebView2` package reference unless a future Windows App SDK release explicitly requires it; the first scaffold verified that the extra package can conflict with WinUI runtime startup. The desktop app initializes WebView2 with `EnsureCoreWebView2Async` before calling `NavigateToString`.

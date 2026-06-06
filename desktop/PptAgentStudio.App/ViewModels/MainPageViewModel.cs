@@ -70,9 +70,21 @@ public partial class MainPageViewModel : ObservableObject
     {
         SessionStatus = "Starting local Agent runtime...";
         var ready = await _sidecar.EnsureRunningAsync();
-        SessionStatus = ready
-            ? "Local Agent runtime ready."
-            : "Local Agent runtime could not be started.";
+        if (!ready)
+        {
+            SessionStatus = "Local Agent runtime could not be started.";
+            return;
+        }
+
+        try
+        {
+            var runtimeConfig = await _agentClient.GetRuntimeConfigAsync();
+            SessionStatus = runtimeConfig.ToStatusText();
+        }
+        catch (Exception ex)
+        {
+            SessionStatus = $"Local Agent runtime ready. Config probe failed: {ex.Message}";
+        }
     }
 
     public void StopRuntime()

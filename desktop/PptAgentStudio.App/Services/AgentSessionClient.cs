@@ -71,6 +71,28 @@ public sealed class AgentSessionClient
         }
     }
 
+    public async Task<RuntimeConfigSummary> GetRuntimeConfigAsync(CancellationToken cancellationToken = default)
+    {
+        using var socket = new ClientWebSocket();
+        await socket.ConnectAsync(_endpoint, cancellationToken);
+
+        var request = JsonSerializer.Serialize(new
+        {
+            type = "runtime.config",
+            session_id = _sessionId
+        });
+        await socket.SendAsync(
+            Encoding.UTF8.GetBytes(request),
+            WebSocketMessageType.Text,
+            true,
+            cancellationToken);
+
+        var message = await ReceiveTextAsync(socket, cancellationToken);
+        var runtimeEvent = ParseEvent(message);
+        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "config received", cancellationToken);
+        return RuntimeConfigSummary.FromPayload(runtimeEvent.Payload);
+    }
+
     private static AgentRuntimeEvent ParseEvent(string json)
     {
         using var doc = JsonDocument.Parse(json);
