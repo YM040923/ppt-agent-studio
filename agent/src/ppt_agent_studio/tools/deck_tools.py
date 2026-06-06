@@ -16,6 +16,9 @@ def build_default_registry() -> ToolRegistry:
     registry = ToolRegistry()
     definitions = {definition.name: definition for definition in core_tool_definitions()}
     registry.register(definitions["deck.create_from_outline"], create_deck_from_outline)
+    registry.register(definitions["deck.update_slide"], update_slide)
+    registry.register(definitions["deck.add_slide"], add_slide)
+    registry.register(definitions["deck.remove_slide"], remove_slide)
     registry.register(definitions["preview.render_html"], render_preview_html)
     registry.register(definitions["pptx.export"], export_pptx)
     return registry
@@ -31,6 +34,67 @@ def create_deck_from_outline(arguments: dict[str, Any]) -> ToolResult:
     revision = int(arguments.get("revision") or 0)
     deck = deck_from_outline(outline, deck_id=deck_id, revision=revision)
     return ToolResult(payload={"deck": deck.to_dict()})
+
+
+def update_slide(arguments: dict[str, Any]) -> ToolResult:
+    deck = _deck_from_arguments(arguments)
+    slide_id = str(arguments.get("slide_id") or "").strip()
+    patch = arguments.get("patch")
+    if not slide_id:
+        raise ValueError("slide_id is required")
+    if not isinstance(patch, dict):
+        raise ValueError("patch must be an object")
+
+    slides: list[SlideSpec] = []
+    found = False
+    for slide in deck.slides:
+        if slide.slide_id != slide_id:
+            slides.append(slide)
+            continue
+        found = True
+        slides.append(
+            SlideSpec(
+                slide_id=str(patch.get("slide_id") or slide.slide_id),
+                title=str(patch.get("title") or slide.title),
+                layout=str(patch.get("layout") or slide.layout),
+                blocks=patch.get("blocks") if isinstance(patch.get("blocks"), list) else slide.blocks,
+            )
+        )
+    if not found:
+        raise ValueError(f"slide not found: {slide_id}")
+    return ToolResult(payload={"deck": _deck_with_slides(deck, slides).to_dict()})
+
+
+def add_slide(arguments: dict[str, Any]) -> ToolResult:
+    deck = _deck_from_arguments(arguments)
+    raw_slide = arguments.get("slide")
+    if not isinstance(raw_slide, dict):
+        raise ValueError("slide must be an object")
+    new_slide = _slide_from_dict(raw_slide, len(deck.slides) + 1)
+    after_slide_id = str(arguments.get("after_slide_id") or "").strip()
+
+    slides = list(deck.slides)
+    if after_slide_id:
+        for index, slide in enumerate(slides):
+            if slide.slide_id == after_slide_id:
+                slides.insert(index + 1, new_slide)
+                break
+        else:
+            raise ValueError(f"slide not found: {after_slide_id}")
+    else:
+        slides.append(new_slide)
+    return ToolResult(payload={"deck": _deck_with_slides(deck, slides).to_dict()})
+
+
+def remove_slide(arguments: dict[str, Any]) -> ToolResult:
+    deck = _deck_from_arguments(arguments)
+    slide_id = str(arguments.get("slide_id") or "").strip()
+    if not slide_id:
+        raise ValueError("slide_id is required")
+    slides = [slide for slide in deck.slides if slide.slide_id != slide_id]
+    if len(slides) == len(deck.slides):
+        raise ValueError(f"slide not found: {slide_id}")
+    return ToolResult(payload={"deck": _deck_with_slides(deck, slides).to_dict()})
 
 
 def render_preview_html(arguments: dict[str, Any]) -> ToolResult:
@@ -105,6 +169,31 @@ def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
         deck_id=str(raw_deck.get("deck_id") or "deck"),
         title=str(raw_deck.get("title") or "Untitled Deck"),
         revision=int(raw_deck.get("revision") or 0),
+        slides=slides,
+    )
+
+
+def _deck_from_arguments(arguments: dict[str, Any]) -> DeckSpec:
+    raw_deck = arguments.get("deck")
+    if not isinstance(raw_deck, dict):
+        raise ValueError("deck must be an object")
+    return _deck_from_dict(raw_deck)
+
+
+def _slide_from_dict(raw_slide: dict[str, Any], index: int) -> SlideSpec:
+    return SlideSpec(
+        slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
+        title=str(raw_slide.get("title") or f"Slide {index}"),
+        layout=str(raw_slide.get("layout") or "content"),
+        blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
+    )
+
+
+def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
+    return DeckSpec(
+        deck_id=deck.deck_id,
+        title=deck.title,
+        revision=deck.revision + 1,
         slides=slides,
     )
 

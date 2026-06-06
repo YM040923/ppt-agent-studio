@@ -100,3 +100,69 @@ def test_default_registry_creates_deck_and_preview_html():
     assert deck_result.payload["deck"]["revision"] == 2
     assert preview_result.payload["html"].startswith("<!doctype html>")
     assert "AI Strategy" in preview_result.payload["html"]
+
+
+def test_default_registry_updates_adds_and_removes_slides():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_001",
+        "title": "AI Strategy",
+        "revision": 3,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Cover",
+                "layout": "cover",
+                "blocks": [{"type": "subtitle", "text": "Board briefing"}],
+            },
+            {
+                "slide_id": "s2",
+                "title": "Priorities",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Focus"}],
+            },
+        ],
+    }
+
+    async def run():
+        updated = await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "patch": {
+                    "title": "Strategic Priorities",
+                    "blocks": [{"type": "bullet", "text": "Sequence the rollout"}],
+                },
+            },
+        )
+        added = await registry.run(
+            "deck.add_slide",
+            {
+                "deck": updated.payload["deck"],
+                "slide": {
+                    "slide_id": "s3",
+                    "title": "Roadmap",
+                    "layout": "content",
+                    "blocks": [{"type": "bullet", "text": "90 day launch"}],
+                },
+                "after_slide_id": "s1",
+            },
+        )
+        removed = await registry.run(
+            "deck.remove_slide",
+            {"deck": added.payload["deck"], "slide_id": "s1"},
+        )
+        return updated.payload["deck"], added.payload["deck"], removed.payload["deck"]
+
+    updated, added, removed = asyncio.run(run())
+
+    assert updated["revision"] == 4
+    assert updated["slides"][1]["title"] == "Strategic Priorities"
+    assert updated["slides"][1]["blocks"][0]["text"] == "Sequence the rollout"
+
+    assert added["revision"] == 5
+    assert [slide["slide_id"] for slide in added["slides"]] == ["s1", "s3", "s2"]
+
+    assert removed["revision"] == 6
+    assert [slide["slide_id"] for slide in removed["slides"]] == ["s3", "s2"]
