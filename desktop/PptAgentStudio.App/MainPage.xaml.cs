@@ -124,6 +124,18 @@ public sealed partial class MainPage : Page
         await ApplyPreviewStateAsync();
     }
 
+    private async void Settings_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Runtime Settings",
+            Content = ViewModel.RuntimeConfig?.ToSettingsText() ?? ViewModel.SessionStatus,
+            CloseButtonText = "Close"
+        };
+        await dialog.ShowAsync();
+    }
+
     private async Task InitializePreviewInteractionAsync()
     {
         if (PreviewWebView.CoreWebView2 is null)

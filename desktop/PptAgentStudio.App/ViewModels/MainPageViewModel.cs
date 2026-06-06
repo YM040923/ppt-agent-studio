@@ -29,6 +29,8 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     public partial string PreviewHtml { get; set; } = InitialPreviewHtml;
 
+    public RuntimeConfigSummary? RuntimeConfig { get; private set; }
+
     public ObservableCollection<ChatMessageItem> Messages { get; } =
     [
         CreateInitialMessage()
@@ -76,6 +78,7 @@ public partial class MainPageViewModel : ObservableObject
         try
         {
             var runtimeConfig = await _agentClient.GetRuntimeConfigAsync();
+            RuntimeConfig = runtimeConfig;
             SessionStatus = runtimeConfig.ToStatusText();
         }
         catch (Exception ex)

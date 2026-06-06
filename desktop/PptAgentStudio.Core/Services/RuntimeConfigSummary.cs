@@ -32,6 +32,18 @@ public sealed record RuntimeConfigSummary(
         return $"Local Agent runtime ready. Model: {Model} at {BaseUrl}. {keyState} {plannerState}";
     }
 
+    public string ToSettingsText()
+    {
+        var keyState = HasApiKey ? "configured" : "missing";
+        var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
+        return $"""
+            Endpoint: {BaseUrl}
+            Model: {Model}
+            Planner: {plannerActive}
+            API key: {keyState}
+            """.ReplaceLineEndings();
+    }
+
     private static string ReadPlannerValue(bool hasPlanner, JsonElement planner, string propertyName)
     {
         if (!hasPlanner || !planner.TryGetProperty(propertyName, out var value))

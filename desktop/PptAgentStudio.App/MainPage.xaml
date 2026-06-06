@@ -26,7 +26,7 @@
             <AppBarButton Icon="Add" Label="New Deck" Command="{x:Bind ViewModel.NewDeckCommand}" />
             <AppBarButton Icon="Save" Label="Export" Command="{x:Bind ViewModel.ExportLatestCommand}" />
             <AppBarSeparator />
-            <AppBarButton Icon="Setting" Label="Settings" />
+            <AppBarButton Icon="Setting" Label="Settings" Click="Settings_Click" />
         </CommandBar>
 
         <Border Grid.Row="1" Style="{StaticResource PaneBorderStyle}" Padding="16">

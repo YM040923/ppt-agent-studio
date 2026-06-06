@@ -67,4 +67,27 @@ public sealed class RuntimeConfigSummaryTests
             "Local Agent runtime ready. Model: gpt-4.1-mini at https://api.openai.com/v1. API key missing. Planner: fallback (requested llm).",
             status);
     }
+
+    [TestMethod]
+    public void ToSettingsTextShowsRuntimeConfigurationWithoutSecrets()
+    {
+        var summary = new RuntimeConfigSummary(
+            BaseUrl: "https://provider.example/v1",
+            Model: "gpt-compatible-model",
+            HasApiKey: true,
+            PlannerRequested: "llm",
+            PlannerActive: "llm");
+
+        var settingsText = summary.ToSettingsText();
+
+        Assert.AreEqual(
+            """
+            Endpoint: https://provider.example/v1
+            Model: gpt-compatible-model
+            Planner: llm
+            API key: configured
+            """.ReplaceLineEndings(),
+            settingsText);
+        Assert.IsFalse(settingsText.Contains("secret", StringComparison.OrdinalIgnoreCase));
+    }
 }
