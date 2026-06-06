@@ -29,6 +29,10 @@ def _build_outline_planner() -> OutlinePlanner:
     return FallbackOutlinePlanner()
 
 
+def _agent_error_message(error: Exception) -> str:
+    return f"Agent turn failed: {type(error).__name__}"
+
+
 async def handle_client_message(raw_message: str) -> list[str]:
     try:
         message = json.loads(raw_message)
@@ -58,8 +62,11 @@ async def handle_client_message(raw_message: str) -> list[str]:
     session = AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
 
     out: list[str] = []
-    async for event in session.submit_user_message(text):
-        out.append(_event_json(event))
+    try:
+        async for event in session.submit_user_message(text):
+            out.append(_event_json(event))
+    except Exception as error:
+        out.append(_error_json(_agent_error_message(error), seq=len(out) + 1, session_id=session_id))
     return out
 
 

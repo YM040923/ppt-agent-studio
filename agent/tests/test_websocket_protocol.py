@@ -5,6 +5,11 @@ from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutline
 from ppt_agent_studio.runtime.websocket_server import _build_outline_planner, handle_client_message
 
 
+class FailingOutlinePlanner:
+    async def create_outline(self, prompt: str):
+        raise RuntimeError("secret-value from provider")
+
+
 def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
 
@@ -55,6 +60,34 @@ def test_handle_unknown_message_type_returns_error_event():
 
     assert payload["type"] == "error"
     assert payload["payload"]["message"] == "Unsupported message type: ping"
+
+
+def test_handle_user_message_returns_error_when_agent_turn_fails(monkeypatch):
+    monkeypatch.setattr(
+        "ppt_agent_studio.runtime.websocket_server._build_outline_planner",
+        lambda: FailingOutlinePlanner(),
+    )
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_001",
+                    "deck_id": "deck_001",
+                    "payload": {"text": "Make a strategy deck"},
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payloads = [json.loads(item) for item in messages]
+
+    assert [item["type"] for item in payloads] == ["user.message", "error"]
+    assert payloads[1]["seq"] == 2
+    assert payloads[1]["session_id"] == "session_001"
+    assert payloads[1]["payload"]["message"] == "Agent turn failed: RuntimeError"
+    assert "secret-value" not in messages[1]
 
 
 def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch):
