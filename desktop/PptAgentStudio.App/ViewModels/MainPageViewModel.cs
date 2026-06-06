@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PptAgentStudio_App.Services;
+using System;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace PptAgentStudio_App.ViewModels;
 
@@ -13,11 +16,16 @@ public sealed class ChatMessageItem
 
 public partial class MainPageViewModel : ObservableObject
 {
+    private readonly AgentSessionClient _agentClient = new();
+
     [ObservableProperty]
     public partial string SessionStatus { get; set; } = "Local Agent runtime not connected";
 
     [ObservableProperty]
     public partial string InputText { get; set; } = "";
+
+    [ObservableProperty]
+    public partial string PreviewHtml { get; set; } = InitialPreviewHtml;
 
     public ObservableCollection<ChatMessageItem> Messages { get; } =
     [
@@ -28,7 +36,7 @@ public partial class MainPageViewModel : ObservableObject
         }
     ];
 
-    public string PreviewHtml { get; } = """
+    private const string InitialPreviewHtml = """
         <!doctype html>
         <html lang="en">
         <head>
@@ -58,7 +66,7 @@ public partial class MainPageViewModel : ObservableObject
         """;
 
     [RelayCommand]
-    private void Send()
+    private async Task Send()
     {
         var text = InputText.Trim();
         if (text.Length == 0)
@@ -67,7 +75,53 @@ public partial class MainPageViewModel : ObservableObject
         }
 
         Messages.Add(new ChatMessageItem { Role = "You", Content = text });
-        Messages.Add(new ChatMessageItem { Role = "Assistant", Content = "The first Agent runtime skeleton is ready. WebSocket streaming will attach here next." });
         InputText = "";
+        SessionStatus = "Sending request to local Agent runtime...";
+
+        try
+        {
+            await foreach (var runtimeEvent in _agentClient.SendUserMessageAsync(text))
+            {
+                ApplyRuntimeEvent(runtimeEvent);
+            }
+        }
+        catch (Exception ex)
+        {
+            SessionStatus = $"Runtime unavailable: {ex.Message}";
+            Messages.Add(new ChatMessageItem
+            {
+                Role = "Assistant",
+                Content = "I could not reach the local Python Agent runtime. Start it with: python -m ppt_agent_studio.runtime.websocket_server --port 8765"
+            });
+        }
+    }
+
+    private void ApplyRuntimeEvent(AgentRuntimeEvent runtimeEvent)
+    {
+        switch (runtimeEvent.Type)
+        {
+            case "plan.updated":
+                SessionStatus = "Agent created a starter plan.";
+                Messages.Add(new ChatMessageItem { Role = "Assistant", Content = "Starter plan created. Rendering preview..." });
+                break;
+            case "deck.updated":
+                SessionStatus = $"Deck updated at revision {runtimeEvent.DeckRevision}.";
+                break;
+            case "preview.ready":
+                if (runtimeEvent.Payload.TryGetProperty("html", out var html))
+                {
+                    PreviewHtml = html.GetString() ?? PreviewHtml;
+                }
+                SessionStatus = $"Preview ready at revision {runtimeEvent.DeckRevision}.";
+                Messages.Add(new ChatMessageItem { Role = "Assistant", Content = "Preview updated from the local Agent runtime." });
+                break;
+            case "error":
+                var message = runtimeEvent.Payload.TryGetProperty("message", out var error)
+                    ? error.GetString()
+                    : "Runtime error";
+                SessionStatus = message ?? "Runtime error";
+                Messages.Add(new ChatMessageItem { Role = "Assistant", Content = SessionStatus });
+                break;
+        }
     }
 }

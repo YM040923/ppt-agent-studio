@@ -14,6 +14,19 @@ PPT Agent Studio is a Windows-native, presentation-focused AI Agent. It is inspi
 
 The first runtime increment includes a deterministic local `AgentSession`. It accepts a user message, emits ordered Agent events, builds a starter `DeckSpec`, and renders a full HTML preview document. This gives the WinUI client a stable event contract before live model calls are added.
 
+Start the local runtime before using the desktop Send button:
+
+```powershell
+$env:PYTHONPATH="E:\MyProjects\ppt-agent-studio\agent\src"
+python -m ppt_agent_studio.runtime.websocket_server --host 127.0.0.1 --port 8765
+```
+
+Then run the desktop app:
+
+```powershell
+dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
+```
+
 ## Repository Layout
 
 ```text

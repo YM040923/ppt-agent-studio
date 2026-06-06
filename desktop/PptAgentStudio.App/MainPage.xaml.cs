@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml.Controls;
 using PptAgentStudio_App.ViewModels;
 using System;
+using System.ComponentModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,6 +18,7 @@ public sealed partial class MainPage : Page
     public MainPage()
     {
         InitializeComponent();
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     private async void Page_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -30,6 +32,14 @@ public sealed partial class MainPage : Page
         catch (Exception ex)
         {
             ViewModel.SessionStatus = $"Preview unavailable: {ex.Message}";
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.PreviewHtml) && PreviewWebView.CoreWebView2 is not null)
+        {
+            PreviewWebView.NavigateToString(ViewModel.PreviewHtml);
         }
     }
 }

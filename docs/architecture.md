@@ -31,6 +31,19 @@ preview.ready
 
 This sequence is intentionally small. It proves state ordering and preview synchronization before adding live model calls, tool execution, and cancellation.
 
+The runtime WebSocket server listens on `127.0.0.1:8765` by default. The desktop client sends:
+
+```json
+{
+  "type": "user.message",
+  "session_id": "desktop-session",
+  "deck_id": "desktop-deck",
+  "payload": { "text": "Make a board AI strategy deck" }
+}
+```
+
+The server streams one JSON event per WebSocket message. The desktop client closes the turn after receiving `preview.ready` or `error`.
+
 ## Preview Pane
 
 The WinUI app hosts the live preview with the WebView2 control bundled through Windows App SDK. Do not add a separate `Microsoft.Web.WebView2` package reference unless a future Windows App SDK release explicitly requires it; the first scaffold verified that the extra package can conflict with WinUI runtime startup. The desktop app initializes WebView2 with `EnsureCoreWebView2Async` before calling `NavigateToString`.
