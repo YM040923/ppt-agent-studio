@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PptAgentStudio.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PptAgentStudio.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
