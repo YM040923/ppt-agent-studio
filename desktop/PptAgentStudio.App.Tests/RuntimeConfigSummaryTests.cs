@@ -16,6 +16,10 @@ public sealed class RuntimeConfigSummaryTests
                 "base_url": "https://provider.example/v1",
                 "model": "gpt-compatible-model",
                 "has_api_key": true
+              },
+              "planner": {
+                "requested": "llm",
+                "active": "llm"
               }
             }
             """);
@@ -25,6 +29,8 @@ public sealed class RuntimeConfigSummaryTests
         Assert.AreEqual("https://provider.example/v1", summary.BaseUrl);
         Assert.AreEqual("gpt-compatible-model", summary.Model);
         Assert.IsTrue(summary.HasApiKey);
+        Assert.AreEqual("llm", summary.PlannerRequested);
+        Assert.AreEqual("llm", summary.PlannerActive);
     }
 
     [TestMethod]
@@ -33,12 +39,14 @@ public sealed class RuntimeConfigSummaryTests
         var summary = new RuntimeConfigSummary(
             BaseUrl: "https://provider.example/v1",
             Model: "gpt-compatible-model",
-            HasApiKey: true);
+            HasApiKey: true,
+            PlannerRequested: "llm",
+            PlannerActive: "llm");
 
         var status = summary.ToStatusText();
 
         Assert.AreEqual(
-            "Local Agent runtime ready. Model: gpt-compatible-model at https://provider.example/v1. API key configured.",
+            "Local Agent runtime ready. Model: gpt-compatible-model at https://provider.example/v1. API key configured. Planner: llm.",
             status);
         Assert.IsFalse(status.Contains("secret", StringComparison.OrdinalIgnoreCase));
     }
@@ -49,12 +57,14 @@ public sealed class RuntimeConfigSummaryTests
         var summary = new RuntimeConfigSummary(
             BaseUrl: "https://api.openai.com/v1",
             Model: "gpt-4.1-mini",
-            HasApiKey: false);
+            HasApiKey: false,
+            PlannerRequested: "llm",
+            PlannerActive: "fallback");
 
         var status = summary.ToStatusText();
 
         Assert.AreEqual(
-            "Local Agent runtime ready. Model: gpt-4.1-mini at https://api.openai.com/v1. API key missing.",
+            "Local Agent runtime ready. Model: gpt-4.1-mini at https://api.openai.com/v1. API key missing. Planner: fallback (requested llm).",
             status);
     }
 }

@@ -23,10 +23,25 @@ def _error_json(message: str, seq: int = 1, session_id: str = "session") -> str:
 
 
 def _build_outline_planner() -> OutlinePlanner:
-    planner_mode = os.getenv("PPT_AGENT_PLANNER", "fallback").strip().lower()
-    if planner_mode == "llm" and OpenAICompatibleConfig.from_env().has_api_key:
+    config = OpenAICompatibleConfig.from_env()
+    if _active_planner_mode(config) == "llm":
         return LLMOutlinePlanner()
     return FallbackOutlinePlanner()
+
+
+def _planner_summary(config: OpenAICompatibleConfig) -> dict[str, str]:
+    return {
+        "requested": _requested_planner_mode(),
+        "active": _active_planner_mode(config),
+    }
+
+
+def _requested_planner_mode() -> str:
+    return os.getenv("PPT_AGENT_PLANNER", "fallback").strip().lower() or "fallback"
+
+
+def _active_planner_mode(config: OpenAICompatibleConfig) -> str:
+    return "llm" if _requested_planner_mode() == "llm" and config.has_api_key else "fallback"
 
 
 def _agent_error_message(error: Exception) -> str:
@@ -45,11 +60,12 @@ async def handle_client_message(raw_message: str) -> list[str]:
     session_id = str(message.get("session_id") or "session")
 
     if message_type == "runtime.config":
+        config = OpenAICompatibleConfig.from_env()
         event = AgentEvent(
             seq=1,
             session_id=session_id,
             type="runtime.config",
-            payload={"llm": OpenAICompatibleConfig.from_env().safe_summary()},
+            payload={"llm": config.safe_summary(), "planner": _planner_summary(config)},
         )
         return [_event_json(event)]
 

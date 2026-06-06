@@ -94,6 +94,7 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch):
     monkeypatch.setenv("OPENAI_BASE_URL", "https://provider.example/v1/")
     monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
     monkeypatch.setenv("OPENAI_MODEL", "gpt-compatible-model")
+    monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
 
     async def run():
         return await handle_client_message(
@@ -116,9 +117,36 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch):
             "base_url": "https://provider.example/v1",
             "model": "gpt-compatible-model",
             "has_api_key": True,
+        },
+        "planner": {
+            "requested": "llm",
+            "active": "llm",
         }
     }
     assert "secret-value" not in messages[0]
+
+
+def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypatch):
+    monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["payload"]["planner"] == {
+        "requested": "llm",
+        "active": "fallback",
+    }
 
 
 def test_build_outline_planner_defaults_to_fallback(monkeypatch):

@@ -31,7 +31,7 @@ Then run the desktop app:
 dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
 ```
 
-On startup the desktop app probes `runtime.config` and shows the configured model endpoint plus whether an API key is present. The key value is never displayed.
+On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether an API key is present, and which planner is active. The key value is never displayed.
 
 ## Repository Layout
 
@@ -68,7 +68,7 @@ The runtime exposes a safe configuration probe over WebSocket:
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-It reports the configured endpoint, model, and whether an API key is present without returning the key.
+It reports the configured endpoint, model, active planner mode, and whether an API key is present without returning the key.
 
 The Python runtime includes an injectable OpenAI-compatible chat client and an LLM outline planner. The default Agent turn still uses the deterministic fallback planner unless `PPT_AGENT_PLANNER=llm` and `OPENAI_API_KEY` are both configured, so the MVP remains testable without a network call or API key.
 

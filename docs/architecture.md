@@ -53,9 +53,9 @@ The desktop app or a test client can ask for a redacted runtime configuration su
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-The response is a single `runtime.config` event. It includes `base_url`, `model`, and `has_api_key`, but never returns the API key value.
+The response is a single `runtime.config` event. It includes `base_url`, `model`, `has_api_key`, and planner `requested`/`active` modes, but never returns the API key value.
 
-The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint and key presence.
+The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner.
 
 Runtime outline planning is selected through `PPT_AGENT_PLANNER`. The default is `fallback`, which keeps local development deterministic and offline. Set `PPT_AGENT_PLANNER=llm` and provide `OPENAI_API_KEY` to use the model-backed `LLMOutlinePlanner`; if the key is missing, the runtime keeps using the fallback planner instead of failing the desktop turn.
 
