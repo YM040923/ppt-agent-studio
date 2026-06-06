@@ -10,6 +10,10 @@ PPT Agent Studio is a Windows-native, presentation-focused AI Agent. It is inspi
 - Python Agent runtime for planning, tool calling, DeckSpec state, preview rendering, and future PPTX export.
 - OpenAI-compatible configuration, including third-party endpoints via `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL`.
 
+## Current MVP Runtime
+
+The first runtime increment includes a deterministic local `AgentSession`. It accepts a user message, emits ordered Agent events, builds a starter `DeckSpec`, and renders a full HTML preview document. This gives the WinUI client a stable event contract before live model calls are added.
+
 ## Repository Layout
 
 ```text

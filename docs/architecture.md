@@ -20,6 +20,17 @@ Python Agent Runtime
 
 The desktop app and Python runtime communicate through ordered Agent events. Every event carries a `seq`, `session_id`, `type`, and `payload`. Deck-related events also carry `deck_id` and `deck_revision`, so the UI can ignore stale preview updates.
 
+The deterministic MVP session emits this turn sequence:
+
+```text
+user.message
+plan.updated
+deck.updated
+preview.ready
+```
+
+This sequence is intentionally small. It proves state ordering and preview synchronization before adding live model calls, tool execution, and cancellation.
+
 ## Preview Pane
 
 The WinUI app hosts the live preview with the WebView2 control bundled through Windows App SDK. Do not add a separate `Microsoft.Web.WebView2` package reference unless a future Windows App SDK release explicitly requires it; the first scaffold verified that the extra package can conflict with WinUI runtime startup. The desktop app initializes WebView2 with `EnsureCoreWebView2Async` before calling `NavigateToString`.
