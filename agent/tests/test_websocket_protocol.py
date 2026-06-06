@@ -33,11 +33,13 @@ def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
         "plan.updated",
         "deck.updated",
         "pptx.ready",
+        "plan.updated",
         "preview.ready",
     ]
     assert payloads[-1]["deck_revision"] == 1
     assert payloads[-1]["payload"]["html"].startswith("<!doctype html>")
-    assert payloads[-2]["payload"]["path"].endswith("deck_001-r1.pptx")
+    assert payloads[-2]["payload"]["plan"]["status"] == "completed"
+    assert payloads[-3]["payload"]["path"].endswith("deck_001-r1.pptx")
 
 
 def test_handle_invalid_json_returns_error_event():

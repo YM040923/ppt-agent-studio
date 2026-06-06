@@ -157,11 +157,16 @@ public partial class MainPageViewModel : ObservableObject
         {
             case "plan.updated":
                 var planSummary = RuntimePlanSummary.FromPayload(runtimeEvent.Payload);
-                SessionStatus = $"Agent created a {planSummary.SlideCount}-slide plan.";
+                var isCompletedPlan = string.Equals(planSummary.Status, "completed", StringComparison.OrdinalIgnoreCase);
+                SessionStatus = isCompletedPlan
+                    ? $"Agent completed a {planSummary.SlideCount}-slide plan."
+                    : $"Agent created a {planSummary.SlideCount}-slide plan.";
                 Messages.Add(new ChatMessageItem
                 {
                     Role = "Assistant",
-                    Content = $"{planSummary.ToChatMessage()} Rendering preview..."
+                    Content = isCompletedPlan
+                        ? planSummary.ToChatMessage()
+                        : $"{planSummary.ToChatMessage()} Rendering preview..."
                 });
                 break;
             case "deck.updated":

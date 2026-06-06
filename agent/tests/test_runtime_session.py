@@ -58,21 +58,25 @@ def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
         "plan.updated",
         "deck.updated",
         "pptx.ready",
+        "plan.updated",
         "preview.ready",
     ]
-    assert [event.seq for event in events] == [1, 2, 3, 4, 5]
+    assert [event.seq for event in events] == [1, 2, 3, 4, 5, 6]
     assert events[1].payload["plan"]["plan_id"] == "deck_001-r1-plan"
+    assert events[1].payload["plan"]["status"] == "running"
     assert events[1].payload["plan"]["slide_count"] == 3
     assert events[1].payload["plan"]["steps"][0]["status"] == "completed"
     assert events[1].payload["plan"]["steps"][1]["status"] == "completed"
     assert events[1].payload["plan"]["steps"][2]["step_id"] == "draft_slides"
     assert events[1].payload["plan"]["steps"][2]["status"] == "running"
+    assert events[4].payload["plan"]["status"] == "completed"
+    assert all(step["status"] == "completed" for step in events[4].payload["plan"]["steps"])
     assert events[2].deck_revision == 1
     assert events[3].payload["path"].endswith("deck_001-r1.pptx")
     assert events[3].payload["slide_count"] == 3
     assert len(Presentation(events[3].payload["path"]).slides) == 3
-    assert events[4].payload["html"].startswith("<!doctype html>")
-    assert "board AI strategy" in events[4].payload["html"]
+    assert events[5].payload["html"].startswith("<!doctype html>")
+    assert "board AI strategy" in events[5].payload["html"]
 
 
 def test_agent_session_ignores_empty_user_message():
@@ -106,7 +110,7 @@ def test_agent_session_uses_injected_outline_planner(tmp_path):
     assert events[1].payload["outline"]["deck_title"] == "Planner Deck"
     assert events[2].payload["deck"]["title"] == "Planner Deck"
     assert events[3].payload["slide_count"] == 1
-    assert "Planner Deck" in events[4].payload["html"]
+    assert "Planner Deck" in events[5].payload["html"]
 
 
 def test_agent_session_preserves_planner_theme_for_preview_and_export(tmp_path):
@@ -124,7 +128,7 @@ def test_agent_session_preserves_planner_theme_for_preview_and_export(tmp_path):
     presentation = Presentation(events[3].payload["path"])
 
     assert events[2].payload["deck"]["theme"]["name"] == "executive-consulting"
-    assert "--slide-accent: #2563EB;" in events[4].payload["html"]
+    assert "--slide-accent: #2563EB;" in events[5].payload["html"]
     assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "2563EB"
 
 
@@ -186,4 +190,4 @@ def test_agent_session_uses_tool_registry_for_deck_and_preview():
     ]
     assert events[2].payload["deck"]["title"] == "Custom Deck"
     assert events[3].payload["path"].endswith("deck_004-r1.pptx")
-    assert events[4].payload["html"] == "<!doctype html><title>Custom</title>"
+    assert events[5].payload["html"] == "<!doctype html><title>Custom</title>"

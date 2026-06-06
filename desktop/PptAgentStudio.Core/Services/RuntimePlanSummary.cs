@@ -6,7 +6,8 @@ public sealed record RuntimePlanSummary(
     string Title,
     int SlideCount,
     IReadOnlyList<string> FirstSteps,
-    string ActiveStepTitle = "")
+    string ActiveStepTitle = "",
+    string Status = "pending")
 {
     public static RuntimePlanSummary FromPayload(JsonElement payload)
     {
@@ -21,6 +22,9 @@ public sealed record RuntimePlanSummary(
         var slideCount = plan.TryGetProperty("slide_count", out var slideCountValue)
             ? slideCountValue.GetInt32()
             : 0;
+        var planStatus = plan.TryGetProperty("status", out var statusValue)
+            ? statusValue.GetString() ?? "pending"
+            : "pending";
         var steps = new List<string>();
         var activeStepTitle = "";
         if (plan.TryGetProperty("steps", out var stepsValue) && stepsValue.ValueKind == JsonValueKind.Array)
@@ -49,12 +53,17 @@ public sealed record RuntimePlanSummary(
             }
         }
 
-        return new RuntimePlanSummary(title, slideCount, steps, activeStepTitle);
+        return new RuntimePlanSummary(title, slideCount, steps, activeStepTitle, planStatus);
     }
 
     public string ToChatMessage()
     {
         var slideText = SlideCount == 1 ? "1 slide" : $"{SlideCount} slides";
+        if (string.Equals(Status, "completed", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"Plan completed: {Title} ({slideText}).";
+        }
+
         var activeStep = string.IsNullOrWhiteSpace(ActiveStepTitle) ? "" : $" Active: {ActiveStepTitle}.";
         var nextSteps = FirstSteps.Count == 0 ? "" : $" Next: {string.Join(", ", FirstSteps)}.";
         return $"Plan ready: {Title} ({slideText}).{activeStep}{nextSteps}";

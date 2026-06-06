@@ -61,4 +61,29 @@ public sealed class RuntimePlanSummaryTests
             "Plan ready: AI Strategy (3 slides). Active: Draft 3 slides. Next: Research context, Structure story, Draft 3 slides.",
             summary.ToChatMessage());
     }
+
+    [TestMethod]
+    public void ToChatMessageShowsCompletedPlanStatus()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "plan": {
+                "title": "AI Strategy",
+                "status": "completed",
+                "slide_count": 3,
+                "steps": [
+                  { "title": "Research context", "status": "completed" },
+                  { "title": "Structure story", "status": "completed" },
+                  { "title": "Draft 3 slides", "status": "completed" }
+                ]
+              }
+            }
+            """);
+
+        var summary = RuntimePlanSummary.FromPayload(document.RootElement);
+
+        Assert.AreEqual("completed", summary.Status);
+        Assert.AreEqual("Plan completed: AI Strategy (3 slides).", summary.ToChatMessage());
+    }
 }
