@@ -57,6 +57,19 @@ def test_fallback_outline_planner_preserves_prompt_topic():
     assert len(outline["slides"]) == 3
 
 
+def test_fallback_outline_planner_respects_requested_slide_count():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline("帮我做一个关于 AI 转型的 20 页 PPT，目标受众是高层管理者")
+
+    outline = asyncio.run(run())
+
+    assert len(outline["slides"]) == 20
+    assert outline["slides"][0]["prototype_hint"] == "cover"
+    assert outline["slides"][-1]["title"] == "Implementation roadmap"
+
+
 def test_fallback_outline_planner_derives_executive_consulting_theme():
     planner = FallbackOutlinePlanner()
 

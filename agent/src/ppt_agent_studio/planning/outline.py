@@ -16,39 +16,11 @@ class OutlinePlanner(Protocol):
 class FallbackOutlinePlanner:
     async def create_outline(self, prompt: str) -> dict[str, object]:
         topic = prompt.removesuffix(".").strip()
+        slide_count = _slide_count_from_prompt(prompt)
         return {
             "deck_title": topic,
             "theme": _theme_from_prompt(prompt),
-            "slides": [
-                {
-                    "title": topic,
-                    "subtitle": "Executive presentation draft",
-                    "prototype_hint": "cover",
-                },
-                {
-                    "title": "Strategic context",
-                    "prototype_hint": "content",
-                    "points": [
-                        {
-                            "label": "Objective",
-                            "body": "Clarify the decision, audience, and expected business outcome.",
-                        },
-                        {
-                            "label": "Signal",
-                            "body": "Frame the core trend and why it matters now.",
-                        },
-                    ],
-                },
-                {
-                    "title": "Recommended path",
-                    "prototype_hint": "content",
-                    "bullets": [
-                        "Define the target operating model.",
-                        "Prioritize high-leverage use cases.",
-                        "Sequence rollout with measurable checkpoints.",
-                    ],
-                },
-            ],
+            "slides": _fallback_slides(topic, slide_count),
         }
 
 
@@ -92,4 +64,101 @@ def _theme_from_prompt(prompt: str) -> dict[str, str]:
         "slide_background": "#FFFFFF",
         "text": "#111827",
         "accent": "#0F766E",
+    }
+
+
+def _slide_count_from_prompt(prompt: str) -> int:
+    match = re.search(r"\b(\d{1,2})\s*(?:slides?|pages?)\b|(\d{1,2})\s*[页張张]", prompt, flags=re.IGNORECASE)
+    if not match:
+        return 3
+    value = int(match.group(1) or match.group(2))
+    return max(1, min(value, 30))
+
+
+def _fallback_slides(topic: str, slide_count: int) -> list[dict[str, object]]:
+    slides: list[dict[str, object]] = [
+        {
+            "title": topic,
+            "subtitle": "Executive presentation draft",
+            "prototype_hint": "cover",
+        }
+    ]
+    if slide_count == 1:
+        return slides
+
+    slides.append(
+        {
+            "title": "Strategic context",
+            "prototype_hint": "content",
+            "points": [
+                {
+                    "label": "Objective",
+                    "body": "Clarify the decision, audience, and expected business outcome.",
+                },
+                {
+                    "label": "Signal",
+                    "body": "Frame the core trend and why it matters now.",
+                },
+            ],
+        }
+    )
+    if slide_count == 2:
+        return slides
+
+    if slide_count == 3:
+        slides.append(_recommended_path_slide())
+        return slides
+
+    middle_titles = [
+        "Audience decision",
+        "Current-state diagnosis",
+        "Opportunity landscape",
+        "Strategic options",
+        "Recommended path",
+        "Business case",
+        "Operating model",
+        "Capability roadmap",
+        "Risk controls",
+        "Governance model",
+        "Adoption plan",
+        "Metrics and milestones",
+    ]
+    middle_count = slide_count - 3
+    for index in range(middle_count):
+        base_title = middle_titles[index % len(middle_titles)]
+        title = base_title if index < len(middle_titles) else f"{base_title} {index + 1}"
+        slides.append(
+            {
+                "title": title,
+                "prototype_hint": "content",
+                "points": [
+                    {"label": "Key message", "body": "State the single takeaway this slide should land."},
+                    {"label": "Evidence", "body": "Add the proof point, metric, or example that supports the message."},
+                ],
+            }
+        )
+
+    slides.append(
+        {
+            "title": "Implementation roadmap",
+            "prototype_hint": "content",
+            "bullets": [
+                "Define the target operating model.",
+                "Prioritize high-leverage use cases.",
+                "Sequence rollout with measurable checkpoints.",
+            ],
+        }
+    )
+    return slides
+
+
+def _recommended_path_slide() -> dict[str, object]:
+    return {
+        "title": "Recommended path",
+        "prototype_hint": "content",
+        "bullets": [
+            "Define the target operating model.",
+            "Prioritize high-leverage use cases.",
+            "Sequence rollout with measurable checkpoints.",
+        ],
     }
