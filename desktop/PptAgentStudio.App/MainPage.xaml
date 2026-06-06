@@ -9,6 +9,7 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:PptAgentStudio_App.ViewModels"
     Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded"
     mc:Ignorable="d">
 
     <Page.Resources>

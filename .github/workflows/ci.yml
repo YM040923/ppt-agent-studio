@@ -27,4 +27,6 @@ jobs:
         with:
           dotnet-version: "10.0.x"
       - name: Build WinUI app
-        run: dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
+        run: dotnet build PptAgentStudio.slnx
+      - name: Run .NET tests
+        run: dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj

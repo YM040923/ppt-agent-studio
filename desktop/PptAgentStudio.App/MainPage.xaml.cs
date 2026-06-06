@@ -27,12 +27,17 @@ public sealed partial class MainPage : Page
         {
             await PreviewWebView.EnsureCoreWebView2Async();
             PreviewWebView.NavigateToString(ViewModel.PreviewHtml);
-            ViewModel.SessionStatus = "Preview pane ready. Local Agent runtime not connected.";
+            await ViewModel.InitializeRuntimeAsync();
         }
         catch (Exception ex)
         {
             ViewModel.SessionStatus = $"Preview unavailable: {ex.Message}";
         }
+    }
+
+    private void Page_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ViewModel.StopRuntime();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -17,6 +17,7 @@ public sealed class ChatMessageItem
 public partial class MainPageViewModel : ObservableObject
 {
     private readonly AgentSessionClient _agentClient = new();
+    private readonly RuntimeSidecarService _sidecar = new();
 
     [ObservableProperty]
     public partial string SessionStatus { get; set; } = "Local Agent runtime not connected";
@@ -64,6 +65,20 @@ public partial class MainPageViewModel : ObservableObject
         </body>
         </html>
         """;
+
+    public async Task InitializeRuntimeAsync()
+    {
+        SessionStatus = "Starting local Agent runtime...";
+        var ready = await _sidecar.EnsureRunningAsync();
+        SessionStatus = ready
+            ? "Local Agent runtime ready."
+            : "Local Agent runtime could not be started.";
+    }
+
+    public void StopRuntime()
+    {
+        _sidecar.Dispose();
+    }
 
     [RelayCommand]
     private async Task Send()

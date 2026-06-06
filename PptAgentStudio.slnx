@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/desktop/">
+    <Project Path="desktop/PptAgentStudio.App.Tests/PptAgentStudio.App.Tests.csproj" />
     <Project Path="desktop/PptAgentStudio.App/PptAgentStudio.App.csproj" />
+    <Project Path="desktop/PptAgentStudio.Core/PptAgentStudio.Core.csproj" />
   </Folder>
 </Solution>
