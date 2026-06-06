@@ -55,3 +55,20 @@ def test_fallback_outline_planner_preserves_prompt_topic():
 
     assert outline["deck_title"] == "Make a revenue growth deck"
     assert len(outline["slides"]) == 3
+
+
+def test_fallback_outline_planner_derives_executive_consulting_theme():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline("帮我做一个关于 AI 转型的 PPT，目标受众是高层管理者，风格麦肯锡")
+
+    outline = asyncio.run(run())
+
+    assert outline["theme"] == {
+        "name": "executive-consulting",
+        "background": "#EEF2F7",
+        "slide_background": "#FFFFFF",
+        "text": "#111827",
+        "accent": "#2563EB",
+    }

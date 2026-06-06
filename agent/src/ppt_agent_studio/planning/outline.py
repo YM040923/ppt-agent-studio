@@ -18,6 +18,7 @@ class FallbackOutlinePlanner:
         topic = prompt.removesuffix(".").strip()
         return {
             "deck_title": topic,
+            "theme": _theme_from_prompt(prompt),
             "slides": [
                 {
                     "title": topic,
@@ -72,3 +73,23 @@ def _extract_json(text: str) -> str:
     if match:
         return match.group(1)
     return text.strip()
+
+
+def _theme_from_prompt(prompt: str) -> dict[str, str]:
+    normalized = prompt.casefold()
+    executive_markers = ("麦肯锡", "高层", "高管", "管理者", "咨询", "mckinsey", "executive", "board", "consulting")
+    if any(marker in normalized for marker in executive_markers):
+        return {
+            "name": "executive-consulting",
+            "background": "#EEF2F7",
+            "slide_background": "#FFFFFF",
+            "text": "#111827",
+            "accent": "#2563EB",
+        }
+    return {
+        "name": "clean-business",
+        "background": "#F3F4F6",
+        "slide_background": "#FFFFFF",
+        "text": "#111827",
+        "accent": "#0F766E",
+    }

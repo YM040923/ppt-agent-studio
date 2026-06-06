@@ -104,6 +104,7 @@ class AgentSession:
             title=str(payload.get("title") or "Untitled Deck"),
             revision=int(payload.get("revision") or 0),
             slides=slides,
+            theme=payload.get("theme") if isinstance(payload.get("theme"), dict) else {},
         )
 
     @staticmethod

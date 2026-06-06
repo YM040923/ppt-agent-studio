@@ -24,6 +24,27 @@ class FakeOutlinePlanner:
         }
 
 
+class ThemedOutlinePlanner:
+    async def create_outline(self, prompt):
+        return {
+            "deck_title": "Themed Deck",
+            "theme": {
+                "name": "executive-consulting",
+                "background": "#EEF2F7",
+                "slide_background": "#FFFFFF",
+                "text": "#111827",
+                "accent": "#2563EB",
+            },
+            "slides": [
+                {
+                    "title": "Themed Deck",
+                    "subtitle": "Generated with a planner theme",
+                    "prototype_hint": "cover",
+                }
+            ],
+        }
+
+
 def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
     session = AgentSession(session_id="session_001", deck_id="deck_001", artifact_dir=tmp_path)
 
@@ -86,6 +107,25 @@ def test_agent_session_uses_injected_outline_planner(tmp_path):
     assert events[2].payload["deck"]["title"] == "Planner Deck"
     assert events[3].payload["slide_count"] == 1
     assert "Planner Deck" in events[4].payload["html"]
+
+
+def test_agent_session_preserves_planner_theme_for_preview_and_export(tmp_path):
+    session = AgentSession(
+        session_id="session_themed",
+        deck_id="deck_themed",
+        outline_planner=ThemedOutlinePlanner(),
+        artifact_dir=tmp_path,
+    )
+
+    async def collect():
+        return [event async for event in session.submit_user_message("Make an executive deck")]
+
+    events = asyncio.run(collect())
+    presentation = Presentation(events[3].payload["path"])
+
+    assert events[2].payload["deck"]["theme"]["name"] == "executive-consulting"
+    assert "--slide-accent: #2563EB;" in events[4].payload["html"]
+    assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "2563EB"
 
 
 def test_agent_session_uses_tool_registry_for_deck_and_preview():
