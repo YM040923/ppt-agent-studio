@@ -41,6 +41,7 @@ class DeckSpec:
     title: str
     revision: int
     slides: list[SlideSpec] = field(default_factory=list)
+    theme: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.revision < 0:
@@ -50,14 +51,18 @@ class DeckSpec:
         title = self.title.strip() or "Untitled Deck"
         object.__setattr__(self, "deck_id", self.deck_id.strip())
         object.__setattr__(self, "title", title)
+        object.__setattr__(self, "theme", dict(self.theme) if isinstance(self.theme, dict) else {})
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "deck_id": self.deck_id,
             "title": self.title,
             "revision": self.revision,
             "slides": [slide.to_dict() for slide in self.slides],
         }
+        if self.theme:
+            payload["theme"] = dict(self.theme)
+        return payload
 
 
 def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) -> DeckSpec:
@@ -78,7 +83,8 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
                 blocks=blocks,
             )
         )
-    return DeckSpec(deck_id=deck_id, title=title, revision=revision, slides=slides)
+    raw_theme = outline.get("theme") if isinstance(outline.get("theme"), dict) else {}
+    return DeckSpec(deck_id=deck_id, title=title, revision=revision, slides=slides, theme=raw_theme)
 
 
 def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:

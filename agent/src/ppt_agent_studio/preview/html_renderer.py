@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 from html import escape
+import re
 
 from ppt_agent_studio.deck.spec import DeckSpec
 
 
+_HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+
+
 def render_preview_document(deck: DeckSpec) -> str:
+    preview_background = _theme_color(deck, "background", "#f3f3f3")
+    slide_background = _theme_color(deck, "slide_background", "#fff")
+    slide_text = _theme_color(deck, "text", "#111827")
+    slide_accent = _theme_color(deck, "accent", "#2563EB")
     return (
         "<!doctype html>\n"
         '<html lang="en">\n'
@@ -13,13 +21,19 @@ def render_preview_document(deck: DeckSpec) -> str:
         '<meta charset="utf-8" />\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1" />\n'
         "<style>\n"
-        "body { margin: 0; background: #f3f3f3; font-family: Segoe UI, sans-serif; }\n"
+        ":root { "
+        f"--preview-background: {preview_background}; "
+        f"--slide-background: {slide_background}; "
+        f"--slide-text: {slide_text}; "
+        f"--slide-accent: {slide_accent}; "
+        "}\n"
+        "body { margin: 0; background: var(--preview-background); font-family: Segoe UI, sans-serif; }\n"
         ".deck { padding: 24px; }\n"
-        ".deck-header { color: #555; font-size: 13px; margin-bottom: 12px; }\n"
-        ".slide { aspect-ratio: 16 / 9; background: #fff; border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,.14); box-sizing: border-box; margin: 0 0 18px; padding: 42px; }\n"
-        ".page-number { color: #777; font-size: 13px; }\n"
+        ".deck-header { color: var(--slide-text); font-size: 13px; margin-bottom: 12px; opacity: .72; }\n"
+        ".slide { aspect-ratio: 16 / 9; background: var(--slide-background); border-radius: 8px; border-top: 4px solid var(--slide-accent); box-shadow: 0 12px 32px rgba(0,0,0,.14); box-sizing: border-box; color: var(--slide-text); margin: 0 0 18px; padding: 42px; }\n"
+        ".page-number { color: var(--slide-accent); font-size: 13px; font-weight: 600; }\n"
         "h1 { font-size: 34px; margin: 34px 0 12px; }\n"
-        "p { color: #444; font-size: 18px; line-height: 1.45; }\n"
+        "p { color: var(--slide-text); font-size: 18px; line-height: 1.45; opacity: .86; }\n"
         ".point { border-top: 1px solid #ddd; padding-top: 12px; }\n"
         ".point strong { display: block; font-size: 18px; }\n"
         "</style>\n"
@@ -63,3 +77,10 @@ def _render_block(block: dict[str, object]) -> str:
         return f'<article class="point"><strong>{label}</strong><p>{body}</p></article>'
     text = escape(str(block.get("text") or ""))
     return f'<p class="block block-{escape(block_type)}">{text}</p>'
+
+
+def _theme_color(deck: DeckSpec, key: str, fallback: str) -> str:
+    value = deck.theme.get(key)
+    if isinstance(value, str) and _HEX_COLOR.fullmatch(value.strip()):
+        return value.strip()
+    return fallback

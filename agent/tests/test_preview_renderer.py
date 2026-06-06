@@ -54,3 +54,27 @@ def test_preview_document_wraps_deck_html_for_webview2():
     assert "<style>" in document
     assert 'class="deck"' in document
     assert "font-family: Segoe UI" in document
+
+
+def test_preview_document_applies_safe_theme_color_tokens():
+    deck = DeckSpec(
+        deck_id="deck_theme",
+        title="Ops",
+        revision=2,
+        theme={
+            "background": "#111827",
+            "slide_background": "#F8FAFC",
+            "text": "#0F172A",
+            "accent": "#2563EB",
+            "unsafe": "red;body{display:none}",
+        },
+        slides=[SlideSpec(slide_id="s1", title="Ops", layout="cover", blocks=[])],
+    )
+
+    document = render_preview_document(deck)
+
+    assert "--preview-background: #111827;" in document
+    assert "--slide-background: #F8FAFC;" in document
+    assert "--slide-text: #0F172A;" in document
+    assert "--slide-accent: #2563EB;" in document
+    assert "display:none" not in document

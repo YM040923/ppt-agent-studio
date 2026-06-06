@@ -212,13 +212,16 @@ def test_default_registry_runs_research_and_theme_tools():
                 "deck": deck,
                 "theme": {
                     "name": "executive-dark",
+                    "background": "#111827",
+                    "slide_background": "#F8FAFC",
                     "accent": "#2563EB",
                 },
             },
         )
-        return brief.payload["brief"], themed.payload["deck"]
+        preview = await registry.run("preview.render_html", {"deck": themed.payload["deck"]})
+        return brief.payload["brief"], themed.payload["deck"], preview.payload["html"]
 
-    brief, themed_deck = asyncio.run(run())
+    brief, themed_deck, preview_html = asyncio.run(run())
 
     assert brief["topic"] == "AI operating model"
     assert brief["audience"] == "executive committee"
@@ -228,5 +231,9 @@ def test_default_registry_runs_research_and_theme_tools():
     assert themed_deck["revision"] == 2
     assert themed_deck["theme"] == {
         "name": "executive-dark",
+        "background": "#111827",
+        "slide_background": "#F8FAFC",
         "accent": "#2563EB",
     }
+    assert "--preview-background: #111827;" in preview_html
+    assert "--slide-background: #F8FAFC;" in preview_html

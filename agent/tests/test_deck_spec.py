@@ -31,6 +31,26 @@ def test_deck_from_outline_preserves_slide_intent_and_revision():
     assert deck.slides[1].blocks[0]["label"] == "Efficiency"
 
 
+def test_deck_from_outline_preserves_theme_tokens():
+    outline = {
+        "deck_title": "Board AI Strategy",
+        "theme": {
+            "name": "executive-dark",
+            "background": "#111827",
+            "slide_background": "#F8FAFC",
+            "text": "#0F172A",
+            "accent": "#2563EB",
+        },
+        "slides": [],
+    }
+
+    deck = deck_from_outline(outline, deck_id="deck_theme", revision=1)
+    payload = deck.to_dict()
+
+    assert deck.theme["name"] == "executive-dark"
+    assert payload["theme"]["accent"] == "#2563EB"
+
+
 def test_slide_spec_rejects_empty_title():
     try:
         SlideSpec(slide_id="s1", title="   ", layout="content", blocks=[])

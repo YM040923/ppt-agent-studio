@@ -210,6 +210,7 @@ def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
         title=str(raw_deck.get("title") or "Untitled Deck"),
         revision=int(raw_deck.get("revision") or 0),
         slides=slides,
+        theme=raw_deck.get("theme") if isinstance(raw_deck.get("theme"), dict) else {},
     )
 
 
@@ -235,6 +236,7 @@ def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
         title=deck.title,
         revision=deck.revision + 1,
         slides=slides,
+        theme=deck.theme,
     )
 
 
