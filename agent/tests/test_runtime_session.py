@@ -42,7 +42,10 @@ def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
     assert [event.seq for event in events] == [1, 2, 3, 4, 5]
     assert events[1].payload["plan"]["plan_id"] == "deck_001-r1-plan"
     assert events[1].payload["plan"]["slide_count"] == 3
+    assert events[1].payload["plan"]["steps"][0]["status"] == "completed"
+    assert events[1].payload["plan"]["steps"][1]["status"] == "completed"
     assert events[1].payload["plan"]["steps"][2]["step_id"] == "draft_slides"
+    assert events[1].payload["plan"]["steps"][2]["status"] == "running"
     assert events[2].deck_revision == 1
     assert events[3].payload["path"].endswith("deck_001-r1.pptx")
     assert events[3].payload["slide_count"] == 3

@@ -40,6 +40,9 @@ class AgentSession:
         outline = await self._outline_planner.create_outline(text)
         next_revision = self._deck_revision + 1
         plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "running")
         yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
 
         self._deck_revision = next_revision
