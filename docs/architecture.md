@@ -86,6 +86,8 @@ The runtime uses OpenAI-compatible configuration keys:
 
 This supports official OpenAI endpoints and third-party compatible providers without changing desktop code.
 
+The Python runtime reads these values from process environment variables first, then falls back to `.env.local` in the repository root. Set `PPT_AGENT_ENV_FILE` to point at a different local env file when needed.
+
 `OpenAICompatibleChatClient` posts to `{OPENAI_BASE_URL}/chat/completions` with the configured model and bearer token. It accepts an injected `httpx.AsyncClient`, so runtime tests can use `httpx.MockTransport` and avoid real network calls or secret exposure. The `LLMOutlinePlanner` uses this client plus the core system prompt to request a JSON DeckSpec outline, while `FallbackOutlinePlanner` remains the default for offline MVP runs.
 
 The core system prompt is stored in `ppt_agent_studio.prompts`. It scopes the Agent to presentation work, requires DeckSpec-backed revisions, ties deck mutations to `preview.ready` and `pptx.ready`, and forbids revealing API keys or hidden configuration.

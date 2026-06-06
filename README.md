@@ -53,7 +53,7 @@ dotnet build PptAgentStudio.slnx
 
 ## Configuration
 
-Copy `.env.example` to `.env.local`, then fill in your local or third-party OpenAI-compatible provider:
+Copy `.env.example` to `.env.local`, then fill in your local or third-party OpenAI-compatible provider. The Python runtime loads `.env.local` from the repository root, while explicit process environment variables take priority:
 
 ```text
 OPENAI_BASE_URL=https://your-provider.example/v1

@@ -126,8 +126,9 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch):
     assert "secret-value" not in messages[0]
 
 
-def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypatch):
+def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     async def run():
@@ -149,8 +150,9 @@ def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypa
     }
 
 
-def test_build_outline_planner_defaults_to_fallback(monkeypatch):
+def test_build_outline_planner_defaults_to_fallback(monkeypatch, tmp_path):
     monkeypatch.delenv("PPT_AGENT_PLANNER", raising=False)
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     planner = _build_outline_planner()
@@ -167,8 +169,9 @@ def test_build_outline_planner_uses_llm_when_enabled_and_key_present(monkeypatch
     assert isinstance(planner, LLMOutlinePlanner)
 
 
-def test_build_outline_planner_falls_back_when_llm_enabled_without_key(monkeypatch):
+def test_build_outline_planner_falls_back_when_llm_enabled_without_key(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     planner = _build_outline_planner()
