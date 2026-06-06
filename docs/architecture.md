@@ -2,6 +2,8 @@
 
 PPT Agent Studio is a two-process desktop application.
 
+The OpenManus adaptation notes live in [`openmanus-reference.md`](openmanus-reference.md). They define what this project borrows from OpenManus and what stays presentation-specific.
+
 ```text
 WinUI 3 Desktop App
   - Chat workspace

@@ -41,6 +41,8 @@ agent/                        Python Agent runtime
 docs/                         Architecture and implementation notes
 ```
 
+See `docs/openmanus-reference.md` for how this project maps OpenManus architecture ideas into a presentation-specific Agent without forking the upstream project.
+
 ## Local Checks
 
 ```powershell
