@@ -186,3 +186,47 @@ def test_default_registry_updates_adds_and_removes_slides():
 
     assert removed["revision"] == 6
     assert [slide["slide_id"] for slide in removed["slides"]] == ["s3", "s2"]
+
+
+def test_default_registry_runs_research_and_theme_tools():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_001",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [],
+    }
+
+    async def run():
+        brief = await registry.run(
+            "research.collect_brief",
+            {
+                "topic": "AI operating model",
+                "audience": "executive committee",
+                "constraints": ["McKinsey style", "20 slides"],
+            },
+        )
+        themed = await registry.run(
+            "design.apply_theme",
+            {
+                "deck": deck,
+                "theme": {
+                    "name": "executive-dark",
+                    "accent": "#2563EB",
+                },
+            },
+        )
+        return brief.payload["brief"], themed.payload["deck"]
+
+    brief, themed_deck = asyncio.run(run())
+
+    assert brief["topic"] == "AI operating model"
+    assert brief["audience"] == "executive committee"
+    assert brief["constraints"] == ["McKinsey style", "20 slides"]
+    assert "Clarify the decision the deck must support." in brief["questions"]
+
+    assert themed_deck["revision"] == 2
+    assert themed_deck["theme"] == {
+        "name": "executive-dark",
+        "accent": "#2563EB",
+    }

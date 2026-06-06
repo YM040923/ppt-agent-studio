@@ -73,7 +73,7 @@ The WinUI app hosts the live preview with the WebView2 control bundled through W
 
 ## Tool System
 
-The Python runtime exposes tool definitions through `ppt_agent_studio.tools`. `ToolRegistry` owns executable handlers and the core catalog defines MVP interfaces for deck creation, slide edits, preview rendering, PPTX export, research briefs, and theme application. The registry validates `input_schema.required` before invoking handlers, so future LLM tool calls fail early with a clear tool argument error. The deterministic `AgentSession` already calls the registry for `deck.create_from_outline` and `preview.render_html`, and the default registry can execute slide update/add/remove tools plus `pptx.export` for editable PowerPoint output. This gives future ReAct/Tool Calling loops a stable execution boundary without changing the desktop event contract.
+The Python runtime exposes tool definitions through `ppt_agent_studio.tools`. `ToolRegistry` owns executable handlers and the core catalog defines MVP interfaces for deck creation, slide edits, preview rendering, PPTX export, research briefs, and theme application. The registry validates `input_schema.required` before invoking handlers, so future LLM tool calls fail early with a clear tool argument error. The deterministic `AgentSession` already calls the registry for `deck.create_from_outline` and `preview.render_html`, and the default registry can execute slide update/add/remove tools, deterministic research briefs, theme application, and `pptx.export` for editable PowerPoint output. This gives future ReAct/Tool Calling loops a stable execution boundary without changing the desktop event contract.
 
 ## OpenAI-Compatible Providers
 

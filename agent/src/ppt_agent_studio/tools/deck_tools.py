@@ -21,6 +21,8 @@ def build_default_registry() -> ToolRegistry:
     registry.register(definitions["deck.remove_slide"], remove_slide)
     registry.register(definitions["preview.render_html"], render_preview_html)
     registry.register(definitions["pptx.export"], export_pptx)
+    registry.register(definitions["research.collect_brief"], collect_research_brief)
+    registry.register(definitions["design.apply_theme"], apply_theme)
     return registry
 
 
@@ -151,6 +153,44 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
 
     presentation.save(output_path)
     return ToolResult(payload={"path": str(output_path), "slide_count": len(deck.slides)})
+
+
+def collect_research_brief(arguments: dict[str, Any]) -> ToolResult:
+    topic = str(arguments.get("topic") or "").strip()
+    audience = str(arguments.get("audience") or "").strip()
+    raw_constraints = arguments.get("constraints")
+    constraints = [str(item) for item in raw_constraints] if isinstance(raw_constraints, list) else []
+    if not topic:
+        raise ValueError("topic is required")
+    if not audience:
+        raise ValueError("audience is required")
+    return ToolResult(
+        payload={
+            "brief": {
+                "topic": topic,
+                "audience": audience,
+                "constraints": constraints,
+                "questions": [
+                    "Clarify the decision the deck must support.",
+                    "Identify the audience's current belief and desired shift.",
+                    "List the proof points needed for executive confidence.",
+                ],
+            }
+        }
+    )
+
+
+def apply_theme(arguments: dict[str, Any]) -> ToolResult:
+    raw_deck = arguments.get("deck")
+    theme = arguments.get("theme")
+    if not isinstance(raw_deck, dict):
+        raise ValueError("deck must be an object")
+    if not isinstance(theme, dict):
+        raise ValueError("theme must be an object")
+    deck = dict(raw_deck)
+    deck["revision"] = int(deck.get("revision") or 0) + 1
+    deck["theme"] = dict(theme)
+    return ToolResult(payload={"deck": deck})
 
 
 def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
