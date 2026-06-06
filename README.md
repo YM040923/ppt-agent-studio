@@ -54,3 +54,11 @@ OPENAI_MODEL=your-compatible-model
 ```
 
 Do not commit `.env.local`.
+
+The runtime exposes a safe configuration probe over WebSocket:
+
+```json
+{ "type": "runtime.config", "session_id": "desktop-session" }
+```
+
+It reports the configured endpoint, model, and whether an API key is present without returning the key.

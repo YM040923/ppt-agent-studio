@@ -6,6 +6,7 @@ import json
 from collections.abc import Iterable
 from typing import Any
 
+from ppt_agent_studio.llm.config import OpenAICompatibleConfig
 from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.runtime.session import AgentSession
 
@@ -28,12 +29,22 @@ async def handle_client_message(raw_message: str) -> list[str]:
         return [_error_json("Message must be a JSON object")]
 
     message_type = str(message.get("type") or "").strip()
+    session_id = str(message.get("session_id") or "session")
+
+    if message_type == "runtime.config":
+        event = AgentEvent(
+            seq=1,
+            session_id=session_id,
+            type="runtime.config",
+            payload={"llm": OpenAICompatibleConfig.from_env().safe_summary()},
+        )
+        return [_event_json(event)]
+
     if message_type != "user.message":
         return [_error_json(f"Unsupported message type: {message_type or '<empty>'}")]
 
     payload = message.get("payload") if isinstance(message.get("payload"), dict) else {}
     text = str(payload.get("text") or "")
-    session_id = str(message.get("session_id") or "session")
     deck_id = str(message.get("deck_id") or "deck")
     session = AgentSession(session_id=session_id, deck_id=deck_id)
 

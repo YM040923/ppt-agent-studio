@@ -50,3 +50,34 @@ def test_handle_unknown_message_type_returns_error_event():
 
     assert payload["type"] == "error"
     assert payload["payload"]["message"] == "Unsupported message type: ping"
+
+
+def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch):
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://provider.example/v1/")
+    monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-compatible-model")
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    assert len(messages) == 1
+    payload = json.loads(messages[0])
+
+    assert payload["type"] == "runtime.config"
+    assert payload["session_id"] == "session_001"
+    assert payload["payload"] == {
+        "llm": {
+            "base_url": "https://provider.example/v1",
+            "model": "gpt-compatible-model",
+            "has_api_key": True,
+        }
+    }
+    assert "secret-value" not in messages[0]
