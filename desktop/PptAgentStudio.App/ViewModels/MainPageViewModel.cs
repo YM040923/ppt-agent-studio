@@ -128,8 +128,13 @@ public partial class MainPageViewModel : ObservableObject
         switch (runtimeEvent.Type)
         {
             case "plan.updated":
-                SessionStatus = "Agent created a starter plan.";
-                Messages.Add(new ChatMessageItem { Role = "Assistant", Content = "Starter plan created. Rendering preview..." });
+                var planSummary = RuntimePlanSummary.FromPayload(runtimeEvent.Payload);
+                SessionStatus = $"Agent created a {planSummary.SlideCount}-slide plan.";
+                Messages.Add(new ChatMessageItem
+                {
+                    Role = "Assistant",
+                    Content = $"{planSummary.ToChatMessage()} Rendering preview..."
+                });
                 break;
             case "deck.updated":
                 SessionStatus = $"Deck updated at revision {runtimeEvent.DeckRevision}.";
