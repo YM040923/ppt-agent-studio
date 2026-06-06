@@ -51,3 +51,37 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
     assert "Focus the operating model." in text
     assert "Sequence" in text
     assert "Ship in measurable waves." in text
+
+
+def test_pptx_export_tool_applies_theme_to_editable_shapes(tmp_path):
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_theme",
+        "title": "Theme Test",
+        "revision": 1,
+        "theme": {
+            "slide_background": "#111827",
+            "text": "#F8FAFC",
+            "accent": "#22C55E",
+        },
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Theme Test",
+                "layout": "cover",
+                "blocks": [{"type": "subtitle", "text": "Executive readout"}],
+            }
+        ],
+    }
+    output_path = tmp_path / "theme-test.pptx"
+
+    async def run():
+        return await registry.run("pptx.export", {"deck": deck, "output_path": str(output_path)})
+
+    asyncio.run(run())
+    slide = Presentation(str(output_path)).slides[0]
+    title_shape = next(shape for shape in slide.shapes if hasattr(shape, "text") and shape.text == "Theme Test")
+
+    assert str(slide.background.fill.fore_color.rgb) == "111827"
+    assert str(slide.shapes[0].fill.fore_color.rgb) == "22C55E"
+    assert str(title_shape.text_frame.paragraphs[0].runs[0].font.color.rgb) == "F8FAFC"

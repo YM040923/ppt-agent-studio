@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any
 
 from pptx import Presentation
+from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Inches, Pt
 
 from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec, deck_from_outline
 from ppt_agent_studio.preview.html_renderer import render_preview_document
 from ppt_agent_studio.tools.base import ToolRegistry, ToolResult
 from ppt_agent_studio.tools.catalog import core_tool_definitions
+
+
+_HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 
 def build_default_registry() -> ToolRegistry:
@@ -124,6 +130,12 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
 
     for slide in deck.slides:
         ppt_slide = presentation.slides.add_slide(blank_layout)
+        slide_background = _theme_rgb(deck, "slide_background", "#FFFFFF")
+        text_color = _theme_rgb(deck, "text", "#111827")
+        accent_color = _theme_rgb(deck, "accent", "#2563EB")
+        ppt_slide.background.fill.solid()
+        ppt_slide.background.fill.fore_color.rgb = slide_background
+        _add_accent_bar(ppt_slide, presentation.slide_width, accent_color)
         _add_textbox(
             ppt_slide,
             left=0.65,
@@ -133,6 +145,7 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
             text=slide.title,
             font_size=30,
             bold=True,
+            font_color=text_color,
         )
         y = 1.45
         for block in slide.blocks:
@@ -148,6 +161,7 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
                 text=block_text,
                 font_size=18,
                 bold=block.get("type") == "subtitle",
+                font_color=text_color,
             )
             y += 0.58
 
@@ -240,13 +254,32 @@ def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
     )
 
 
-def _add_textbox(slide: Any, left: float, top: float, width: float, height: float, text: str, font_size: int, bold: bool) -> None:
+def _add_accent_bar(slide: Any, slide_width: Any, accent_color: RGBColor) -> None:
+    shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, slide_width, Inches(0.08))
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = accent_color
+    shape.line.fill.background()
+
+
+def _add_textbox(
+    slide: Any,
+    left: float,
+    top: float,
+    width: float,
+    height: float,
+    text: str,
+    font_size: int,
+    bold: bool,
+    font_color: RGBColor | None = None,
+) -> None:
     shape = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
     paragraph = shape.text_frame.paragraphs[0]
     run = paragraph.add_run()
     run.text = text
     run.font.size = Pt(font_size)
     run.font.bold = bold
+    if font_color is not None:
+        run.font.color.rgb = font_color
 
 
 def _block_text(block: dict[str, Any]) -> str:
@@ -258,3 +291,16 @@ def _block_text(block: dict[str, Any]) -> str:
             return f"{label}: {body}"
         return label or body
     return str(block.get("text") or "").strip()
+
+
+def _theme_rgb(deck: DeckSpec, key: str, fallback: str) -> RGBColor:
+    raw_value = deck.theme.get(key)
+    value = raw_value.strip() if isinstance(raw_value, str) else fallback
+    if not _HEX_COLOR.fullmatch(value):
+        value = fallback
+    value = value.lstrip("#")
+    if len(value) == 3:
+        value = "".join(character * 2 for character in value)
+    if len(value) == 8:
+        value = value[:6]
+    return RGBColor(int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16))
