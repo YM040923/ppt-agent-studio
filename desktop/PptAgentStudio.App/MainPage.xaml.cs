@@ -1,7 +1,10 @@
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Web.WebView2.Core;
+using PptAgentStudio_App.Services;
 using PptAgentStudio_App.ViewModels;
 using System;
 using System.ComponentModel;
+using System.Globalization;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -15,10 +18,41 @@ public sealed partial class MainPage : Page
 {
     public MainPageViewModel ViewModel { get; } = new();
 
+    private readonly PreviewPaneState _previewPaneState = new();
+    private bool _previewScriptReady;
+
+    private const string PreviewInteractionScript = """
+        (() => {
+          const slides = Array.from(document.querySelectorAll('.slide'));
+          const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+          window.pptAgentPreview = {
+            slideCount: slides.length,
+            currentIndex: 0,
+            zoom: 1,
+            showSlide(index) {
+              const maxIndex = Math.max(slides.length - 1, 0);
+              this.currentIndex = clamp(Number(index) || 0, 0, maxIndex);
+              slides.forEach((slide, slideIndex) => {
+                slide.style.display = slideIndex === this.currentIndex ? 'block' : 'none';
+              });
+              window.scrollTo(0, 0);
+            },
+            setZoom(zoom) {
+              this.zoom = clamp(Number(zoom) || 1, 0.5, 2);
+              document.body.style.zoom = String(this.zoom);
+            }
+          };
+          window.pptAgentPreview.showSlide(0);
+          window.pptAgentPreview.setZoom(1);
+          return slides.length;
+        })()
+        """;
+
     public MainPage()
     {
         InitializeComponent();
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        UpdatePreviewToolbar();
     }
 
     private async void Page_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -44,7 +78,95 @@ public sealed partial class MainPage : Page
     {
         if (e.PropertyName == nameof(ViewModel.PreviewHtml) && PreviewWebView.CoreWebView2 is not null)
         {
+            _previewScriptReady = false;
+            UpdatePreviewToolbar();
             PreviewWebView.NavigateToString(ViewModel.PreviewHtml);
         }
+    }
+
+    private async void PreviewWebView_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args)
+    {
+        if (!args.IsSuccess)
+        {
+            return;
+        }
+
+        await InitializePreviewInteractionAsync();
+    }
+
+    private async void PreviewPrevious_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _previewPaneState.GoPrevious();
+        await ApplyPreviewStateAsync();
+    }
+
+    private async void PreviewNext_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _previewPaneState.GoNext();
+        await ApplyPreviewStateAsync();
+    }
+
+    private async void PreviewZoomOut_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _previewPaneState.ZoomOut();
+        await ApplyPreviewStateAsync();
+    }
+
+    private async void PreviewZoomReset_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _previewPaneState.ResetZoom();
+        await ApplyPreviewStateAsync();
+    }
+
+    private async void PreviewZoomIn_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        _previewPaneState.ZoomIn();
+        await ApplyPreviewStateAsync();
+    }
+
+    private async Task InitializePreviewInteractionAsync()
+    {
+        if (PreviewWebView.CoreWebView2 is null)
+        {
+            return;
+        }
+
+        var slideCountJson = await PreviewWebView.ExecuteScriptAsync(PreviewInteractionScript);
+        _previewPaneState.SetSlideCount(ParseScriptInt(slideCountJson));
+        _previewScriptReady = true;
+        await ApplyPreviewStateAsync();
+    }
+
+    private async Task ApplyPreviewStateAsync()
+    {
+        UpdatePreviewToolbar();
+        if (!_previewScriptReady || PreviewWebView.CoreWebView2 is null)
+        {
+            return;
+        }
+
+        var zoom = (_previewPaneState.ZoomPercent / 100d).ToString(CultureInfo.InvariantCulture);
+        await PreviewWebView.ExecuteScriptAsync(
+            $"window.pptAgentPreview?.showSlide({_previewPaneState.CurrentSlideIndex});" +
+            $"window.pptAgentPreview?.setZoom({zoom});");
+        UpdatePreviewToolbar();
+    }
+
+    private void UpdatePreviewToolbar()
+    {
+        PreviewPageText.Text = _previewPaneState.PageText;
+        PreviewZoomText.Text = _previewPaneState.ZoomText;
+        PreviewPreviousButton.IsEnabled = _previewScriptReady && _previewPaneState.CanGoPrevious;
+        PreviewNextButton.IsEnabled = _previewScriptReady && _previewPaneState.CanGoNext;
+        PreviewZoomOutButton.IsEnabled = _previewScriptReady && _previewPaneState.ZoomPercent > 50;
+        PreviewZoomResetButton.IsEnabled = _previewScriptReady && _previewPaneState.ZoomPercent != 100;
+        PreviewZoomInButton.IsEnabled = _previewScriptReady && _previewPaneState.ZoomPercent < 200;
+    }
+
+    private static int ParseScriptInt(string? json)
+    {
+        return int.TryParse(json?.Trim('"'), NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : 0;
     }
 }

@@ -81,16 +81,25 @@
         <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource PaneBorderStyle}" Padding="0">
             <Grid RowDefinitions="Auto,*">
                 <CommandBar DefaultLabelPosition="Collapsed" Background="Transparent">
-                    <AppBarButton Icon="Back" Label="Previous" />
-                    <AppBarButton Icon="Forward" Label="Next" />
+                    <AppBarButton x:Name="PreviewPreviousButton" Icon="Back" Label="Previous" Click="PreviewPrevious_Click" />
+                    <AppBarButton x:Name="PreviewNextButton" Icon="Forward" Label="Next" Click="PreviewNext_Click" />
+                    <AppBarElementContainer>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,0,10,0">
+                            <TextBlock x:Name="PreviewPageText" Text="0 / 0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="PreviewZoomText" Text="100%" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </AppBarElementContainer>
                     <AppBarSeparator />
-                    <AppBarButton Icon="Zoom" Label="Zoom" />
+                    <AppBarButton x:Name="PreviewZoomOutButton" Icon="Remove" Label="Zoom out" Click="PreviewZoomOut_Click" />
+                    <AppBarButton x:Name="PreviewZoomResetButton" Icon="Zoom" Label="Reset zoom" Click="PreviewZoomReset_Click" />
+                    <AppBarButton x:Name="PreviewZoomInButton" Icon="Add" Label="Zoom in" Click="PreviewZoomIn_Click" />
                 </CommandBar>
 
                 <controls:WebView2
                     x:Name="PreviewWebView"
                     Grid.Row="1"
                     Source="about:blank"
+                    NavigationCompleted="PreviewWebView_NavigationCompleted"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch" />
             </Grid>
