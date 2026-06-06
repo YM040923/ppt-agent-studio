@@ -54,12 +54,23 @@ class ToolRegistry:
         return list(self._definitions.values())
 
     async def run(self, name: str, arguments: ToolArguments) -> ToolResult:
+        definition = self._definitions.get(name)
         handler = self._handlers.get(name)
-        if handler is None:
+        if handler is None or definition is None:
             raise KeyError(f"unknown tool: {name}")
+        self._validate_arguments(definition, arguments)
         result = handler(arguments)
         if inspect.isawaitable(result):
             result = await result
         if not isinstance(result, ToolResult):
             raise TypeError(f"tool returned unsupported result: {name}")
         return result
+
+    @staticmethod
+    def _validate_arguments(definition: ToolDefinition, arguments: ToolArguments) -> None:
+        required = definition.input_schema.get("required", [])
+        if not isinstance(required, list):
+            return
+        for name in required:
+            if isinstance(name, str) and name not in arguments:
+                raise ValueError(f"missing required tool argument: {name}")

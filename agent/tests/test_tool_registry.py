@@ -76,6 +76,26 @@ def test_tool_registry_runs_sync_and_async_handlers():
     ]
 
 
+def test_tool_registry_validates_required_arguments_before_running_handler():
+    calls = []
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.required",
+            description="Require an argument.",
+            input_schema={"type": "object", "required": ["value"]},
+        ),
+        lambda args: calls.append(args) or ToolResult(),
+    )
+
+    async def run():
+        return await registry.run("demo.required", {})
+
+    with pytest.raises(ValueError, match="missing required tool argument: value"):
+        asyncio.run(run())
+    assert calls == []
+
+
 def test_default_registry_creates_deck_and_preview_html():
     registry = build_default_registry()
     outline = {
