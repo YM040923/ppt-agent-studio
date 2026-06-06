@@ -53,7 +53,7 @@ dotnet build PptAgentStudio.slnx
 
 ## Configuration
 
-Create `.env.local` or set environment variables locally:
+Copy `.env.example` to `.env.local`, then fill in your local or third-party OpenAI-compatible provider:
 
 ```text
 OPENAI_BASE_URL=https://your-provider.example/v1
