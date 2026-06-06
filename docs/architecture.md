@@ -26,10 +26,11 @@ The deterministic MVP session emits this turn sequence:
 user.message
 plan.updated
 deck.updated
+pptx.ready
 preview.ready
 ```
 
-This sequence is intentionally small. It proves state ordering and preview synchronization before adding live model calls, tool execution, and cancellation.
+This sequence is intentionally small. It proves state ordering, editable artifact creation, and preview synchronization before adding live model calls, richer tool execution, and cancellation.
 
 The runtime WebSocket server listens on `127.0.0.1:8765` by default. The desktop client sends:
 
@@ -44,7 +45,7 @@ The runtime WebSocket server listens on `127.0.0.1:8765` by default. The desktop
 
 The server streams one JSON event per WebSocket message. The desktop client closes the turn after receiving `preview.ready` or `error`.
 
-During development the WinUI app starts the sidecar automatically if `127.0.0.1:8765` is not already listening. The locator walks up from the app base directory until it finds `agent/src`, and `PPT_AGENT_RUNTIME_ROOT` can override the repository root. The Python executable defaults to `python`; set `PPT_AGENT_PYTHON` to use a specific interpreter.
+During development the WinUI app starts the sidecar automatically if `127.0.0.1:8765` is not already listening. The locator walks up from the app base directory until it finds `agent/src`, and `PPT_AGENT_RUNTIME_ROOT` can override the repository root. The Python executable defaults to `python`; set `PPT_AGENT_PYTHON` to use a specific interpreter. PPTX artifacts are written to `artifacts/decks` by default; set `PPT_AGENT_ARTIFACTS_DIR` to use another directory.
 
 The desktop app or a test client can ask for a redacted runtime configuration summary:
 

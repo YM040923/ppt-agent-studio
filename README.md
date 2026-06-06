@@ -14,6 +14,8 @@ PPT Agent Studio is a Windows-native, presentation-focused AI Agent. It is inspi
 
 The first runtime increments include a deterministic local `AgentSession`. It accepts a user message, emits ordered Agent events, builds a starter `DeckSpec`, renders a full HTML preview document, and exposes a basic `pptx.export` tool. This gives the WinUI client a stable event contract before live model calls are added.
 
+Each successful Agent turn exports an editable PPTX artifact before refreshing the preview. By default artifacts are written under `artifacts/decks`; set `PPT_AGENT_ARTIFACTS_DIR` to use a different local output directory.
+
 The WinUI app starts the local runtime automatically in development. To run the runtime manually for protocol testing:
 
 ```powershell

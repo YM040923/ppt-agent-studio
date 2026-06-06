@@ -4,7 +4,9 @@ import json
 from ppt_agent_studio.runtime.websocket_server import handle_client_message
 
 
-def test_handle_user_message_returns_json_event_lines():
+def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
+
     async def run():
         return await handle_client_message(
             json.dumps(
@@ -24,10 +26,12 @@ def test_handle_user_message_returns_json_event_lines():
         "user.message",
         "plan.updated",
         "deck.updated",
+        "pptx.ready",
         "preview.ready",
     ]
     assert payloads[-1]["deck_revision"] == 1
     assert payloads[-1]["payload"]["html"].startswith("<!doctype html>")
+    assert payloads[-2]["payload"]["path"].endswith("deck_001-r1.pptx")
 
 
 def test_handle_invalid_json_returns_error_event():

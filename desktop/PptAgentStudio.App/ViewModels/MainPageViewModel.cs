@@ -122,6 +122,19 @@ public partial class MainPageViewModel : ObservableObject
             case "deck.updated":
                 SessionStatus = $"Deck updated at revision {runtimeEvent.DeckRevision}.";
                 break;
+            case "pptx.ready":
+                var path = runtimeEvent.Payload.TryGetProperty("path", out var pptxPath)
+                    ? pptxPath.GetString()
+                    : null;
+                SessionStatus = $"PPTX exported at revision {runtimeEvent.DeckRevision}.";
+                Messages.Add(new ChatMessageItem
+                {
+                    Role = "Assistant",
+                    Content = string.IsNullOrWhiteSpace(path)
+                        ? "Editable PPTX export is ready."
+                        : $"Editable PPTX export is ready: {path}"
+                });
+                break;
             case "preview.ready":
                 if (runtimeEvent.Payload.TryGetProperty("html", out var html))
                 {

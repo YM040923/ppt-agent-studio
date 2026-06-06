@@ -1,11 +1,13 @@
 import asyncio
 
+from pptx import Presentation
+
 from ppt_agent_studio.runtime.session import AgentSession
 from ppt_agent_studio.tools.base import ToolDefinition, ToolRegistry, ToolResult
 
 
-def test_agent_session_turn_emits_ordered_preview_events():
-    session = AgentSession(session_id="session_001", deck_id="deck_001")
+def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
+    session = AgentSession(session_id="session_001", deck_id="deck_001", artifact_dir=tmp_path)
 
     async def collect():
         return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
@@ -16,12 +18,16 @@ def test_agent_session_turn_emits_ordered_preview_events():
         "user.message",
         "plan.updated",
         "deck.updated",
+        "pptx.ready",
         "preview.ready",
     ]
-    assert [event.seq for event in events] == [1, 2, 3, 4]
+    assert [event.seq for event in events] == [1, 2, 3, 4, 5]
     assert events[2].deck_revision == 1
-    assert events[3].payload["html"].startswith("<!doctype html>")
-    assert "board AI strategy" in events[3].payload["html"]
+    assert events[3].payload["path"].endswith("deck_001-r1.pptx")
+    assert events[3].payload["slide_count"] == 3
+    assert len(Presentation(events[3].payload["path"]).slides) == 3
+    assert events[4].payload["html"].startswith("<!doctype html>")
+    assert "board AI strategy" in events[4].payload["html"]
 
 
 def test_agent_session_ignores_empty_user_message():
@@ -74,6 +80,14 @@ def test_agent_session_uses_tool_registry_for_deck_and_preview():
         ),
         render_preview,
     )
+    registry.register(
+        ToolDefinition(
+            name="pptx.export",
+            description="Export a deck.",
+            input_schema={"type": "object"},
+        ),
+        lambda args: ToolResult(payload={"path": args["output_path"], "slide_count": 0}),
+    )
     session = AgentSession(session_id="session_003", deck_id="deck_003", tool_registry=registry)
 
     async def collect():
@@ -86,4 +100,5 @@ def test_agent_session_uses_tool_registry_for_deck_and_preview():
         ("preview.render_html", "Custom Deck"),
     ]
     assert events[2].payload["deck"]["title"] == "Custom Deck"
-    assert events[3].payload["html"] == "<!doctype html><title>Custom</title>"
+    assert events[3].payload["path"].endswith("deck_003-r1.pptx")
+    assert events[4].payload["html"] == "<!doctype html><title>Custom</title>"
