@@ -34,6 +34,8 @@ preview.ready
 
 This sequence is intentionally small. It proves state ordering, editable artifact creation, and preview synchronization before adding live model calls, richer tool execution, and cancellation.
 
+`plan.updated` carries both the raw outline and a deck-specific `DeckPlan`. The outline preserves the planner result for debugging, while `DeckPlan` gives the desktop app future-ready step IDs, titles, statuses, and slide counts for progress UI.
+
 The runtime WebSocket server listens on `127.0.0.1:8765` by default. The desktop client sends:
 
 ```json

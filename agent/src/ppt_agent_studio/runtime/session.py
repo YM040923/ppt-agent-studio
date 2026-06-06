@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 
 from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec
 from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, OutlinePlanner
+from ppt_agent_studio.planning.plan import DeckPlan
 from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.tools.base import ToolRegistry
 from ppt_agent_studio.tools.deck_tools import build_default_registry
@@ -37,9 +38,11 @@ class AgentSession:
 
         yield self._event("user.message", {"text": text})
         outline = await self._outline_planner.create_outline(text)
-        yield self._event("plan.updated", {"outline": outline})
+        next_revision = self._deck_revision + 1
+        plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
 
-        self._deck_revision += 1
+        self._deck_revision = next_revision
         deck_result = await self._tool_registry.run(
             "deck.create_from_outline",
             {"outline": outline, "deck_id": self.deck_id, "revision": self._deck_revision},
