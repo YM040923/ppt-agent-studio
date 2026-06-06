@@ -23,8 +23,8 @@
 
     <Grid Padding="16" ColumnDefinitions="*,12,460" RowDefinitions="Auto,*">
         <CommandBar Grid.ColumnSpan="3" DefaultLabelPosition="Right" Background="Transparent">
-            <AppBarButton Icon="Add" Label="New Deck" />
-            <AppBarButton Icon="Save" Label="Export" />
+            <AppBarButton Icon="Add" Label="New Deck" Command="{x:Bind ViewModel.NewDeckCommand}" />
+            <AppBarButton Icon="Save" Label="Export" Command="{x:Bind ViewModel.ExportLatestCommand}" />
             <AppBarSeparator />
             <AppBarButton Icon="Setting" Label="Settings" />
         </CommandBar>

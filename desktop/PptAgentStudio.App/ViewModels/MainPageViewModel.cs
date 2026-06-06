@@ -18,6 +18,7 @@ public partial class MainPageViewModel : ObservableObject
 {
     private readonly AgentSessionClient _agentClient = new();
     private readonly RuntimeSidecarService _sidecar = new();
+    private readonly WorkspaceDeckState _workspaceDeckState = new();
 
     [ObservableProperty]
     public partial string SessionStatus { get; set; } = "Local Agent runtime not connected";
@@ -30,11 +31,7 @@ public partial class MainPageViewModel : ObservableObject
 
     public ObservableCollection<ChatMessageItem> Messages { get; } =
     [
-        new()
-        {
-            Role = "Assistant",
-            Content = "Tell me the topic, audience, slide count, and style. I will turn it into a DeckSpec and keep the preview in sync."
-        }
+        CreateInitialMessage()
     ];
 
     private const string InitialPreviewHtml = """
@@ -93,6 +90,34 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void NewDeck()
+    {
+        _workspaceDeckState.Reset();
+        InputText = "";
+        PreviewHtml = InitialPreviewHtml;
+        Messages.Clear();
+        Messages.Add(CreateInitialMessage());
+        SessionStatus = "New deck workspace ready.";
+        ExportLatestCommand.NotifyCanExecuteChanged();
+    }
+
+    private bool CanExportLatest()
+    {
+        return _workspaceDeckState.CanExport;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExportLatest))]
+    private void ExportLatest()
+    {
+        SessionStatus = $"Latest editable PPTX export: {_workspaceDeckState.LastPptxPath}";
+        Messages.Add(new ChatMessageItem
+        {
+            Role = "Assistant",
+            Content = $"Latest editable PPTX export: {_workspaceDeckState.LastPptxPath}"
+        });
+    }
+
+    [RelayCommand]
     private async Task Send()
     {
         var text = InputText.Trim();
@@ -143,6 +168,8 @@ public partial class MainPageViewModel : ObservableObject
                 var path = runtimeEvent.Payload.TryGetProperty("path", out var pptxPath)
                     ? pptxPath.GetString()
                     : null;
+                _workspaceDeckState.RecordPptx(path);
+                ExportLatestCommand.NotifyCanExecuteChanged();
                 SessionStatus = $"PPTX exported at revision {runtimeEvent.DeckRevision}.";
                 Messages.Add(new ChatMessageItem
                 {
@@ -168,5 +195,14 @@ public partial class MainPageViewModel : ObservableObject
                 Messages.Add(new ChatMessageItem { Role = "Assistant", Content = SessionStatus });
                 break;
         }
+    }
+
+    private static ChatMessageItem CreateInitialMessage()
+    {
+        return new ChatMessageItem
+        {
+            Role = "Assistant",
+            Content = "Tell me the topic, audience, slide count, and style. I will turn it into a DeckSpec and keep the preview in sync."
+        };
     }
 }
