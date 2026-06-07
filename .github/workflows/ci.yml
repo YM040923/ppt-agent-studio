@@ -30,3 +30,17 @@ jobs:
         run: dotnet build PptAgentStudio.slnx
       - name: Run .NET tests
         run: dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj
+      - name: Package unsigned MSIX
+        run: >
+          dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
+          -c Release
+          -p:GenerateAppxPackageOnBuild=true
+          -p:AppxPackageSigningEnabled=false
+          -p:UapAppxPackageBuildMode=SideloadOnly
+          -p:AppxBundle=Never
+          -p:PublishTrimmed=false
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ppt-agent-studio-msix
+          path: desktop/PptAgentStudio.App/AppPackages/**/*.msix

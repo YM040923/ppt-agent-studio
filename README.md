@@ -55,6 +55,16 @@ dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj
 dotnet build PptAgentStudio.slnx
 ```
 
+## Packaging
+
+Create an unsigned sideload MSIX package locally:
+
+```powershell
+dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj -c Release -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false -p:UapAppxPackageBuildMode=SideloadOnly -p:AppxBundle=Never -p:PublishTrimmed=false
+```
+
+The package is written under `desktop\PptAgentStudio.App\AppPackages`. CI runs the same packaging smoke and uploads the `.msix` as an artifact.
+
 ## Configuration
 
 Copy `.env.example` to `.env.local`, then fill in your local or third-party OpenAI-compatible provider. The Python runtime loads `.env.local` from the repository root, while explicit process environment variables take priority:
