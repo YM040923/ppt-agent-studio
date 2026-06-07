@@ -115,6 +115,10 @@ public sealed partial class MainPage : Page
         {
             ViewModel.ExportLatestCommand.Execute(null);
         }
+        else if (sender is Button { Tag: "demo_deck" } && ViewModel.GenerateDemoCommand.CanExecute(null))
+        {
+            ViewModel.GenerateDemoCommand.Execute(null);
+        }
     }
 
     private async Task InitializePreviewInteractionAsync()

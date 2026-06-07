@@ -298,7 +298,15 @@ public partial class MainPageViewModel : ObservableObject
         return new ChatMessageItem
         {
             Role = "Assistant",
-            Content = "Tell me the topic, audience, slide count, and style. I will turn it into a DeckSpec and keep the preview in sync."
+            Content = "Tell me the topic, audience, slide count, and style. I will turn it into a DeckSpec and keep the preview in sync.",
+            Actions =
+            [
+                new ChatMessageAction
+                {
+                    Label = "Demo Deck",
+                    Kind = "demo_deck"
+                }
+            ]
         };
     }
 }

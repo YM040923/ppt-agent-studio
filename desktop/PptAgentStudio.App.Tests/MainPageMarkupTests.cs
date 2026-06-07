@@ -88,12 +88,22 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void InitialMessageOffersDemoDeckAction()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "Label = \"Demo Deck\"");
+        StringAssert.Contains(source, "Kind = \"demo_deck\"");
+    }
+
+    [TestMethod]
     public void ChatMessageActionHandlerRoutesOpenPptxToExportCommand()
     {
         var source = File.ReadAllText(FindMainPageCodeBehind());
 
         StringAssert.Contains(source, "ChatMessageAction_Click");
         StringAssert.Contains(source, "ViewModel.ExportLatestCommand.Execute(null)");
+        StringAssert.Contains(source, "ViewModel.GenerateDemoCommand.Execute(null)");
     }
 
     [TestMethod]
