@@ -249,6 +249,32 @@ def test_fallback_outline_planner_reads_chinese_number_slide_count():
     assert len(outline["slides"]) == 20
 
 
+def test_fallback_outline_planner_reads_real_chinese_digit_slide_count():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline(
+            "\u5e2e\u6211\u505a\u4e00\u4e2a\u5173\u4e8e AI \u8f6c\u578b\u7684 20 \u9875 PPT"
+        )
+
+    outline = asyncio.run(run())
+
+    assert len(outline["slides"]) == 20
+
+
+def test_fallback_outline_planner_reads_real_chinese_number_slide_count():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline(
+            "\u5e2e\u6211\u505a\u4e00\u4e2a\u5173\u4e8e AI \u8f6c\u578b\u7684\u4e8c\u5341\u9875 PPT"
+        )
+
+    outline = asyncio.run(run())
+
+    assert len(outline["slides"]) == 20
+
+
 def test_fallback_outline_planner_derives_executive_consulting_theme():
     planner = FallbackOutlinePlanner()
 
