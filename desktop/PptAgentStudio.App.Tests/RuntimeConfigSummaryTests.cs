@@ -23,6 +23,10 @@ public sealed class RuntimeConfigSummaryTests
               },
               "artifacts": {
                 "directory": "E:\\MyProjects\\ppt-agent-studio\\artifacts\\decks"
+              },
+              "env_file": {
+                "path": "E:\\MyProjects\\ppt-agent-studio\\.env.local",
+                "exists": true
               }
             }
             """);
@@ -35,6 +39,8 @@ public sealed class RuntimeConfigSummaryTests
         Assert.AreEqual("llm", summary.PlannerRequested);
         Assert.AreEqual("llm", summary.PlannerActive);
         Assert.AreEqual(@"E:\MyProjects\ppt-agent-studio\artifacts\decks", summary.ArtifactDirectory);
+        Assert.AreEqual(@"E:\MyProjects\ppt-agent-studio\.env.local", summary.EnvFilePath);
+        Assert.IsTrue(summary.EnvFileExists);
     }
 
     [TestMethod]
@@ -46,7 +52,9 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: true,
             PlannerRequested: "llm",
             PlannerActive: "llm",
-            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks");
+            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
+            EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
+            EnvFileExists: true);
 
         var status = summary.ToStatusText();
 
@@ -65,7 +73,9 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: false,
             PlannerRequested: "llm",
             PlannerActive: "fallback",
-            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks");
+            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
+            EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
+            EnvFileExists: false);
 
         var status = summary.ToStatusText();
 
@@ -83,7 +93,9 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: true,
             PlannerRequested: "llm",
             PlannerActive: "llm",
-            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks");
+            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
+            EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
+            EnvFileExists: true);
 
         var settingsText = summary.ToSettingsText();
 
@@ -93,6 +105,7 @@ public sealed class RuntimeConfigSummaryTests
             Model: gpt-compatible-model
             Planner: llm
             PPTX directory: E:\MyProjects\ppt-agent-studio\artifacts\decks
+            Env file: E:\MyProjects\ppt-agent-studio\.env.local (found)
             API key: configured
             """.ReplaceLineEndings(),
             settingsText);

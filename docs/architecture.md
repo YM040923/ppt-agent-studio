@@ -63,9 +63,9 @@ The desktop app or a test client can ask for a redacted runtime configuration su
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-The response is a single `runtime.config` event. It includes `base_url`, `model`, `has_api_key`, planner `requested`/`active` modes, and the PPTX artifact directory, but never returns the API key value.
+The response is a single `runtime.config` event. It includes `base_url`, `model`, `has_api_key`, planner `requested`/`active` modes, the PPTX artifact directory, and the env file `path`/`exists` status, but never returns the API key value.
 
-The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner. The Settings dialog also shows the project-local PPTX artifact directory so users can find exported decks quickly.
+The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner. The Settings dialog also shows the project-local PPTX artifact directory and env file status so users can find exported decks and confirm whether `.env.local` is being picked up.
 
 Runtime outline planning is selected through `PPT_AGENT_PLANNER`. The default is `fallback`, which keeps local development deterministic and offline. Set `PPT_AGENT_PLANNER=llm` and provide `OPENAI_API_KEY` to use the model-backed `LLMOutlinePlanner`; if the key is missing, the runtime keeps using the fallback planner instead of failing the desktop turn.
 

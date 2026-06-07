@@ -155,11 +155,14 @@ def test_handle_user_message_returns_error_when_agent_turn_fails(monkeypatch):
 
 
 def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env.local"
+    env_file.write_text("OPENAI_API_KEY=secret-value", encoding="utf-8")
     monkeypatch.setenv("OPENAI_BASE_URL", "https://provider.example/v1/")
     monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
     monkeypatch.setenv("OPENAI_MODEL", "gpt-compatible-model")
     monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
     monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path / "decks"))
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(env_file))
 
     async def run():
         return await handle_client_message(
@@ -189,7 +192,11 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch, tmp_p
         },
         "artifacts": {
             "directory": str(tmp_path / "decks"),
-        }
+        },
+        "env_file": {
+            "path": str(env_file),
+            "exists": True,
+        },
     }
     assert "secret-value" not in messages[0]
 

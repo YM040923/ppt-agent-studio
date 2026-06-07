@@ -8,7 +8,9 @@ public sealed record RuntimeConfigSummary(
     bool HasApiKey,
     string PlannerRequested,
     string PlannerActive,
-    string ArtifactDirectory = "")
+    string ArtifactDirectory = "",
+    string EnvFilePath = "",
+    bool EnvFileExists = false)
 {
     public static RuntimeConfigSummary FromPayload(JsonElement payload)
     {
@@ -20,6 +22,17 @@ public sealed record RuntimeConfigSummary(
         {
             artifactDirectory = directory.GetString() ?? "";
         }
+        var envFilePath = "";
+        var envFileExists = false;
+        if (payload.TryGetProperty("env_file", out var envFile))
+        {
+            if (envFile.TryGetProperty("path", out var path))
+            {
+                envFilePath = path.GetString() ?? "";
+            }
+
+            envFileExists = envFile.TryGetProperty("exists", out var exists) && exists.GetBoolean();
+        }
 
         return new RuntimeConfigSummary(
             BaseUrl: llm.GetProperty("base_url").GetString() ?? "",
@@ -27,7 +40,9 @@ public sealed record RuntimeConfigSummary(
             HasApiKey: llm.TryGetProperty("has_api_key", out var hasApiKey) && hasApiKey.GetBoolean(),
             PlannerRequested: ReadPlannerValue(hasPlanner, planner, "requested"),
             PlannerActive: ReadPlannerValue(hasPlanner, planner, "active"),
-            ArtifactDirectory: artifactDirectory);
+            ArtifactDirectory: artifactDirectory,
+            EnvFilePath: envFilePath,
+            EnvFileExists: envFileExists);
     }
 
     public string ToStatusText()
@@ -45,11 +60,13 @@ public sealed record RuntimeConfigSummary(
     {
         var keyState = HasApiKey ? "configured" : "missing";
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
+        var envFileState = EnvFileExists ? "found" : "missing";
         return $"""
             Endpoint: {BaseUrl}
             Model: {Model}
             Planner: {plannerActive}
             PPTX directory: {ArtifactDirectory}
+            Env file: {EnvFilePath} ({envFileState})
             API key: {keyState}
             """.ReplaceLineEndings();
     }

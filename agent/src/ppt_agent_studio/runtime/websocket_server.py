@@ -43,6 +43,17 @@ def _artifact_summary() -> dict[str, str]:
     }
 
 
+def _env_file_summary() -> dict[str, object]:
+    path = Path(os.getenv("PPT_AGENT_ENV_FILE", ".env.local")).expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    resolved = path.resolve()
+    return {
+        "path": str(resolved),
+        "exists": resolved.exists(),
+    }
+
+
 def _requested_planner_mode() -> str:
     return os.getenv("PPT_AGENT_PLANNER", "fallback").strip().lower() or "fallback"
 
@@ -82,6 +93,7 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
                 "llm": config.safe_summary(),
                 "planner": _planner_summary(config),
                 "artifacts": _artifact_summary(),
+                "env_file": _env_file_summary(),
             },
         )
         yield _event_json(event)
