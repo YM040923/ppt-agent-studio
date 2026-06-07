@@ -54,10 +54,12 @@ class AgentSession:
         deck_payload = deck_result.payload["deck"]
         self.deck = self._deck_from_payload(deck_payload)
         plan.update_step_status("draft_slides", "completed")
+        yield self._tool_completed_event("deck.create_from_outline", "Created deck from outline.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
         plan.update_step_status("render_preview", "completed")
+        yield self._tool_completed_event("preview.render_html", "Rendered live preview HTML.")
         yield self._deck_event("preview.ready", {"html": str(preview_result.payload["html"])})
 
         pptx_path = self._artifact_dir / f"{self._safe_artifact_name(self.deck_id)}-r{self._deck_revision}.pptx"
@@ -66,6 +68,7 @@ class AgentSession:
             {"deck": self.deck.to_dict(), "output_path": str(pptx_path)},
         )
         plan.update_step_status("export_pptx", "completed")
+        yield self._tool_completed_event("pptx.export", "Exported editable PPTX artifact.")
         yield self._deck_event("pptx.ready", dict(pptx_result.payload))
 
         plan.status = "completed"
@@ -89,6 +92,16 @@ class AgentSession:
             deck_id=self.deck_id,
             deck_revision=self._deck_revision,
             payload=payload,
+        )
+
+    def _tool_completed_event(self, tool_name: str, summary: str) -> AgentEvent:
+        return self._deck_event(
+            "tool.completed",
+            {
+                "tool_name": tool_name,
+                "status": "completed",
+                "summary": summary,
+            },
         )
 
     @staticmethod

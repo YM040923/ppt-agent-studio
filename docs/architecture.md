@@ -27,8 +27,11 @@ The deterministic MVP session emits this turn sequence:
 ```text
 user.message
 plan.updated
+tool.completed
 deck.updated
+tool.completed
 preview.ready
+tool.completed
 pptx.ready
 plan.updated
 ```
@@ -36,6 +39,8 @@ plan.updated
 This sequence is intentionally small. It proves state ordering, live preview synchronization, editable artifact creation, and completed-plan reporting before adding richer tool execution and cancellation.
 
 `plan.updated` carries both the raw outline and a deck-specific `DeckPlan`. The outline preserves the planner result for debugging, while `DeckPlan` gives the desktop app future-ready step IDs, titles, statuses, and slide counts for progress UI.
+
+`tool.completed` is a safe progress event emitted after a deterministic tool succeeds and before the related product sync event. Its payload includes `tool_name`, `status`, and a short `summary`; it does not carry raw tool outputs or secrets. The desktop app displays it in chat but keeps the turn open until `error` or the final completed `plan.updated`.
 
 The runtime WebSocket server listens on `127.0.0.1:8765` by default. The desktop client sends:
 
@@ -74,7 +79,7 @@ The WinUI app hosts the live preview with the WebView2 control bundled through W
 
 ## Tool System
 
-The Python runtime exposes tool definitions through `ppt_agent_studio.tools`. `ToolRegistry` owns executable handlers and the core catalog defines MVP interfaces for deck creation, slide edits, preview rendering, PPTX export, research briefs, and theme application. The registry validates `input_schema.required` before invoking handlers, so future LLM tool calls fail early with a clear tool argument error. The deterministic `AgentSession` already calls the registry for `deck.create_from_outline` and `preview.render_html`, and the default registry can execute slide update/add/remove tools, deterministic research briefs, theme application, and `pptx.export` for editable PowerPoint output. This gives future ReAct/Tool Calling loops a stable execution boundary without changing the desktop event contract.
+The Python runtime exposes tool definitions through `ppt_agent_studio.tools`. `ToolRegistry` owns executable handlers and the core catalog defines MVP interfaces for deck creation, slide edits, preview rendering, PPTX export, research briefs, and theme application. The registry validates `input_schema.required` before invoking handlers, so future LLM tool calls fail early with a clear tool argument error. The deterministic `AgentSession` already calls the registry for `deck.create_from_outline`, `preview.render_html`, and `pptx.export`, and emits `tool.completed` after each successful call. The default registry can execute slide update/add/remove tools, deterministic research briefs, theme application, and editable PowerPoint output. This gives future ReAct/Tool Calling loops a stable execution boundary without changing the desktop event contract.
 
 ## OpenAI-Compatible Providers
 

@@ -194,6 +194,15 @@ public partial class MainPageViewModel : ObservableObject
             case "deck.updated":
                 SessionStatus = $"Deck updated at revision {runtimeEvent.DeckRevision}.";
                 break;
+            case "tool.completed":
+                var toolSummary = RuntimeToolSummary.FromPayload(runtimeEvent.Payload);
+                SessionStatus = toolSummary.ToChatMessage();
+                Messages.Add(new ChatMessageItem
+                {
+                    Role = "Assistant",
+                    Content = SessionStatus
+                });
+                break;
             case "pptx.ready":
                 var path = runtimeEvent.Payload.TryGetProperty("path", out var pptxPath)
                     ? pptxPath.GetString()
