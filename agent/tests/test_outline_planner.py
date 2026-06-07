@@ -273,6 +273,22 @@ def test_fallback_outline_planner_extracts_chinese_audience_and_style_metadata()
     }
 
 
+def test_fallback_outline_planner_derives_executive_theme_from_real_chinese_prompt():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline(
+            "\u5e2e\u6211\u505a\u4e00\u4e2a\u5173\u4e8e AI \u8f6c\u578b\u7684 PPT\uff0c"
+            "\u76ee\u6807\u53d7\u4f17\u662f\u9ad8\u5c42\u7ba1\u7406\u8005\uff0c"
+            "\u98ce\u683c\u9ea6\u80af\u9521"
+        )
+
+    outline = asyncio.run(run())
+
+    assert outline["theme"]["name"] == "executive-consulting"
+    assert outline["theme"]["accent"] == "#2563EB"
+
+
 def test_fallback_outline_planner_respects_requested_slide_count():
     planner = FallbackOutlinePlanner()
 
