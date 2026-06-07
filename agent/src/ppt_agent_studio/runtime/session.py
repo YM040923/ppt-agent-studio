@@ -115,6 +115,7 @@ class AgentSession:
                 title=str(raw_slide.get("title") or f"Slide {index}"),
                 layout=str(raw_slide.get("layout") or "content"),
                 blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
+                speaker_notes=str(raw_slide.get("speaker_notes") or ""),
             )
             for index, raw_slide in enumerate(raw_slides, start=1)
             if isinstance(raw_slide, dict)

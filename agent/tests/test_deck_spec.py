@@ -9,6 +9,7 @@ def test_deck_from_outline_preserves_slide_intent_and_revision():
                 "title": "Board AI Strategy",
                 "subtitle": "2026 operating model",
                 "prototype_hint": "cover",
+                "speaker_notes": "Open by framing the board decision and the expected outcome.",
             },
             {
                 "title": "Three bets",
@@ -27,6 +28,7 @@ def test_deck_from_outline_preserves_slide_intent_and_revision():
     assert deck.revision == 3
     assert deck.title == "Board AI Strategy"
     assert deck.slides[0].layout == "cover"
+    assert deck.slides[0].speaker_notes == "Open by framing the board decision and the expected outcome."
     assert deck.slides[1].blocks[0]["type"] == "point"
     assert deck.slides[1].blocks[0]["label"] == "Efficiency"
 
@@ -71,6 +73,7 @@ def test_deck_to_dict_is_json_ready():
                 title="Market Review",
                 layout="cover",
                 blocks=[{"type": "subtitle", "text": "Executive readout"}],
+                speaker_notes="Keep this to 60 seconds.",
             )
         ],
     )
@@ -80,3 +83,4 @@ def test_deck_to_dict_is_json_ready():
     assert payload["deck_id"] == "deck_002"
     assert payload["slides"][0]["slide_id"] == "s1"
     assert payload["slides"][0]["blocks"][0]["text"] == "Executive readout"
+    assert payload["slides"][0]["speaker_notes"] == "Keep this to 60 seconds."

@@ -17,6 +17,7 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
                 "title": "AI Strategy",
                 "layout": "cover",
                 "blocks": [{"type": "subtitle", "text": "Board briefing"}],
+                "speaker_notes": "Open with the decision the board needs to make.",
             },
             {
                 "slide_id": "s2",
@@ -51,6 +52,7 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
     assert "Focus the operating model." in text
     assert "Sequence" in text
     assert "Ship in measurable waves." in text
+    assert "Open with the decision the board needs to make." in presentation.slides[0].notes_slide.notes_text_frame.text
 
 
 def test_pptx_export_tool_applies_theme_to_editable_shapes(tmp_path):

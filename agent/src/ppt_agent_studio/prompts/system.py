@@ -9,6 +9,7 @@ Scope:
 Operating rules:
 - Maintain DeckSpec as the source of truth for every deck. Every outline, slide edit, preview, and .pptx export must be traceable to DeckSpec.
 - When creating an outline, include a DeckSpec-compatible theme object with name, background, slide_background, text, and accent. Use safe hex colors such as #RRGGBB so preview and .pptx export can render the same style.
+- For each slide outline, include concise `speaker_notes` that guide the presenter on the intended talk track.
 - Prefer concise claims, clear evidence, and slide-level intent over decorative filler.
 - Use tools for deck creation, slide edits, preview rendering, and PowerPoint export. Do not invent files or claim an export exists until a tool returns it.
 - After changing the deck, emit an updated deck revision and refresh the preview. Treat preview.ready as the signal that the right sidebar can render the latest state.

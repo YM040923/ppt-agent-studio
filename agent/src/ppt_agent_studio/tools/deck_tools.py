@@ -66,6 +66,7 @@ def update_slide(arguments: dict[str, Any]) -> ToolResult:
                 title=str(patch.get("title") or slide.title),
                 layout=str(patch.get("layout") or slide.layout),
                 blocks=patch.get("blocks") if isinstance(patch.get("blocks"), list) else slide.blocks,
+                speaker_notes=str(patch.get("speaker_notes") or slide.speaker_notes),
             )
         )
     if not found:
@@ -136,6 +137,8 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
         ppt_slide.background.fill.solid()
         ppt_slide.background.fill.fore_color.rgb = slide_background
         _add_accent_bar(ppt_slide, presentation.slide_width, accent_color)
+        if slide.speaker_notes:
+            ppt_slide.notes_slide.notes_text_frame.text = slide.speaker_notes
         _add_textbox(
             ppt_slide,
             left=0.65,
@@ -210,12 +213,13 @@ def apply_theme(arguments: dict[str, Any]) -> ToolResult:
 def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
     raw_slides = raw_deck.get("slides") if isinstance(raw_deck.get("slides"), list) else []
     slides = [
-        SlideSpec(
-            slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
-            title=str(raw_slide.get("title") or f"Slide {index}"),
-            layout=str(raw_slide.get("layout") or "content"),
-            blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
-        )
+            SlideSpec(
+                slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
+                title=str(raw_slide.get("title") or f"Slide {index}"),
+                layout=str(raw_slide.get("layout") or "content"),
+                blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
+                speaker_notes=str(raw_slide.get("speaker_notes") or ""),
+            )
         for index, raw_slide in enumerate(raw_slides, start=1)
         if isinstance(raw_slide, dict)
     ]
@@ -241,6 +245,7 @@ def _slide_from_dict(raw_slide: dict[str, Any], index: int) -> SlideSpec:
         title=str(raw_slide.get("title") or f"Slide {index}"),
         layout=str(raw_slide.get("layout") or "content"),
         blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
+        speaker_notes=str(raw_slide.get("speaker_notes") or ""),
     )
 
 

@@ -149,6 +149,7 @@ def _fallback_slides(topic: str, slide_count: int) -> list[dict[str, object]]:
             "title": topic,
             "subtitle": "Executive presentation draft",
             "prototype_hint": "cover",
+            "speaker_notes": "Open with the decision this presentation is meant to support and the audience outcome you want.",
         }
     ]
     if slide_count == 1:
@@ -158,6 +159,7 @@ def _fallback_slides(topic: str, slide_count: int) -> list[dict[str, object]]:
         {
             "title": "Strategic context",
             "prototype_hint": "content",
+            "speaker_notes": "Explain why the context matters now, then connect the signal to the decision in front of the audience.",
             "points": [
                 {
                     "label": "Objective",
@@ -199,6 +201,7 @@ def _fallback_slides(topic: str, slide_count: int) -> list[dict[str, object]]:
             {
                 "title": title,
                 "prototype_hint": "content",
+                "speaker_notes": "Land one message, then use the evidence point to support it without over-explaining the slide.",
                 "points": [
                     {"label": "Key message", "body": "State the single takeaway this slide should land."},
                     {"label": "Evidence", "body": "Add the proof point, metric, or example that supports the message."},
@@ -210,6 +213,7 @@ def _fallback_slides(topic: str, slide_count: int) -> list[dict[str, object]]:
         {
             "title": "Implementation roadmap",
             "prototype_hint": "content",
+            "speaker_notes": "Close by making the next steps concrete, sequenced, and measurable.",
             "bullets": [
                 "Define the target operating model.",
                 "Prioritize high-leverage use cases.",
@@ -224,6 +228,7 @@ def _recommended_path_slide() -> dict[str, object]:
     return {
         "title": "Recommended path",
         "prototype_hint": "content",
+        "speaker_notes": "State the recommendation first, then describe why this path is better than the alternatives.",
         "bullets": [
             "Define the target operating model.",
             "Prioritize high-leverage use cases.",

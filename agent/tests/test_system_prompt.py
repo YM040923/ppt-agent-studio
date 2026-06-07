@@ -18,6 +18,7 @@ def test_system_prompt_includes_preview_pptx_and_iteration_rules():
     assert "preview.ready" in prompt
     assert "pptx.ready" in prompt
     assert ".pptx" in prompt
+    assert "speaker_notes" in prompt
     assert "iterate" in prompt.lower()
     assert "revision" in prompt.lower()
 

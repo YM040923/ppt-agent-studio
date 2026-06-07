@@ -61,11 +61,14 @@ def _render_slide(slide: dict[str, object], index: int) -> str:
     layout = escape(str(slide.get("layout") or "content"))
     blocks = slide.get("blocks") if isinstance(slide.get("blocks"), list) else []
     body = "\n".join(_render_block(block) for block in blocks if isinstance(block, dict))
+    speaker_notes = escape(str(slide.get("speaker_notes") or ""))
+    notes = f'<aside class="speaker-notes" hidden>{speaker_notes}</aside>\n' if speaker_notes else ""
     return (
         f'<section class="slide slide-{layout}" data-slide-index="{index}">\n'
         f'<div class="page-number">{index:02d}</div>\n'
         f"<h1>{title}</h1>\n"
         f'<div class="content">{body}</div>\n'
+        f"{notes}"
         "</section>"
     )
 

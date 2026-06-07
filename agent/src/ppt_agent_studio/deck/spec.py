@@ -13,6 +13,7 @@ class SlideSpec:
     title: str
     layout: str
     blocks: list[Block] = field(default_factory=list)
+    speaker_notes: str = ""
 
     def __post_init__(self) -> None:
         title = self.title.strip()
@@ -25,14 +26,18 @@ class SlideSpec:
         object.__setattr__(self, "title", title)
         object.__setattr__(self, "slide_id", self.slide_id.strip())
         object.__setattr__(self, "layout", self.layout.strip())
+        object.__setattr__(self, "speaker_notes", self.speaker_notes.strip())
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "slide_id": self.slide_id,
             "title": self.title,
             "layout": self.layout,
             "blocks": list(self.blocks),
         }
+        if self.speaker_notes:
+            payload["speaker_notes"] = self.speaker_notes
+        return payload
 
 
 @dataclass(frozen=True)
@@ -81,6 +86,7 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
                 title=slide_title,
                 layout=layout,
                 blocks=blocks,
+                speaker_notes=_speaker_notes_from_outline_slide(raw_slide),
             )
         )
     raw_theme = outline.get("theme") if isinstance(outline.get("theme"), dict) else {}
@@ -120,3 +126,11 @@ def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
         if text:
             blocks.append({"type": "summary_item", "text": text})
     return blocks
+
+
+def _speaker_notes_from_outline_slide(slide: dict[str, Any]) -> str:
+    for key in ("speaker_notes", "notes", "talk_track"):
+        value = slide.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""

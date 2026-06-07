@@ -13,6 +13,7 @@ def test_preview_html_escapes_text_and_renders_all_slides():
                 title="Risk < Review",
                 layout="cover",
                 blocks=[{"type": "subtitle", "text": "Q2 & Q3"}],
+                speaker_notes="Open with the risk trade-off, not the appendix.",
             ),
             SlideSpec(
                 slide_id="s2",
@@ -28,7 +29,31 @@ def test_preview_html_escapes_text_and_renders_all_slides():
     assert html.count('class="slide') == 2
     assert "Risk &lt; Review" in html
     assert "Q2 &amp; Q3" in html
+    assert 'class="speaker-notes"' in html
+    assert "Open with the risk trade-off" in html
     assert "<single vendor>" not in html
+
+
+def test_preview_html_escapes_speaker_notes():
+    deck = DeckSpec(
+        deck_id="deck_notes",
+        title="Notes",
+        revision=1,
+        slides=[
+            SlideSpec(
+                slide_id="s1",
+                title="Notes",
+                layout="content",
+                blocks=[],
+                speaker_notes="Mention <sensitive> trade-offs & next steps.",
+            )
+        ],
+    )
+
+    html = render_preview_html(deck)
+
+    assert "Mention &lt;sensitive&gt; trade-offs &amp; next steps." in html
+    assert "<sensitive>" not in html
 
 
 def test_preview_html_includes_revision_for_webview_diffing():
