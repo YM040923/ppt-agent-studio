@@ -18,6 +18,7 @@ class DemoRunSummary:
     session_id: str
     deck_id: str
     deck_revision: int
+    slide_count: int
     event_count: int
     preview_html_path: Path
     pptx_path: Path
@@ -36,6 +37,7 @@ async def run_demo(
     preview_html = ""
     pptx_path: Path | None = None
     deck_revision = 0
+    slide_count = 0
     event_count = 0
 
     async for event in session.submit_user_message(prompt):
@@ -46,6 +48,7 @@ async def run_demo(
             preview_html = str(event.payload.get("html") or "")
         if event.type == "pptx.ready":
             pptx_path = Path(str(event.payload.get("path") or ""))
+            slide_count = int(event.payload.get("slide_count") or 0)
 
     if not preview_html:
         raise RuntimeError("Demo run did not produce preview HTML.")
@@ -59,6 +62,7 @@ async def run_demo(
         session_id=session_id,
         deck_id=deck_id,
         deck_revision=deck_revision,
+        slide_count=slide_count,
         event_count=event_count,
         preview_html_path=preview_html_path,
         pptx_path=pptx_path,
@@ -71,6 +75,7 @@ def format_summary(summary: DemoRunSummary) -> str:
             "PPT Agent Studio demo deck generated.",
             f"Session: {summary.session_id}",
             f"Deck: {summary.deck_id} r{summary.deck_revision}",
+            f"Slides: {summary.slide_count}",
             f"Events: {summary.event_count}",
             f"Preview HTML: {summary.preview_html_path}",
             f"Editable PPTX: {summary.pptx_path}",
