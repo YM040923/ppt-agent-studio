@@ -37,6 +37,8 @@ class LLMOutlinePlanner:
         outline = json.loads(_extract_json(response))
         if not isinstance(outline, dict):
             raise ValueError("outline response must be a JSON object")
+        if not isinstance(outline.get("theme"), dict):
+            outline["theme"] = _theme_from_prompt(prompt)
         return outline
 
 
@@ -44,7 +46,12 @@ def _extract_json(text: str) -> str:
     match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.DOTALL | re.IGNORECASE)
     if match:
         return match.group(1)
-    return text.strip()
+    stripped = text.strip()
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return stripped[start : end + 1]
+    return stripped
 
 
 def _theme_from_prompt(prompt: str) -> dict[str, str]:

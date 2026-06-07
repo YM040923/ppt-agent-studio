@@ -45,6 +45,57 @@ def test_llm_outline_planner_parses_json_response():
     }
 
 
+def test_llm_outline_planner_parses_json_embedded_in_provider_text():
+    chat_client = FakeChatClient(
+        """
+        Sure, here is the requested DeckSpec outline:
+        {
+          "deck_title": "Market Expansion",
+          "slides": [
+            {"title": "Market Expansion", "prototype_hint": "cover"}
+          ]
+        }
+        Let me know if you want speaker notes.
+        """
+    )
+    planner = LLMOutlinePlanner(chat_client=chat_client)
+
+    async def run():
+        return await planner.create_outline("Make a market expansion deck")
+
+    outline = asyncio.run(run())
+
+    assert outline["deck_title"] == "Market Expansion"
+    assert outline["slides"][0]["title"] == "Market Expansion"
+
+
+def test_llm_outline_planner_adds_theme_when_model_omits_it():
+    chat_client = FakeChatClient(
+        """
+        {
+          "deck_title": "AI Transformation",
+          "slides": [
+            {"title": "AI Transformation", "prototype_hint": "cover"}
+          ]
+        }
+        """
+    )
+    planner = LLMOutlinePlanner(chat_client=chat_client)
+
+    async def run():
+        return await planner.create_outline("帮我做一个关于 AI 转型的 PPT，目标受众是高层管理者，风格麦肯锡")
+
+    outline = asyncio.run(run())
+
+    assert outline["theme"] == {
+        "name": "executive-consulting",
+        "background": "#EEF2F7",
+        "slide_background": "#FFFFFF",
+        "text": "#111827",
+        "accent": "#2563EB",
+    }
+
+
 def test_fallback_outline_planner_preserves_prompt_topic():
     planner = FallbackOutlinePlanner()
 
