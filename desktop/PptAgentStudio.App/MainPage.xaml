@@ -26,6 +26,7 @@
         <CommandBar Grid.ColumnSpan="3" DefaultLabelPosition="Right" Background="Transparent">
             <AppBarButton Icon="Add" Label="New Deck" Command="{x:Bind ViewModel.NewDeckCommand}" />
             <AppBarButton Icon="Play" Label="Demo Deck" Command="{x:Bind ViewModel.GenerateDemoCommand}" />
+            <AppBarButton Icon="Cancel" Label="Cancel" Command="{x:Bind ViewModel.CancelCommand}" />
             <AppBarButton Icon="OpenFile" Label="Open PPTX" Command="{x:Bind ViewModel.ExportLatestCommand}" />
             <AppBarSeparator />
             <AppBarButton Icon="Setting" Label="Settings" Click="Settings_Click" />

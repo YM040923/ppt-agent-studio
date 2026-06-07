@@ -5,6 +5,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PptAgentStudio_App.ViewModels;
@@ -30,6 +31,7 @@ public partial class MainPageViewModel : ObservableObject
     private readonly AgentSessionClient _agentClient = new();
     private readonly RuntimeSidecarService _sidecar = new();
     private readonly WorkspaceDeckState _workspaceDeckState = new();
+    private CancellationTokenSource? _turnCancellation;
 
     [ObservableProperty]
     public partial string SessionStatus { get; set; } = "Local Agent runtime not connected";
@@ -41,6 +43,7 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     [NotifyCanExecuteChangedFor(nameof(GenerateDemoCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
     public partial bool IsSending { get; set; }
 
     [ObservableProperty]
@@ -149,6 +152,11 @@ public partial class MainPageViewModel : ObservableObject
         return !IsSending;
     }
 
+    private bool CanCancel()
+    {
+        return IsSending;
+    }
+
     [RelayCommand(CanExecute = nameof(CanGenerateDemo))]
     private async Task GenerateDemo()
     {
@@ -197,6 +205,18 @@ public partial class MainPageViewModel : ObservableObject
         return ChatInputPolicy.CanSend(InputText, IsSending);
     }
 
+    [RelayCommand(CanExecute = nameof(CanCancel))]
+    private void Cancel()
+    {
+        if (!IsSending)
+        {
+            return;
+        }
+
+        SessionStatus = "Canceling current Agent turn...";
+        _turnCancellation?.Cancel();
+    }
+
     [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task Send()
     {
@@ -209,14 +229,25 @@ public partial class MainPageViewModel : ObservableObject
         Messages.Add(new ChatMessageItem { Role = "You", Content = text });
         InputText = "";
         IsSending = true;
+        using var turnCancellation = new CancellationTokenSource();
+        _turnCancellation = turnCancellation;
         SessionStatus = "Sending request to local Agent runtime...";
 
         try
         {
-            await foreach (var runtimeEvent in _agentClient.SendUserMessageAsync(text))
+            await foreach (var runtimeEvent in _agentClient.SendUserMessageAsync(text, turnCancellation.Token))
             {
                 ApplyRuntimeEvent(runtimeEvent);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            SessionStatus = "Agent turn canceled.";
+            Messages.Add(new ChatMessageItem
+            {
+                Role = "Assistant",
+                Content = "Agent turn canceled."
+            });
         }
         catch (Exception ex)
         {
@@ -229,6 +260,7 @@ public partial class MainPageViewModel : ObservableObject
         }
         finally
         {
+            _turnCancellation = null;
             IsSending = false;
         }
     }

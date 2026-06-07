@@ -56,6 +56,18 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void CommandBarExposesCancelShortcut()
+    {
+        var page = XDocument.Load(FindMainPageXaml());
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var button = page
+            .Descendants(xaml + "AppBarButton")
+            .Single(element => element.Attribute("Label")?.Value == "Cancel");
+
+        StringAssert.Contains(button.Attribute("Command")?.Value ?? "", "CancelCommand");
+    }
+
+    [TestMethod]
     public void ViewModelGeneratesDemoDeckFromDefaultPrompt()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
@@ -63,6 +75,18 @@ public sealed class MainPageMarkupTests
         StringAssert.Contains(source, "private const string DemoPrompt");
         StringAssert.Contains(source, "Make a 5 slide board AI strategy deck");
         StringAssert.Contains(source, "await Send()");
+    }
+
+    [TestMethod]
+    public void ViewModelCanCancelRunningAgentTurn()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "private CancellationTokenSource? _turnCancellation");
+        StringAssert.Contains(source, "CancelCommand");
+        StringAssert.Contains(source, "_turnCancellation?.Cancel()");
+        StringAssert.Contains(source, "SendUserMessageAsync(text, turnCancellation.Token)");
+        StringAssert.Contains(source, "Agent turn canceled.");
     }
 
     [TestMethod]
