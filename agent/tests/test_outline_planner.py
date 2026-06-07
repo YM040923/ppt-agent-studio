@@ -13,6 +13,11 @@ class FakeChatClient:
         return self.response
 
 
+class FailingChatClient:
+    async def complete(self, messages, temperature=0.2):
+        raise RuntimeError("secret-value from provider")
+
+
 def test_llm_outline_planner_parses_json_response():
     chat_client = FakeChatClient(
         """
@@ -128,6 +133,18 @@ def test_llm_outline_planner_falls_back_when_provider_returns_non_json():
     assert outline["deck_title"] == "AI Strategy"
     assert len(outline["slides"]) == 4
     assert outline["slides"][-1]["title"] == "Implementation roadmap"
+
+
+def test_llm_outline_planner_falls_back_when_provider_call_fails():
+    planner = LLMOutlinePlanner(chat_client=FailingChatClient())
+
+    async def run():
+        return await planner.create_outline("Make a 4 page AI strategy deck")
+
+    outline = asyncio.run(run())
+
+    assert outline["deck_title"] == "AI Strategy"
+    assert len(outline["slides"]) == 4
 
 
 def test_llm_outline_planner_adds_fallback_slides_when_model_omits_them():

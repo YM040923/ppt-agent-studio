@@ -27,7 +27,10 @@ class LLMOutlinePlanner:
             {"role": "system", "content": PPT_AGENT_SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ]
-        response = await self._chat_client.complete(messages=messages, temperature=0.2)
+        try:
+            response = await self._chat_client.complete(messages=messages, temperature=0.2)
+        except Exception:
+            return _fallback_outline(prompt)
         try:
             outline = json.loads(_extract_json(response))
         except json.JSONDecodeError:
