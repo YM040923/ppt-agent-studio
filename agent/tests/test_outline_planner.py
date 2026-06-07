@@ -96,6 +96,28 @@ def test_llm_outline_planner_adds_theme_when_model_omits_it():
     }
 
 
+def test_llm_outline_planner_adds_fallback_slides_when_model_omits_them():
+    chat_client = FakeChatClient(
+        """
+        {
+          "deck_title": "Market Expansion",
+          "slides": []
+        }
+        """
+    )
+    planner = LLMOutlinePlanner(chat_client=chat_client)
+
+    async def run():
+        return await planner.create_outline("Make a 4 page market expansion deck")
+
+    outline = asyncio.run(run())
+
+    assert outline["deck_title"] == "Market Expansion"
+    assert len(outline["slides"]) == 4
+    assert outline["slides"][0]["title"] == "Market Expansion"
+    assert outline["slides"][-1]["title"] == "Implementation roadmap"
+
+
 def test_fallback_outline_planner_preserves_prompt_topic():
     planner = FallbackOutlinePlanner()
 

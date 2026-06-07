@@ -39,6 +39,10 @@ class LLMOutlinePlanner:
             raise ValueError("outline response must be a JSON object")
         if not isinstance(outline.get("theme"), dict):
             outline["theme"] = _theme_from_prompt(prompt)
+        if not _has_usable_slides(outline):
+            title = str(outline.get("deck_title") or outline.get("title") or prompt.removesuffix(".").strip())
+            outline["deck_title"] = title or "Untitled Deck"
+            outline["slides"] = _fallback_slides(outline["deck_title"], _slide_count_from_prompt(prompt))
         return outline
 
 
@@ -52,6 +56,11 @@ def _extract_json(text: str) -> str:
     if start != -1 and end != -1 and end > start:
         return stripped[start : end + 1]
     return stripped
+
+
+def _has_usable_slides(outline: dict[str, object]) -> bool:
+    slides = outline.get("slides")
+    return isinstance(slides, list) and any(isinstance(slide, dict) for slide in slides)
 
 
 def _theme_from_prompt(prompt: str) -> dict[str, str]:

@@ -74,6 +74,6 @@ The runtime exposes a safe configuration probe over WebSocket:
 
 It reports the configured endpoint, model, active planner mode, and whether an API key is present without returning the key.
 
-The Python runtime includes an injectable OpenAI-compatible chat client and an LLM outline planner. The planner accepts fenced JSON or prose-wrapped JSON from compatible providers, and fills in a safe DeckSpec theme when the model omits one. The default Agent turn still uses the deterministic fallback planner unless `PPT_AGENT_PLANNER=llm` and `OPENAI_API_KEY` are both configured, so the MVP remains testable without a network call or API key.
+The Python runtime includes an injectable OpenAI-compatible chat client and an LLM outline planner. The planner accepts fenced JSON or prose-wrapped JSON from compatible providers, fills in a safe DeckSpec theme when the model omits one, and falls back to deterministic slides if the model returns no usable slides. The default Agent turn still uses the deterministic fallback planner unless `PPT_AGENT_PLANNER=llm` and `OPENAI_API_KEY` are both configured, so the MVP remains testable without a network call or API key.
 
 The core Agent system prompt lives in `ppt_agent_studio.prompts` and scopes the assistant to presentation work, DeckSpec revisions, live preview updates, editable PPTX artifacts, and secret-safe configuration reporting.
