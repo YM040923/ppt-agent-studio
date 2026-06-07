@@ -68,6 +68,8 @@ $env:PYTHONPATH=(Resolve-Path .\agent\src).Path
 python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\demo
 ```
 
+Add `--follow-up "Add a risk mitigation slide"` to generate a second revision that demonstrates cached follow-up editing.
+
 ## Packaging
 
 Create an unsigned sideload MSIX package locally:

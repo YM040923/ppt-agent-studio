@@ -26,6 +26,7 @@ class DemoRunSummary:
 
 async def run_demo(
     prompt: str = DEFAULT_PROMPT,
+    follow_up: str = "",
     artifact_dir: str | os.PathLike[str] = "artifacts/demo",
     session_id: str = "demo-session",
     deck_id: str = "demo-deck",
@@ -40,15 +41,21 @@ async def run_demo(
     slide_count = 0
     event_count = 0
 
-    async for event in session.submit_user_message(prompt):
-        event_count += 1
-        if event.deck_revision is not None:
-            deck_revision = event.deck_revision
-        if event.type == "preview.ready":
-            preview_html = str(event.payload.get("html") or "")
-        if event.type == "pptx.ready":
-            pptx_path = Path(str(event.payload.get("path") or ""))
-            slide_count = int(event.payload.get("slide_count") or 0)
+    async def consume_turn(text: str) -> None:
+        nonlocal deck_revision, event_count, preview_html, pptx_path, slide_count
+        async for event in session.submit_user_message(text):
+            event_count += 1
+            if event.deck_revision is not None:
+                deck_revision = event.deck_revision
+            if event.type == "preview.ready":
+                preview_html = str(event.payload.get("html") or "")
+            if event.type == "pptx.ready":
+                pptx_path = Path(str(event.payload.get("path") or ""))
+                slide_count = int(event.payload.get("slide_count") or 0)
+
+    await consume_turn(prompt)
+    if follow_up.strip():
+        await consume_turn(follow_up)
 
     if not preview_html:
         raise RuntimeError("Demo run did not produce preview HTML.")
@@ -86,6 +93,7 @@ def format_summary(summary: DemoRunSummary) -> str:
 def main(argv: Iterable[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Generate an offline PPT Agent Studio demo deck.")
     parser.add_argument("--prompt", default=DEFAULT_PROMPT)
+    parser.add_argument("--follow-up", default="")
     parser.add_argument("--artifact-dir", default="artifacts/demo")
     parser.add_argument("--session-id", default="demo-session")
     parser.add_argument("--deck-id", default="demo-deck")
@@ -94,6 +102,7 @@ def main(argv: Iterable[str] | None = None) -> None:
     summary = asyncio.run(
         run_demo(
             prompt=args.prompt,
+            follow_up=args.follow_up,
             artifact_dir=args.artifact_dir,
             session_id=args.session_id,
             deck_id=args.deck_id,

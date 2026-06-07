@@ -24,3 +24,22 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
     assert summary.pptx_path.exists()
     assert summary.pptx_path.name == "demo-deck-r1.pptx"
     assert "Slides: 5" in format_summary(summary)
+
+
+def test_run_demo_can_apply_follow_up_turn(tmp_path):
+    async def run():
+        return await run_demo(
+            prompt="Make a 5 slide board AI strategy deck in McKinsey style",
+            follow_up="Add a risk mitigation slide",
+            artifact_dir=tmp_path,
+            session_id="demo-session",
+            deck_id="demo-deck",
+        )
+
+    summary = asyncio.run(run())
+
+    assert summary.deck_revision == 2
+    assert summary.slide_count == 6
+    assert summary.event_count == 20
+    assert summary.preview_html_path.name == "demo-deck-r2.html"
+    assert summary.pptx_path.name == "demo-deck-r2.pptx"
