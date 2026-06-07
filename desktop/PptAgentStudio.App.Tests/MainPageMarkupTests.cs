@@ -52,6 +52,15 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelUsesPptxExportSummaryForReadyEvents()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "RuntimePptxExportSummary.FromPayload");
+        StringAssert.Contains(source, "pptxSummary.ToChatMessage()");
+    }
+
+    [TestMethod]
     public void NewDeckStartsFreshRuntimeDeckIdentity()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
