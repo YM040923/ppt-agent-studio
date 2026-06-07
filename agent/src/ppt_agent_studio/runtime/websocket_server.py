@@ -101,7 +101,11 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
         return
 
     if message_type == "runtime.config":
-        config = OpenAICompatibleConfig.from_env()
+        try:
+            config = OpenAICompatibleConfig.from_env()
+        except ValueError as error:
+            yield _error_json(f"Invalid runtime configuration: {error}", session_id=session_id)
+            return
         event = AgentEvent(
             seq=1,
             session_id=session_id,

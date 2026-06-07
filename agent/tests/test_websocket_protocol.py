@@ -318,6 +318,29 @@ def test_handle_runtime_config_reports_extra_headers_without_values(monkeypatch,
     assert "X-Provider" not in messages[0]
 
 
+def test_handle_runtime_config_reports_invalid_extra_headers_without_values(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_EXTRA_HEADERS", "secret-tenant")
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["type"] == "error"
+    assert payload["session_id"] == "session_001"
+    assert payload["payload"]["message"] == "Invalid runtime configuration: OPENAI_EXTRA_HEADERS must be a JSON object"
+    assert "secret-tenant" not in messages[0]
+
+
 def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
     monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))

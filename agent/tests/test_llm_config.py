@@ -1,3 +1,5 @@
+import pytest
+
 from ppt_agent_studio.llm.config import OpenAICompatibleConfig
 
 
@@ -77,3 +79,12 @@ def test_openai_compatible_config_redacts_key():
     assert config.safe_summary()["has_api_key"] is True
     assert config.safe_summary()["has_extra_headers"] is True
     assert "secret-tenant" not in str(config.safe_summary())
+
+
+def test_openai_compatible_config_rejects_invalid_extra_headers_without_value(monkeypatch):
+    monkeypatch.setenv("OPENAI_EXTRA_HEADERS", "secret-tenant")
+
+    with pytest.raises(ValueError, match="OPENAI_EXTRA_HEADERS must be a JSON object") as error:
+        OpenAICompatibleConfig.from_env()
+
+    assert "secret-tenant" not in str(error.value)

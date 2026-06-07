@@ -81,7 +81,10 @@ def _strip_env_value(value: str) -> str:
 def _extra_headers_from_config(value: str) -> dict[str, str]:
     if not value.strip():
         return {}
-    parsed = json.loads(value)
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as error:
+        raise ValueError("OPENAI_EXTRA_HEADERS must be a JSON object") from error
     if not isinstance(parsed, dict):
         raise ValueError("OPENAI_EXTRA_HEADERS must be a JSON object")
 
