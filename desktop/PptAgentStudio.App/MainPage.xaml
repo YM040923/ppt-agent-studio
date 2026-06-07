@@ -60,7 +60,7 @@
 
                 <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <TextBox
-                        Text="{x:Bind ViewModel.InputText, Mode=TwoWay}"
+                        Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="Ask for a board-ready deck..."
                         AcceptsReturn="True"
                         MinHeight="48"

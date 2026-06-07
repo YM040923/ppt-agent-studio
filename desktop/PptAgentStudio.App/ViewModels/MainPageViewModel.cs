@@ -26,7 +26,12 @@ public partial class MainPageViewModel : ObservableObject
     public partial string SessionStatus { get; set; } = "Local Agent runtime not connected";
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     public partial string InputText { get; set; } = "";
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    public partial bool IsSending { get; set; }
 
     [ObservableProperty]
     public partial string PreviewHtml { get; set; } = InitialPreviewHtml;
@@ -142,17 +147,23 @@ public partial class MainPageViewModel : ObservableObject
         });
     }
 
-    [RelayCommand]
+    private bool CanSend()
+    {
+        return ChatInputPolicy.CanSend(InputText, IsSending);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task Send()
     {
         var text = InputText.Trim();
-        if (text.Length == 0)
+        if (!ChatInputPolicy.CanSend(text, IsSending))
         {
             return;
         }
 
         Messages.Add(new ChatMessageItem { Role = "You", Content = text });
         InputText = "";
+        IsSending = true;
         SessionStatus = "Sending request to local Agent runtime...";
 
         try
@@ -170,6 +181,10 @@ public partial class MainPageViewModel : ObservableObject
                 Role = "Assistant",
                 Content = "I could not reach the local Python Agent runtime. Start it with: python -m ppt_agent_studio.runtime.websocket_server --port 8765"
             });
+        }
+        finally
+        {
+            IsSending = false;
         }
     }
 
