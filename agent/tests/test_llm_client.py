@@ -63,6 +63,59 @@ def test_chat_client_posts_openai_compatible_request_and_parses_text():
     }
 
 
+def test_chat_client_parses_content_blocks_from_compatible_provider():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": [
+                                {"type": "text", "text": "First paragraph."},
+                                {"type": "text", "text": "Second paragraph."},
+                            ]
+                        }
+                    }
+                ]
+            },
+        )
+
+    config = OpenAICompatibleConfig(
+        base_url="https://provider.example/v1",
+        api_key="secret-value",
+        model="gpt-compatible-model",
+    )
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = OpenAICompatibleChatClient(config=config, http_client=http_client)
+            return await client.complete(messages=[{"role": "user", "content": "Draft"}])
+
+    assert asyncio.run(run()) == "First paragraph.\nSecond paragraph."
+
+
+def test_chat_client_parses_legacy_text_choice_from_compatible_provider():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={"choices": [{"text": "Legacy compatible completion."}]},
+        )
+
+    config = OpenAICompatibleConfig(
+        base_url="https://provider.example/v1",
+        api_key="secret-value",
+        model="gpt-compatible-model",
+    )
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = OpenAICompatibleChatClient(config=config, http_client=http_client)
+            return await client.complete(messages=[{"role": "user", "content": "Draft"}])
+
+    assert asyncio.run(run()) == "Legacy compatible completion."
+
+
 def test_chat_client_requires_api_key():
     config = OpenAICompatibleConfig(
         base_url="https://provider.example/v1",
