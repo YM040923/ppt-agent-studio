@@ -52,6 +52,7 @@ public sealed partial class MainPage : Page
         if (e.PropertyName == nameof(ViewModel.PreviewHtml) && PreviewWebView.CoreWebView2 is not null)
         {
             _previewScriptReady = false;
+            _previewPaneState.ResetSlidePosition();
             UpdatePreviewToolbar();
             PreviewWebView.NavigateToString(ViewModel.PreviewHtml);
         }

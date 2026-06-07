@@ -52,6 +52,18 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void PreviewHtmlChangesResetPreviewToFirstSlide()
+    {
+        var source = File.ReadAllText(FindMainPageCodeBehind());
+        var previewChangedStart = source.IndexOf("e.PropertyName == nameof(ViewModel.PreviewHtml)", StringComparison.Ordinal);
+
+        Assert.AreNotEqual(-1, previewChangedStart);
+        var previewChangedBody = source[previewChangedStart..source.IndexOf("PreviewWebView.NavigateToString", previewChangedStart, StringComparison.Ordinal)];
+
+        StringAssert.Contains(previewChangedBody, "_previewPaneState.ResetSlidePosition()");
+    }
+
+    [TestMethod]
     public void CommandBarExposesDemoDeckShortcut()
     {
         var page = XDocument.Load(FindMainPageXaml());
