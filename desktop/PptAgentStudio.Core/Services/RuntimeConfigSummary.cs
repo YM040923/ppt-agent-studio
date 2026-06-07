@@ -14,7 +14,8 @@ public sealed record RuntimeConfigSummary(
     bool EnvFileExists = false,
     string RuntimeName = "ppt-agent-studio",
     string RuntimeVersion = "",
-    string EndpointKind = "cloud")
+    string EndpointKind = "cloud",
+    string ConfigSource = "")
 {
     public static RuntimeConfigSummary FromPayload(JsonElement payload)
     {
@@ -64,7 +65,8 @@ public sealed record RuntimeConfigSummary(
             EnvFileExists: envFileExists,
             RuntimeName: runtimeName,
             RuntimeVersion: runtimeVersion,
-            EndpointKind: ReadEndpointKind(llm));
+            EndpointKind: ReadEndpointKind(llm),
+            ConfigSource: ReadConfigSource(llm));
     }
 
     public string ToStatusText()
@@ -98,6 +100,7 @@ public sealed record RuntimeConfigSummary(
                 $"Endpoint type: {EndpointKind}",
                 $"Model: {Model}",
                 $"Planner: {plannerActive}",
+                $"Config source: {ConfigSource}",
                 $"PPTX directory: {ArtifactDirectory}",
                 $"Env file: {EnvFilePath} ({envFileState})",
                 $"API key: {keyState}",
@@ -124,5 +127,24 @@ public sealed record RuntimeConfigSummary(
         }
 
         return string.IsNullOrWhiteSpace(value.GetString()) ? "cloud" : value.GetString()!;
+    }
+
+    private static string ReadConfigSource(JsonElement llm)
+    {
+        if (!llm.TryGetProperty("source", out var source) || source.ValueKind != JsonValueKind.Object)
+        {
+            return "unknown";
+        }
+
+        var parts = new List<string>();
+        foreach (var name in new[] { "base_url", "api_key", "model", "extra_headers" })
+        {
+            if (source.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String)
+            {
+                parts.Add($"{name}: {value.GetString()}");
+            }
+        }
+
+        return parts.Count == 0 ? "unknown" : string.Join(", ", parts);
     }
 }

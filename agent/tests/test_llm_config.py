@@ -58,6 +58,12 @@ def test_openai_compatible_config_reads_env_file_when_env_is_missing(monkeypatch
     assert config.model == "file-compatible-model"
     assert config.has_api_key is True
     assert config.extra_headers == {"X-Provider": "file-tenant"}
+    assert config.safe_summary()["source"] == {
+        "base_url": "env_file",
+        "api_key": "env_file",
+        "model": "env_file",
+        "extra_headers": "env_file",
+    }
 
 
 def test_openai_compatible_config_prefers_env_over_env_file(monkeypatch, tmp_path):
@@ -81,6 +87,12 @@ def test_openai_compatible_config_prefers_env_over_env_file(monkeypatch, tmp_pat
     assert config.base_url == "https://env-provider.example/v1"
     assert config.model == "env-compatible-model"
     assert config.has_api_key is True
+    assert config.safe_summary()["source"] == {
+        "base_url": "environment",
+        "api_key": "environment",
+        "model": "environment",
+        "extra_headers": "default",
+    }
 
 
 def test_openai_compatible_config_redacts_key():

@@ -17,7 +17,13 @@ public sealed class RuntimeConfigSummaryTests
                 "model": "gpt-compatible-model",
                 "has_api_key": true,
                 "has_extra_headers": true,
-                "endpoint_kind": "cloud"
+                "endpoint_kind": "cloud",
+                "source": {
+                  "base_url": "environment",
+                  "api_key": "env_file",
+                  "model": "environment",
+                  "extra_headers": "environment"
+                }
               },
               "runtime": {
                 "name": "ppt-agent-studio",
@@ -44,6 +50,7 @@ public sealed class RuntimeConfigSummaryTests
         Assert.IsTrue(summary.HasApiKey);
         Assert.IsTrue(summary.HasExtraHeaders);
         Assert.AreEqual("cloud", summary.EndpointKind);
+        Assert.AreEqual("base_url: environment, api_key: env_file, model: environment, extra_headers: environment", summary.ConfigSource);
         Assert.AreEqual("ppt-agent-studio", summary.RuntimeName);
         Assert.AreEqual("0.1.0", summary.RuntimeVersion);
         Assert.AreEqual("llm", summary.PlannerRequested);
@@ -67,7 +74,9 @@ public sealed class RuntimeConfigSummaryTests
             EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
             EnvFileExists: true,
             RuntimeName: "ppt-agent-studio",
-            RuntimeVersion: "0.1.0");
+            RuntimeVersion: "0.1.0",
+            EndpointKind: "cloud",
+            ConfigSource: "base_url: environment, api_key: env_file, model: environment, extra_headers: environment");
 
         var status = summary.ToStatusText();
 
@@ -112,7 +121,9 @@ public sealed class RuntimeConfigSummaryTests
             EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
             EnvFileExists: true,
             RuntimeName: "ppt-agent-studio",
-            RuntimeVersion: "0.1.0");
+            RuntimeVersion: "0.1.0",
+            EndpointKind: "cloud",
+            ConfigSource: "base_url: environment, api_key: env_file, model: environment, extra_headers: environment");
 
         var settingsText = summary.ToSettingsText();
 
@@ -123,6 +134,7 @@ public sealed class RuntimeConfigSummaryTests
             Endpoint type: cloud
             Model: gpt-compatible-model
             Planner: llm
+            Config source: base_url: environment, api_key: env_file, model: environment, extra_headers: environment
             PPTX directory: E:\MyProjects\ppt-agent-studio\artifacts\decks
             Env file: E:\MyProjects\ppt-agent-studio\.env.local (found)
             API key: configured

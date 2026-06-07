@@ -87,9 +87,9 @@ The desktop app or a test client can ask for a redacted runtime configuration su
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-The response is a single `runtime.config` event. It includes `base_url`, `model`, `endpoint_kind`, `has_api_key`, `has_extra_headers`, planner `requested`/`active` modes, the PPTX artifact directory, and the env file `path`/`exists` status, but never returns API key or header values.
+The response is a single `runtime.config` event. It includes `base_url`, `model`, `endpoint_kind`, a per-field `source` summary, `has_api_key`, `has_extra_headers`, planner `requested`/`active` modes, the PPTX artifact directory, and the env file `path`/`exists` status, but never returns API key or header values.
 
-The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner. The Settings dialog also shows whether the endpoint is local or cloud-hosted, the project-local PPTX artifact directory, and env file status so users can find exported decks and confirm whether `.env.local` is being picked up.
+The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner. The Settings dialog also shows whether the endpoint is local or cloud-hosted, whether each core config value came from process environment, `.env.local`, or defaults, the project-local PPTX artifact directory, and env file status so users can find exported decks and confirm whether `.env.local` is being picked up.
 
 Runtime outline planning is selected through `PPT_AGENT_PLANNER`. The default is `fallback`, which keeps local development deterministic and offline. Set `PPT_AGENT_PLANNER=llm` and provide `OPENAI_API_KEY` to use the model-backed `LLMOutlinePlanner`; if the key is missing, the runtime keeps using the fallback planner instead of failing the desktop turn.
 

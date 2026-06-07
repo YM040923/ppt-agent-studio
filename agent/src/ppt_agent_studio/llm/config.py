@@ -14,6 +14,7 @@ class OpenAICompatibleConfig:
     api_key: str
     model: str
     extra_headers: dict[str, str] = field(default_factory=dict)
+    source: dict[str, str] = field(default_factory=dict)
 
     @property
     def has_api_key(self) -> bool:
@@ -39,6 +40,12 @@ class OpenAICompatibleConfig:
             api_key=_api_key_from_config(_config_value("OPENAI_API_KEY", "", file_values)),
             model=_config_value("OPENAI_MODEL", "gpt-4.1-mini", file_values).strip(),
             extra_headers=_extra_headers_from_config(_config_value("OPENAI_EXTRA_HEADERS", "", file_values)),
+            source={
+                "base_url": _config_source("OPENAI_BASE_URL", file_values),
+                "api_key": _config_source("OPENAI_API_KEY", file_values),
+                "model": _config_source("OPENAI_MODEL", file_values),
+                "extra_headers": _config_source("OPENAI_EXTRA_HEADERS", file_values),
+            },
         )
 
     def __repr__(self) -> str:
@@ -57,6 +64,12 @@ class OpenAICompatibleConfig:
             "has_api_key": self.has_api_key,
             "has_extra_headers": bool(self.extra_headers),
             "endpoint_kind": self.endpoint_kind,
+            "source": {
+                "base_url": self.source.get("base_url", "default"),
+                "api_key": self.source.get("api_key", "default"),
+                "model": self.source.get("model", "default"),
+                "extra_headers": self.source.get("extra_headers", "default"),
+            },
         }
 
 
@@ -65,6 +78,14 @@ def _config_value(name: str, default: str, file_values: dict[str, str]) -> str:
     if value is not None:
         return value
     return file_values.get(name, default)
+
+
+def _config_source(name: str, file_values: dict[str, str]) -> str:
+    if os.environ.get(name) is not None:
+        return "environment"
+    if name in file_values:
+        return "env_file"
+    return "default"
 
 
 def _api_key_from_config(value: str) -> str:
