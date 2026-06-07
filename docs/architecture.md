@@ -61,7 +61,7 @@ The server streams one JSON event per WebSocket message. The desktop client clos
 
 Runtime Agent sessions are cached by `(session_id, deck_id)` inside the Python process. This lets the desktop client reconnect for each user turn while preserving DeckSpec revision numbers, event ordering, and the latest deck state for that workspace.
 
-When a follow-up message clearly asks to add, append, update, rename, remove, or delete a slide, the runtime mutates the cached DeckSpec with `deck.add_slide`, `deck.update_slide`, or `deck.remove_slide`, emits a new `deck.updated` revision, refreshes `preview.ready`, and exports a new `pptx.ready` artifact. Other follow-up prompts still run through the planner path until richer edit-intent routing is added.
+When a follow-up message clearly asks to add, append, update, rename, remove, or delete a slide, the runtime mutates the cached DeckSpec with `deck.add_slide`, `deck.update_slide`, or `deck.remove_slide`. Clear dark-theme follow-ups use `design.apply_theme` against the cached DeckSpec. Both paths emit a new `deck.updated` revision, refresh `preview.ready`, and export a new `pptx.ready` artifact. Other follow-up prompts still run through the planner path until richer edit-intent routing is added.
 
 The desktop app filters deck-scoped runtime events by the active deck id before mutating preview or export state. This protects the UI when a user starts a new deck or cancels a turn while delayed messages from an older deck are still in flight.
 

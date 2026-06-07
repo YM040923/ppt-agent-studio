@@ -323,6 +323,49 @@ def test_agent_session_updates_slide_title_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
+def test_agent_session_applies_dark_theme_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_theme_followup", deck_id="deck_theme_followup", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Apply a dark executive theme")]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert [event.type for event in events] == [
+        "user.message",
+        "plan.updated",
+        "tool.completed",
+        "deck.updated",
+        "tool.completed",
+        "preview.ready",
+        "tool.completed",
+        "pptx.ready",
+        "plan.updated",
+    ]
+    presentation = Presentation(events[7].payload["path"])
+    assert events[2].payload == {
+        "tool_name": "design.apply_theme",
+        "status": "completed",
+        "summary": "Applied follow-up theme.",
+    }
+    assert events[3].payload["deck"]["revision"] == 2
+    assert events[3].payload["deck"]["theme"] == {
+        "name": "executive-dark",
+        "background": "#0B1220",
+        "slide_background": "#111827",
+        "text": "#F9FAFB",
+        "accent": "#38BDF8",
+    }
+    assert "--slide-background: #111827;" in events[5].payload["html"]
+    assert "--slide-text: #F9FAFB;" in events[5].payload["html"]
+    assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "38BDF8"
+    assert events[8].payload["plan"]["status"] == "completed"
+
+
 def test_agent_session_uses_tool_registry_for_deck_and_preview():
     calls = []
     registry = ToolRegistry()

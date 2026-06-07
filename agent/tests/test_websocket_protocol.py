@@ -220,6 +220,33 @@ def test_handle_user_message_follow_up_updates_and_removes_cached_deck(monkeypat
     assert third_turn[7]["payload"]["path"].endswith("deck_followup_edit-r3.pptx")
 
 
+def test_handle_user_message_follow_up_applies_dark_theme(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
+
+    async def run_turn(text: str):
+        messages = await handle_client_message(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_followup_theme",
+                    "deck_id": "deck_followup_theme",
+                    "payload": {"text": text},
+                }
+            )
+        )
+        return [json.loads(item) for item in messages]
+
+    first_turn = asyncio.run(run_turn("Make a 3 page AI strategy deck"))
+    second_turn = asyncio.run(run_turn("Apply a dark executive theme"))
+
+    assert first_turn[5]["payload"]["deck"]["revision"] == 1
+    assert second_turn[2]["payload"]["tool_name"] == "design.apply_theme"
+    assert second_turn[3]["deck_revision"] == 2
+    assert second_turn[3]["payload"]["deck"]["theme"]["name"] == "executive-dark"
+    assert "--slide-background: #111827;" in second_turn[5]["payload"]["html"]
+    assert second_turn[7]["payload"]["path"].endswith("deck_followup_theme-r2.pptx")
+
+
 def test_handle_session_reset_clears_cached_deck(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
 

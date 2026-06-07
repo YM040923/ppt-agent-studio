@@ -15,6 +15,13 @@ def test_readme_documents_demo_summary_json():
     assert "demo-deck-r2-summary.json" in readme
 
 
+def test_readme_documents_theme_follow_up():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "Follow-up add/update/remove slide and dark-theme requests" in readme
+    assert "design.apply_theme" in readme
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

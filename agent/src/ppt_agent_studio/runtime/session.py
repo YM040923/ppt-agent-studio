@@ -51,6 +51,10 @@ class AgentSession:
             async for event in self._submit_remove_slide_follow_up():
                 yield event
             return
+        if self.deck is not None and self._is_dark_theme_request(text):
+            async for event in self._submit_dark_theme_follow_up():
+                yield event
+            return
 
         outline = await self._outline_planner.create_outline(text)
         next_revision = self._deck_revision + 1
@@ -212,6 +216,43 @@ class AgentSession:
         async for event in self._render_preview_export_and_complete(plan, outline):
             yield event
 
+    async def _submit_dark_theme_follow_up(self) -> AsyncIterator[AgentEvent]:
+        if self.deck is None:
+            return
+
+        next_revision = self._deck_revision + 1
+        theme = {
+            "name": "executive-dark",
+            "background": "#0B1220",
+            "slide_background": "#111827",
+            "text": "#F9FAFB",
+            "accent": "#38BDF8",
+        }
+        outline = {
+            "deck_title": self.deck.title,
+            "theme": theme,
+            "slides": [{"title": slide.title} for slide in self.deck.slides],
+        }
+        plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        plan.status = "running"
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "running")
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+        deck_result = await self._tool_registry.run(
+            "design.apply_theme",
+            {"deck": self.deck.to_dict(), "theme": theme},
+        )
+        self.deck = self._deck_from_payload(deck_result.payload["deck"])
+        self._deck_revision = self.deck.revision
+        plan.update_step_status("draft_slides", "completed")
+        yield self._tool_completed_event("design.apply_theme", "Applied follow-up theme.")
+        yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
+
+        async for event in self._render_preview_export_and_complete(plan, outline):
+            yield event
+
     async def _render_preview_export_and_complete(
         self,
         plan: DeckPlan,
@@ -328,6 +369,14 @@ class AgentSession:
         if re.search(r"\b(remove|delete)\b", prompt, flags=re.IGNORECASE):
             return True
         return any(token in prompt for token in ["删除", "移除", "删掉"])
+
+    @staticmethod
+    def _is_dark_theme_request(prompt: str) -> bool:
+        if re.search(r"\b(dark|deep|night)\b.*\b(theme|style|look)\b", prompt, flags=re.IGNORECASE):
+            return True
+        if re.search(r"\b(theme|style|look)\b.*\b(dark|deep|night)\b", prompt, flags=re.IGNORECASE):
+            return True
+        return any(token in prompt for token in ["深色", "暗色", "黑色主题", "深色风格"])
 
     @staticmethod
     def _slide_title_update_request(prompt: str) -> tuple[str, str] | None:
