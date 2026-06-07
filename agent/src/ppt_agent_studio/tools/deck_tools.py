@@ -136,7 +136,7 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
         presentation.core_properties.keywords = style
     blank_layout = presentation.slide_layouts[6]
 
-    for slide in deck.slides:
+    for index, slide in enumerate(deck.slides, start=1):
         ppt_slide = presentation.slides.add_slide(blank_layout)
         slide_background = _theme_rgb(deck, "slide_background", "#FFFFFF")
         text_color = _theme_rgb(deck, "text", "#111827")
@@ -144,6 +144,17 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
         ppt_slide.background.fill.solid()
         ppt_slide.background.fill.fore_color.rgb = slide_background
         _add_accent_bar(ppt_slide, presentation.slide_width, accent_color)
+        _add_textbox(
+            ppt_slide,
+            left=0.65,
+            top=6.95,
+            width=0.55,
+            height=0.2,
+            text=f"{index:02d}",
+            font_size=10,
+            bold=True,
+            font_color=accent_color,
+        )
         if slide.speaker_notes:
             ppt_slide.notes_slide.notes_text_frame.text = slide.speaker_notes
         _add_textbox(

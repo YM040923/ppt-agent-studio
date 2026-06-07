@@ -41,6 +41,8 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
 
     result = asyncio.run(run())
     presentation = Presentation(str(output_path))
+    first_slide_texts = [shape.text for shape in presentation.slides[0].shapes if hasattr(shape, "text")]
+    second_slide_texts = [shape.text for shape in presentation.slides[1].shapes if hasattr(shape, "text")]
     text = "\n".join(
         shape.text
         for slide in presentation.slides
@@ -51,6 +53,8 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
     assert result.payload["path"] == str(output_path)
     assert result.payload["slide_count"] == 2
     assert len(presentation.slides) == 2
+    assert "01" in first_slide_texts
+    assert "02" in second_slide_texts
     assert "AI Strategy" in text
     assert "Board briefing" in text
     assert "Focus the operating model." in text
