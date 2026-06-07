@@ -132,6 +132,7 @@ public partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private async Task NewDeck()
     {
+        _turnCancellation?.Cancel();
         await _agentClient.StartNewDeckAsync();
         _workspaceDeckState.Reset();
         InputText = "";

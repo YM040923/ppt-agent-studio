@@ -187,6 +187,21 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void NewDeckCancelsRunningAgentTurnBeforeReset()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+        var newDeckStart = source.IndexOf("private async Task NewDeck()", StringComparison.Ordinal);
+        var nextMemberStart = source.IndexOf("private bool CanExportLatest()", newDeckStart, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, newDeckStart);
+        Assert.IsGreaterThan(newDeckStart, nextMemberStart);
+
+        var newDeckBody = source[newDeckStart..nextMemberStart];
+
+        StringAssert.Contains(newDeckBody, "_turnCancellation?.Cancel();");
+    }
+
+    [TestMethod]
     public void AgentSessionClientSendsRuntimeSessionReset()
     {
         var source = File.ReadAllText(FindAgentSessionClient());
