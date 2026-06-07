@@ -42,6 +42,10 @@ class AgentSession:
             async for event in self._submit_add_slide_follow_up(text):
                 yield event
             return
+        if self.deck is not None and self._is_remove_slide_request(text):
+            async for event in self._submit_remove_slide_follow_up():
+                yield event
+            return
 
         outline = await self._outline_planner.create_outline(text)
         next_revision = self._deck_revision + 1
@@ -79,31 +83,8 @@ class AgentSession:
         yield self._tool_completed_event("deck.create_from_outline", "Created deck from outline.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
-        preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
-        plan.update_step_status("render_preview", "completed")
-        yield self._tool_completed_event("preview.render_html", "Rendered live preview HTML.")
-        yield self._deck_event(
-            "preview.ready",
-            {
-                "html": str(preview_result.payload["html"]),
-                "deck_id": self.deck.deck_id,
-                "revision": self.deck.revision,
-                "deck_title": self.deck.title,
-                "slide_count": len(self.deck.slides),
-            },
-        )
-
-        pptx_path = self._artifact_dir / f"{self._safe_artifact_name(self.deck_id)}-r{self._deck_revision}.pptx"
-        pptx_result = await self._tool_registry.run(
-            "pptx.export",
-            {"deck": self.deck.to_dict(), "output_path": str(pptx_path)},
-        )
-        plan.update_step_status("export_pptx", "completed")
-        yield self._tool_completed_event("pptx.export", "Exported editable PPTX artifact.")
-        yield self._deck_event("pptx.ready", dict(pptx_result.payload))
-
-        plan.status = "completed"
-        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+        async for event in self._render_preview_export_and_complete(plan, outline):
+            yield event
 
     async def _submit_add_slide_follow_up(self, text: str) -> AsyncIterator[AgentEvent]:
         if self.deck is None:
@@ -154,6 +135,47 @@ class AgentSession:
         plan.update_step_status("draft_slides", "completed")
         yield self._tool_completed_event("deck.add_slide", "Added follow-up slide.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
+
+        async for event in self._render_preview_export_and_complete(plan, outline):
+            yield event
+
+    async def _submit_remove_slide_follow_up(self) -> AsyncIterator[AgentEvent]:
+        if self.deck is None or not self.deck.slides:
+            return
+
+        next_revision = self._deck_revision + 1
+        target_slide = self.deck.slides[-1]
+        outline = {
+            "deck_title": self.deck.title,
+            "slides": [{"title": slide.title} for slide in self.deck.slides[:-1]],
+        }
+        plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        plan.status = "running"
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "running")
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+        deck_result = await self._tool_registry.run(
+            "deck.remove_slide",
+            {"deck": self.deck.to_dict(), "slide_id": target_slide.slide_id},
+        )
+        self.deck = self._deck_from_payload(deck_result.payload["deck"])
+        self._deck_revision = self.deck.revision
+        plan.update_step_status("draft_slides", "completed")
+        yield self._tool_completed_event("deck.remove_slide", "Removed follow-up slide.")
+        yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
+
+        async for event in self._render_preview_export_and_complete(plan, outline):
+            yield event
+
+    async def _render_preview_export_and_complete(
+        self,
+        plan: DeckPlan,
+        outline: dict[str, object],
+    ) -> AsyncIterator[AgentEvent]:
+        if self.deck is None:
+            return
 
         preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
         plan.update_step_status("render_preview", "completed")
@@ -257,6 +279,12 @@ class AgentSession:
         if re.search(r"\b(add|append)\b", prompt, flags=re.IGNORECASE):
             return True
         return any(token in prompt for token in ["新增", "增加", "加一页", "加一张", "加一个"])
+
+    @staticmethod
+    def _is_remove_slide_request(prompt: str) -> bool:
+        if re.search(r"\b(remove|delete)\b", prompt, flags=re.IGNORECASE):
+            return True
+        return any(token in prompt for token in ["删除", "移除", "删掉"])
 
     @staticmethod
     def _follow_up_slide_title(prompt: str) -> str:
