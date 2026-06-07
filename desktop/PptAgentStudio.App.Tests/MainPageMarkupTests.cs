@@ -30,6 +30,20 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void SettingsDialogShowsRuntimeTools()
+    {
+        var viewModelSource = File.ReadAllText(FindMainPageViewModel());
+        var pageSource = File.ReadAllText(FindMainPageCodeBehind());
+        var clientSource = File.ReadAllText(FindAgentSessionClient());
+
+        StringAssert.Contains(clientSource, "type = \"runtime.tools\"");
+        StringAssert.Contains(viewModelSource, "GetRuntimeToolsAsync");
+        StringAssert.Contains(viewModelSource, "RuntimeTools");
+        StringAssert.Contains(viewModelSource, "SettingsText");
+        StringAssert.Contains(pageSource, "ViewModel.SettingsText");
+    }
+
+    [TestMethod]
     public void CommandBarExposesDemoDeckShortcut()
     {
         var page = XDocument.Load(FindMainPageXaml());

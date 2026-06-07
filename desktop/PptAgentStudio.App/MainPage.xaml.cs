@@ -103,7 +103,7 @@ public sealed partial class MainPage : Page
         {
             XamlRoot = XamlRoot,
             Title = "Runtime Settings",
-            Content = ViewModel.RuntimeConfig?.ToSettingsText() ?? ViewModel.SessionStatus,
+            Content = ViewModel.SettingsText,
             CloseButtonText = "Close"
         };
         await dialog.ShowAsync();

@@ -111,6 +111,28 @@ public sealed class AgentSessionClient
         return RuntimeConfigSummary.FromPayload(runtimeEvent.Payload);
     }
 
+    public async Task<RuntimeToolCatalogSummary> GetRuntimeToolsAsync(CancellationToken cancellationToken = default)
+    {
+        using var socket = new ClientWebSocket();
+        await socket.ConnectAsync(_endpoint, cancellationToken);
+
+        var request = JsonSerializer.Serialize(new
+        {
+            type = "runtime.tools",
+            session_id = _identity.SessionId
+        });
+        await socket.SendAsync(
+            Encoding.UTF8.GetBytes(request),
+            WebSocketMessageType.Text,
+            true,
+            cancellationToken);
+
+        var message = await ReceiveTextAsync(socket, cancellationToken);
+        var runtimeEvent = ParseEvent(message);
+        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "tools received", cancellationToken);
+        return RuntimeToolCatalogSummary.FromPayload(runtimeEvent.Payload);
+    }
+
     private async Task ResetCurrentDeckAsync(CancellationToken cancellationToken)
     {
         using var socket = new ClientWebSocket();

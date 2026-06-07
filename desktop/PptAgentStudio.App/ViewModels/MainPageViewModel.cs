@@ -48,6 +48,19 @@ public partial class MainPageViewModel : ObservableObject
 
     public RuntimeConfigSummary? RuntimeConfig { get; private set; }
 
+    public RuntimeToolCatalogSummary? RuntimeTools { get; private set; }
+
+    public string SettingsText
+    {
+        get
+        {
+            var configText = RuntimeConfig?.ToSettingsText() ?? SessionStatus;
+            return RuntimeTools is null
+                ? configText
+                : $"{configText}{Environment.NewLine}{RuntimeTools.ToSettingsText()}";
+        }
+    }
+
     public ObservableCollection<ChatMessageItem> Messages { get; } =
     [
         CreateInitialMessage()
@@ -97,8 +110,10 @@ public partial class MainPageViewModel : ObservableObject
         try
         {
             var runtimeConfig = await _agentClient.GetRuntimeConfigAsync();
+            var runtimeTools = await _agentClient.GetRuntimeToolsAsync();
             RuntimeConfig = runtimeConfig;
-            SessionStatus = runtimeConfig.ToStatusText();
+            RuntimeTools = runtimeTools;
+            SessionStatus = $"{runtimeConfig.ToStatusText()} Tools: {runtimeTools.ToolCount}.";
         }
         catch (Exception ex)
         {
