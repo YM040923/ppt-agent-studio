@@ -194,6 +194,19 @@ def test_fallback_outline_planner_derives_clean_english_deck_title():
     assert outline["slides"][0]["title"] == "Board AI Strategy"
 
 
+def test_fallback_outline_planner_starts_multislide_decks_with_executive_summary():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline("Make a 5 slide board AI strategy deck in McKinsey style")
+
+    outline = asyncio.run(run())
+    summary = outline["slides"][1]
+
+    assert summary["title"] == "Executive summary"
+    assert [point["label"] for point in summary["points"]] == ["Recommendation", "Impact", "Next step"]
+
+
 def test_fallback_outline_planner_derives_clean_chinese_deck_title():
     planner = FallbackOutlinePlanner()
 

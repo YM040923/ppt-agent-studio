@@ -240,17 +240,21 @@ def _fallback_slides(topic: str, slide_count: int) -> list[dict[str, object]]:
 
     slides.append(
         {
-            "title": "Strategic context",
+            "title": "Executive summary",
             "prototype_hint": "content",
-            "speaker_notes": "Explain why the context matters now, then connect the signal to the decision in front of the audience.",
+            "speaker_notes": "Start with the recommendation, quantify why it matters, and make the next decision explicit.",
             "points": [
                 {
-                    "label": "Objective",
-                    "body": "Clarify the decision, audience, and expected business outcome.",
+                    "label": "Recommendation",
+                    "body": "State the preferred path and the decision needed from the audience.",
                 },
                 {
-                    "label": "Signal",
-                    "body": "Frame the core trend and why it matters now.",
+                    "label": "Impact",
+                    "body": "Summarize the expected business value, risk reduction, or strategic advantage.",
+                },
+                {
+                    "label": "Next step",
+                    "body": "Name the immediate action, owner, and timing required to move forward.",
                 },
             ],
         }
