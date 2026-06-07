@@ -19,6 +19,7 @@ class DemoRunSummary:
     session_id: str
     deck_id: str
     deck_revision: int
+    prompt: str
     follow_up: str
     slide_count: int
     event_count: int
@@ -56,7 +57,8 @@ async def run_demo(
                 pptx_path = Path(str(event.payload.get("path") or ""))
                 slide_count = int(event.payload.get("slide_count") or 0)
 
-    await consume_turn(prompt)
+    normalized_prompt = prompt.strip()
+    await consume_turn(normalized_prompt)
     normalized_follow_up = follow_up.strip()
     if normalized_follow_up:
         await consume_turn(normalized_follow_up)
@@ -74,6 +76,7 @@ async def run_demo(
         session_id=session_id,
         deck_id=deck_id,
         deck_revision=deck_revision,
+        prompt=normalized_prompt,
         follow_up=normalized_follow_up,
         slide_count=slide_count,
         event_count=event_count,
@@ -87,6 +90,7 @@ async def run_demo(
                 "session_id": summary.session_id,
                 "deck_id": summary.deck_id,
                 "deck_revision": summary.deck_revision,
+                "prompt": summary.prompt,
                 "follow_up": summary.follow_up,
                 "slide_count": summary.slide_count,
                 "event_count": summary.event_count,
@@ -106,6 +110,7 @@ def format_summary(summary: DemoRunSummary) -> str:
         "PPT Agent Studio demo deck generated.",
         f"Session: {summary.session_id}",
         f"Deck: {summary.deck_id} r{summary.deck_revision}",
+        f"Prompt: {summary.prompt}",
     ]
     if summary.follow_up:
         lines.append(f"Follow-up: {summary.follow_up}")

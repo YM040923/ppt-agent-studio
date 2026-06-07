@@ -29,6 +29,7 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
         "session_id": "demo-session",
         "deck_id": "demo-deck",
         "deck_revision": 1,
+        "prompt": "Make a 5 slide board AI strategy deck in McKinsey style",
         "follow_up": "",
         "slide_count": 5,
         "event_count": 11,
