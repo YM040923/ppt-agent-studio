@@ -39,7 +39,9 @@ def test_run_demo_can_apply_follow_up_turn(tmp_path):
     summary = asyncio.run(run())
 
     assert summary.deck_revision == 2
+    assert summary.follow_up == "Add a risk mitigation slide"
     assert summary.slide_count == 6
     assert summary.event_count == 20
     assert summary.preview_html_path.name == "demo-deck-r2.html"
     assert summary.pptx_path.name == "demo-deck-r2.pptx"
+    assert "Follow-up: Add a risk mitigation slide" in format_summary(summary)

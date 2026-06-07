@@ -18,6 +18,7 @@ class DemoRunSummary:
     session_id: str
     deck_id: str
     deck_revision: int
+    follow_up: str
     slide_count: int
     event_count: int
     preview_html_path: Path
@@ -54,8 +55,9 @@ async def run_demo(
                 slide_count = int(event.payload.get("slide_count") or 0)
 
     await consume_turn(prompt)
-    if follow_up.strip():
-        await consume_turn(follow_up)
+    normalized_follow_up = follow_up.strip()
+    if normalized_follow_up:
+        await consume_turn(normalized_follow_up)
 
     if not preview_html:
         raise RuntimeError("Demo run did not produce preview HTML.")
@@ -69,6 +71,7 @@ async def run_demo(
         session_id=session_id,
         deck_id=deck_id,
         deck_revision=deck_revision,
+        follow_up=normalized_follow_up,
         slide_count=slide_count,
         event_count=event_count,
         preview_html_path=preview_html_path,
@@ -77,17 +80,22 @@ async def run_demo(
 
 
 def format_summary(summary: DemoRunSummary) -> str:
-    return "\n".join(
+    lines = [
+        "PPT Agent Studio demo deck generated.",
+        f"Session: {summary.session_id}",
+        f"Deck: {summary.deck_id} r{summary.deck_revision}",
+    ]
+    if summary.follow_up:
+        lines.append(f"Follow-up: {summary.follow_up}")
+    lines.extend(
         [
-            "PPT Agent Studio demo deck generated.",
-            f"Session: {summary.session_id}",
-            f"Deck: {summary.deck_id} r{summary.deck_revision}",
             f"Slides: {summary.slide_count}",
             f"Events: {summary.event_count}",
             f"Preview HTML: {summary.preview_html_path}",
             f"Editable PPTX: {summary.pptx_path}",
         ]
     )
+    return "\n".join(lines)
 
 
 def main(argv: Iterable[str] | None = None) -> None:
