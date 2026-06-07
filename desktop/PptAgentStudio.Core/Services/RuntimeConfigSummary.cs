@@ -133,7 +133,7 @@ public sealed record RuntimeConfigSummary(
     {
         if (!llm.TryGetProperty("source", out var source) || source.ValueKind != JsonValueKind.Object)
         {
-            return "unknown";
+            return "unavailable";
         }
 
         var parts = new List<string>();
@@ -145,6 +145,6 @@ public sealed record RuntimeConfigSummary(
             }
         }
 
-        return parts.Count == 0 ? "unknown" : string.Join(", ", parts);
+        return parts.Count == 0 ? "unavailable" : string.Join(", ", parts);
     }
 }

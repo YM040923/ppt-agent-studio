@@ -108,6 +108,31 @@ public sealed class RuntimeConfigSummaryTests
     }
 
     [TestMethod]
+    public void ToSettingsTextShowsUnavailableConfigSourceForOlderRuntimePayloads()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "llm": {
+                "base_url": "https://provider.example/v1",
+                "model": "gpt-compatible-model",
+                "has_api_key": true,
+                "has_extra_headers": false,
+                "endpoint_kind": "cloud"
+              },
+              "planner": {
+                "requested": "fallback",
+                "active": "fallback"
+              }
+            }
+            """);
+
+        var summary = RuntimeConfigSummary.FromPayload(document.RootElement);
+
+        StringAssert.Contains(summary.ToSettingsText(), "Config source: unavailable");
+    }
+
+    [TestMethod]
     public void ToSettingsTextShowsRuntimeConfigurationWithoutSecrets()
     {
         var summary = new RuntimeConfigSummary(
