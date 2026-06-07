@@ -31,6 +31,7 @@ public partial class MainPageViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyCanExecuteChangedFor(nameof(GenerateDemoCommand))]
     public partial bool IsSending { get; set; }
 
     [ObservableProperty]
@@ -71,6 +72,8 @@ public partial class MainPageViewModel : ObservableObject
         </body>
         </html>
         """;
+
+    private const string DemoPrompt = "Make a 5 slide board AI strategy deck in McKinsey style for senior executives.";
 
     public async Task InitializeRuntimeAsync()
     {
@@ -115,6 +118,23 @@ public partial class MainPageViewModel : ObservableObject
     private bool CanExportLatest()
     {
         return _workspaceDeckState.CanExport;
+    }
+
+    private bool CanGenerateDemo()
+    {
+        return !IsSending;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanGenerateDemo))]
+    private async Task GenerateDemo()
+    {
+        if (IsSending)
+        {
+            return;
+        }
+
+        InputText = DemoPrompt;
+        await Send();
     }
 
     [RelayCommand(CanExecute = nameof(CanExportLatest))]

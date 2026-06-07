@@ -30,6 +30,28 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void CommandBarExposesDemoDeckShortcut()
+    {
+        var page = XDocument.Load(FindMainPageXaml());
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var button = page
+            .Descendants(xaml + "AppBarButton")
+            .Single(element => element.Attribute("Label")?.Value == "Demo Deck");
+
+        StringAssert.Contains(button.Attribute("Command")?.Value ?? "", "GenerateDemoCommand");
+    }
+
+    [TestMethod]
+    public void ViewModelGeneratesDemoDeckFromDefaultPrompt()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "private const string DemoPrompt");
+        StringAssert.Contains(source, "Make a 5 slide board AI strategy deck");
+        StringAssert.Contains(source, "await Send()");
+    }
+
+    [TestMethod]
     public void NewDeckStartsFreshRuntimeDeckIdentity()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
