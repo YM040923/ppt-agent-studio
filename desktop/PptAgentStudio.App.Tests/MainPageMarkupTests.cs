@@ -19,6 +19,16 @@ public sealed class MainPageMarkupTests
         StringAssert.Contains(textBinding, "UpdateSourceTrigger=PropertyChanged");
     }
 
+    [TestMethod]
+    public void ViewModelDisplaysResearchBriefPlanUpdates()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "RuntimeResearchBriefSummary.FromPayload");
+        StringAssert.Contains(source, "researchSummary.HasBrief");
+        StringAssert.Contains(source, "researchSummary.ToChatMessage()");
+    }
+
     private static string FindMainPageXaml()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -34,5 +44,22 @@ public sealed class MainPageMarkupTests
         }
 
         throw new FileNotFoundException("MainPage.xaml was not found.");
+    }
+
+    private static string FindMainPageViewModel()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "desktop", "PptAgentStudio.App", "ViewModels", "MainPageViewModel.cs");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new FileNotFoundException("MainPageViewModel.cs was not found.");
     }
 }

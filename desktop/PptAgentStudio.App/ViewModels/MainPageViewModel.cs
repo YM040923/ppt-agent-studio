@@ -201,10 +201,18 @@ public partial class MainPageViewModel : ObservableObject
                 Messages.Add(new ChatMessageItem
                 {
                     Role = "Assistant",
-                    Content = isCompletedPlan
-                        ? planSummary.ToChatMessage()
-                        : $"{planSummary.ToChatMessage()} Rendering preview..."
+                    Content = planSummary.ToChatMessage()
                 });
+                var researchSummary = RuntimeResearchBriefSummary.FromPayload(runtimeEvent.Payload);
+                if (researchSummary.HasBrief)
+                {
+                    SessionStatus = researchSummary.ToChatMessage();
+                    Messages.Add(new ChatMessageItem
+                    {
+                        Role = "Assistant",
+                        Content = researchSummary.ToChatMessage()
+                    });
+                }
                 break;
             case "deck.updated":
                 SessionStatus = $"Deck updated at revision {runtimeEvent.DeckRevision}.";
