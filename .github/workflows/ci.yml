@@ -51,9 +51,13 @@ jobs:
           -p:UapAppxPackageBuildMode=SideloadOnly
           -p:AppxBundle=Never
           -p:PublishTrimmed=false
+      - name: Archive unsigned MSIX package
+        run: |
+          New-Item -ItemType Directory -Force artifacts\msix
+          Compress-Archive -Path desktop\PptAgentStudio.App\AppPackages\* -DestinationPath artifacts\msix\ppt-agent-studio-msix.zip -Force
       - name: Upload MSIX artifact
         uses: actions/upload-artifact@v7
         with:
           name: ppt-agent-studio-msix
-          path: desktop/PptAgentStudio.App/AppPackages/**/*.msix
+          path: artifacts/msix/ppt-agent-studio-msix.zip
           if-no-files-found: error
