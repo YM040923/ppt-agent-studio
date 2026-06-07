@@ -78,7 +78,7 @@ Create an unsigned sideload MSIX package locally:
 dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj -c Release -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false -p:UapAppxPackageBuildMode=SideloadOnly -p:AppxBundle=Never -p:PublishTrimmed=false
 ```
 
-The package is written under `desktop\PptAgentStudio.App\AppPackages`. CI runs the same packaging smoke and uploads the `.msix` as an artifact.
+The package is written under `desktop\PptAgentStudio.App\AppPackages`. CI runs the same packaging smoke and uploads a zipped AppPackages artifact named `ppt-agent-studio-msix.zip`.
 
 ## Configuration
 
