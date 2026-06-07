@@ -44,7 +44,7 @@ class LLMOutlinePlanner:
             outline["deck_title"] = title or "Untitled Deck"
             outline["slides"] = _fallback_slides(outline["deck_title"], _slide_count_from_prompt(prompt))
         else:
-            outline["slides"] = _usable_slides(outline)[:30]
+            outline["slides"] = _normalized_llm_slides(outline, prompt)
         return outline
 
 
@@ -71,6 +71,19 @@ def _usable_slides(outline: dict[str, object]) -> list[dict[str, object]]:
     return [slide for slide in slides if isinstance(slide, dict)]
 
 
+def _normalized_llm_slides(outline: dict[str, object], prompt: str) -> list[dict[str, object]]:
+    slides = _usable_slides(outline)
+    requested_count = _requested_slide_count_from_prompt(prompt)
+    target_count = requested_count if requested_count is not None else len(slides)
+    target_count = max(1, min(target_count, 30))
+    if len(slides) >= target_count:
+        return slides[:target_count]
+
+    title = str(outline.get("deck_title") or outline.get("title") or prompt.removesuffix(".").strip())
+    fallback_slides = _fallback_slides(title or "Untitled Deck", target_count)
+    return [*slides, *fallback_slides[len(slides) : target_count]]
+
+
 def _theme_from_prompt(prompt: str) -> dict[str, str]:
     normalized = prompt.casefold()
     executive_markers = ("麦肯锡", "高层", "高管", "管理者", "咨询", "mckinsey", "executive", "board", "consulting")
@@ -92,13 +105,17 @@ def _theme_from_prompt(prompt: str) -> dict[str, str]:
 
 
 def _slide_count_from_prompt(prompt: str) -> int:
+    return _requested_slide_count_from_prompt(prompt) or 3
+
+
+def _requested_slide_count_from_prompt(prompt: str) -> int | None:
     match = re.search(r"\b(\d{1,3})\s*(?:slides?|pages?)\b|(\d{1,3})\s*[页張张]", prompt, flags=re.IGNORECASE)
     if match:
         value = int(match.group(1) or match.group(2))
         return max(1, min(value, 30))
     chinese_match = re.search(r"([一二两三四五六七八九十]{1,3})\s*[页張张]", prompt)
     if not chinese_match:
-        return 3
+        return None
     value = _chinese_number_to_int(chinese_match.group(1))
     return max(1, min(value, 30))
 

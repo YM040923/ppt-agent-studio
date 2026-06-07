@@ -145,6 +145,31 @@ def test_llm_outline_planner_caps_excessive_model_slides():
     assert outline["slides"][-1]["title"] == "Slide 30"
 
 
+def test_llm_outline_planner_backfills_when_model_returns_too_few_slides():
+    chat_client = FakeChatClient(
+        """
+        {
+          "deck_title": "AI Operating Model",
+          "slides": [
+            {"title": "AI Operating Model", "prototype_hint": "cover"},
+            {"title": "Current State", "prototype_hint": "content"}
+          ]
+        }
+        """
+    )
+    planner = LLMOutlinePlanner(chat_client=chat_client)
+
+    async def run():
+        return await planner.create_outline("Make a 5 page AI operating model deck")
+
+    outline = asyncio.run(run())
+
+    assert len(outline["slides"]) == 5
+    assert outline["slides"][0]["title"] == "AI Operating Model"
+    assert outline["slides"][1]["title"] == "Current State"
+    assert outline["slides"][-1]["title"] == "Implementation roadmap"
+
+
 def test_fallback_outline_planner_preserves_prompt_topic():
     planner = FallbackOutlinePlanner()
 
