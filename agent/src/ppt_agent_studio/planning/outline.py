@@ -69,10 +69,37 @@ def _theme_from_prompt(prompt: str) -> dict[str, str]:
 
 def _slide_count_from_prompt(prompt: str) -> int:
     match = re.search(r"\b(\d{1,3})\s*(?:slides?|pages?)\b|(\d{1,3})\s*[页張张]", prompt, flags=re.IGNORECASE)
-    if not match:
+    if match:
+        value = int(match.group(1) or match.group(2))
+        return max(1, min(value, 30))
+    chinese_match = re.search(r"([一二两三四五六七八九十]{1,3})\s*[页張张]", prompt)
+    if not chinese_match:
         return 3
-    value = int(match.group(1) or match.group(2))
+    value = _chinese_number_to_int(chinese_match.group(1))
     return max(1, min(value, 30))
+
+
+def _chinese_number_to_int(value: str) -> int:
+    digits = {
+        "一": 1,
+        "二": 2,
+        "两": 2,
+        "三": 3,
+        "四": 4,
+        "五": 5,
+        "六": 6,
+        "七": 7,
+        "八": 8,
+        "九": 9,
+    }
+    if value == "十":
+        return 10
+    if "十" in value:
+        tens_text, ones_text = value.split("十", 1)
+        tens = digits.get(tens_text, 1) if tens_text else 1
+        ones = digits.get(ones_text, 0) if ones_text else 0
+        return tens * 10 + ones
+    return digits.get(value, 3)
 
 
 def _fallback_slides(topic: str, slide_count: int) -> list[dict[str, object]]:

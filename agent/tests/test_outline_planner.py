@@ -81,6 +81,17 @@ def test_fallback_outline_planner_caps_large_requested_slide_count():
     assert len(outline["slides"]) == 30
 
 
+def test_fallback_outline_planner_reads_chinese_number_slide_count():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline("帮我做一个关于 AI 转型的二十页 PPT")
+
+    outline = asyncio.run(run())
+
+    assert len(outline["slides"]) == 20
+
+
 def test_fallback_outline_planner_derives_executive_consulting_theme():
     planner = FallbackOutlinePlanner()
 
