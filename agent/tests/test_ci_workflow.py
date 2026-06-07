@@ -11,6 +11,13 @@ def test_ci_runs_offline_demo_smoke():
     assert "if-no-files-found: error" in workflow
 
 
+def test_ci_avoids_duplicate_pr_branch_push_runs():
+    workflow = _repo_root().joinpath(".github", "workflows", "ci.yml").read_text(encoding="utf-8")
+
+    assert "pull_request:" in workflow
+    assert "push:\n    branches: [main]" in workflow
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
