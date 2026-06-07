@@ -222,6 +222,12 @@ def collect_research_brief(arguments: dict[str, Any]) -> ToolResult:
                     "Identify the audience's current belief and desired shift.",
                     "List the proof points needed for executive confidence.",
                 ],
+                "source_suggestions": [
+                    f"Recent reports, filings, and investor materials related to {topic}.",
+                    f"Industry benchmarks and analyst research tailored to {audience}.",
+                    "Internal performance, customer, financial, and operating metrics.",
+                ],
+                "evidence_needs": _research_evidence_needs(constraints),
             }
         }
     )
@@ -377,3 +383,14 @@ def _theme_rgb(deck: DeckSpec, key: str, fallback: str) -> RGBColor:
 def _metadata_text(deck: DeckSpec, key: str) -> str:
     value = deck.metadata.get(key)
     return value.strip() if isinstance(value, str) else ""
+
+
+def _research_evidence_needs(constraints: list[str]) -> list[str]:
+    needs = [
+        "Market context and size of the opportunity.",
+        "Current-state baseline, pain points, and root causes.",
+        "Decision options with value, risk, timing, and ownership implications.",
+    ]
+    if constraints:
+        needs.append(f"Evidence that satisfies constraints: {', '.join(constraints)}.")
+    return needs

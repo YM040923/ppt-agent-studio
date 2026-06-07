@@ -21,6 +21,14 @@ public sealed class RuntimeResearchBriefSummaryTests
                   "Identify the audience's current belief and desired shift.",
                   "List the proof points needed for executive confidence."
                 ],
+                "source_suggestions": [
+                  "Recent reports, filings, and investor materials related to AI strategy.",
+                  "Industry benchmarks and analyst research tailored to executive committee."
+                ],
+                "evidence_needs": [
+                  "Market context and size of the opportunity.",
+                  "Decision options with value, risk, timing, and ownership implications."
+                ],
                 "api_key": "should-not-appear"
               }
             }
@@ -43,7 +51,7 @@ public sealed class RuntimeResearchBriefSummaryTests
             },
             summary.Questions.ToArray());
         Assert.AreEqual(
-            "**Research brief:** AI strategy for executive committee. **Constraints:** Style: McKinsey, Slides: 4. **Questions:** Clarify the decision the deck must support.; Identify the audience's current belief and desired shift.; List the proof points needed for executive confidence.",
+            "**Research brief:** AI strategy for executive committee. **Constraints:** Style: McKinsey, Slides: 4. **Questions:** Clarify the decision the deck must support.; Identify the audience's current belief and desired shift.; List the proof points needed for executive confidence. **Sources:** Recent reports, filings, and investor materials related to AI strategy.; Industry benchmarks and analyst research tailored to executive committee. **Evidence:** Market context and size of the opportunity.; Decision options with value, risk, timing, and ownership implications.",
             summary.ToChatMessage());
         Assert.IsFalse(summary.ToChatMessage().Contains("api_key", StringComparison.OrdinalIgnoreCase));
     }

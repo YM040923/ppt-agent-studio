@@ -249,6 +249,35 @@ def test_default_registry_runs_research_and_theme_tools():
     assert "--slide-background: #F8FAFC;" in preview_html
 
 
+def test_research_brief_includes_sources_and_evidence_needs():
+    registry = build_default_registry()
+
+    async def run():
+        result = await registry.run(
+            "research.collect_brief",
+            {
+                "topic": "AI operating model",
+                "audience": "executive committee",
+                "constraints": ["McKinsey style", "20 slides"],
+            },
+        )
+        return result.payload["brief"]
+
+    brief = asyncio.run(run())
+
+    assert brief["source_suggestions"] == [
+        "Recent reports, filings, and investor materials related to AI operating model.",
+        "Industry benchmarks and analyst research tailored to executive committee.",
+        "Internal performance, customer, financial, and operating metrics.",
+    ]
+    assert brief["evidence_needs"] == [
+        "Market context and size of the opportunity.",
+        "Current-state baseline, pain points, and root causes.",
+        "Decision options with value, risk, timing, and ownership implications.",
+        "Evidence that satisfies constraints: McKinsey style, 20 slides.",
+    ]
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

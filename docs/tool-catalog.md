@@ -180,7 +180,17 @@ Output:
     "topic": "AI operating model",
     "audience": "executive committee",
     "constraints": ["Style: McKinsey"],
-    "questions": []
+    "questions": [],
+    "source_suggestions": [
+      "Recent reports, filings, and investor materials related to AI operating model.",
+      "Industry benchmarks and analyst research tailored to executive committee.",
+      "Internal performance, customer, financial, and operating metrics."
+    ],
+    "evidence_needs": [
+      "Market context and size of the opportunity.",
+      "Current-state baseline, pain points, and root causes.",
+      "Decision options with value, risk, timing, and ownership implications."
+    ]
   }
 }
 ```
