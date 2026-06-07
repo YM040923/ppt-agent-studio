@@ -39,6 +39,8 @@ class LLMOutlinePlanner:
         outline = json.loads(_extract_json(response))
         if not isinstance(outline, dict):
             raise ValueError("outline response must be a JSON object")
+        if not str(outline.get("deck_title") or "").strip():
+            outline["deck_title"] = str(outline.get("title") or _topic_from_prompt(prompt))
         if not isinstance(outline.get("metadata"), dict):
             outline["metadata"] = _metadata_from_prompt(prompt)
         if not isinstance(outline.get("theme"), dict):

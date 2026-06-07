@@ -96,6 +96,26 @@ def test_llm_outline_planner_adds_theme_when_model_omits_it():
     }
 
 
+def test_llm_outline_planner_adds_deck_title_when_model_omits_it():
+    chat_client = FakeChatClient(
+        """
+        {
+          "slides": [
+            {"title": "Opening", "prototype_hint": "cover"}
+          ]
+        }
+        """
+    )
+    planner = LLMOutlinePlanner(chat_client=chat_client)
+
+    async def run():
+        return await planner.create_outline("Make a board AI strategy deck in McKinsey style")
+
+    outline = asyncio.run(run())
+
+    assert outline["deck_title"] == "Board AI Strategy"
+
+
 def test_llm_outline_planner_adds_fallback_slides_when_model_omits_them():
     chat_client = FakeChatClient(
         """
