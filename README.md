@@ -21,7 +21,7 @@ Each successful Agent turn exports an editable PPTX artifact before refreshing t
 The WinUI app starts the local runtime automatically in development. To run the runtime manually for protocol testing:
 
 ```powershell
-$env:PYTHONPATH="E:\MyProjects\ppt-agent-studio\agent\src"
+$env:PYTHONPATH=(Resolve-Path .\agent\src).Path
 python -m ppt_agent_studio.runtime.websocket_server --host 127.0.0.1 --port 8765
 ```
 
@@ -60,7 +60,7 @@ dotnet build PptAgentStudio.slnx
 Generate an offline demo deck without calling a model:
 
 ```powershell
-$env:PYTHONPATH="E:\MyProjects\ppt-agent-studio\agent\src"
+$env:PYTHONPATH=(Resolve-Path .\agent\src).Path
 python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\demo
 ```
 
