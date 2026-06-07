@@ -24,7 +24,7 @@ public sealed class RuntimeToolSummaryTests
         Assert.AreEqual("pptx.export", summary.ToolName);
         Assert.AreEqual("completed", summary.Status);
         Assert.AreEqual("Exported editable PPTX artifact.", summary.Summary);
-        Assert.AreEqual("Tool completed: pptx.export. Exported editable PPTX artifact.", summary.ToChatMessage());
+        Assert.AreEqual("**Tool completed:** pptx.export. Exported editable PPTX artifact.", summary.ToChatMessage());
         Assert.IsFalse(summary.ToChatMessage().Contains("secret", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -37,6 +37,6 @@ public sealed class RuntimeToolSummaryTests
 
         Assert.AreEqual("preview.render_html", summary.ToolName);
         Assert.AreEqual("completed", summary.Status);
-        Assert.AreEqual("Tool completed: preview.render_html.", summary.ToChatMessage());
+        Assert.AreEqual("**Tool completed:** preview.render_html.", summary.ToChatMessage());
     }
 }

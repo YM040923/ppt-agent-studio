@@ -18,7 +18,7 @@ public sealed record RuntimeToolSummary(string ToolName, string Status, string S
         var statusText = string.Equals(Status, "completed", StringComparison.OrdinalIgnoreCase)
             ? "completed"
             : Status;
-        var prefix = $"Tool {statusText}: {ToolName}.";
+        var prefix = $"**Tool {statusText}:** {ToolName}.";
         return string.IsNullOrWhiteSpace(Summary)
             ? prefix
             : $"{prefix} {Summary}";

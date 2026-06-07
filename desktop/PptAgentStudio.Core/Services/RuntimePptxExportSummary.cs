@@ -27,17 +27,17 @@ public sealed record RuntimePptxExportSummary(string Path, int SlideCount)
 
         if (!string.IsNullOrWhiteSpace(slideText) && !string.IsNullOrWhiteSpace(Path))
         {
-            return $"Editable PPTX export is ready: {slideText} at {Path}";
+            return $"**Editable PPTX export is ready:** {slideText} at `{Path}`";
         }
 
         if (!string.IsNullOrWhiteSpace(slideText))
         {
-            return $"Editable PPTX export is ready: {slideText}.";
+            return $"**Editable PPTX export is ready:** {slideText}.";
         }
 
         return string.IsNullOrWhiteSpace(Path)
-            ? "Editable PPTX export is ready."
-            : $"Editable PPTX export is ready: {Path}";
+            ? "**Editable PPTX export is ready.**"
+            : $"**Editable PPTX export is ready:** `{Path}`";
     }
 
     public string ToStatusText(int? deckRevision)

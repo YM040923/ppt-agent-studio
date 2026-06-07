@@ -61,11 +61,11 @@ public sealed record RuntimePlanSummary(
         var slideText = SlideCount == 1 ? "1 slide" : $"{SlideCount} slides";
         if (string.Equals(Status, "completed", StringComparison.OrdinalIgnoreCase))
         {
-            return $"Plan completed: {Title} ({slideText}).";
+            return $"**Plan completed:** {Title} ({slideText}).";
         }
 
-        var activeStep = string.IsNullOrWhiteSpace(ActiveStepTitle) ? "" : $" Active: {ActiveStepTitle}.";
-        var nextSteps = FirstSteps.Count == 0 ? "" : $" Next: {string.Join(", ", FirstSteps)}.";
-        return $"Plan ready: {Title} ({slideText}).{activeStep}{nextSteps}";
+        var activeStep = string.IsNullOrWhiteSpace(ActiveStepTitle) ? "" : $" **Active:** {ActiveStepTitle}.";
+        var nextSteps = FirstSteps.Count == 0 ? "" : $" **Next:** {string.Join(", ", FirstSteps)}.";
+        return $"**Plan ready:** {Title} ({slideText}).{activeStep}{nextSteps}";
     }
 }

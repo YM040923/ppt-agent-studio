@@ -38,9 +38,9 @@ public sealed record RuntimeResearchBriefSummary(
 
         var topic = string.IsNullOrWhiteSpace(Topic) ? "deck context" : Topic;
         var audience = string.IsNullOrWhiteSpace(Audience) ? "" : $" for {Audience}";
-        var constraints = Constraints.Count == 0 ? "" : $" Constraints: {string.Join(", ", Constraints)}.";
-        var questions = Questions.Count == 0 ? "" : $" Questions: {string.Join("; ", Questions)}";
-        return $"Research brief: {topic}{audience}.{constraints}{questions}";
+        var constraints = Constraints.Count == 0 ? "" : $" **Constraints:** {string.Join(", ", Constraints)}.";
+        var questions = Questions.Count == 0 ? "" : $" **Questions:** {string.Join("; ", Questions)}";
+        return $"**Research brief:** {topic}{audience}.{constraints}{questions}";
     }
 
     private static string ReadString(JsonElement source, string propertyName)

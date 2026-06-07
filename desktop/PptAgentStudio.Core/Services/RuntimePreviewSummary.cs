@@ -29,20 +29,20 @@ public sealed record RuntimePreviewSummary(string Title, int SlideCount)
         var slideText = FormatSlideCount();
         if (!string.IsNullOrWhiteSpace(Title) && !string.IsNullOrWhiteSpace(slideText))
         {
-            return $"Preview updated: {Title} ({slideText}).";
+            return $"**Preview updated:** {Title} ({slideText}).";
         }
 
         if (!string.IsNullOrWhiteSpace(Title))
         {
-            return $"Preview updated: {Title}.";
+            return $"**Preview updated:** {Title}.";
         }
 
         if (!string.IsNullOrWhiteSpace(slideText))
         {
-            return $"Preview updated: {slideText}.";
+            return $"**Preview updated:** {slideText}.";
         }
 
-        return "Preview updated from the local Agent runtime.";
+        return "**Preview updated** from the local Agent runtime.";
     }
 
     public string ToStatusText(int? deckRevision)

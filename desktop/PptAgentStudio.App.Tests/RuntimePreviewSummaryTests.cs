@@ -29,7 +29,7 @@ public sealed class RuntimePreviewSummaryTests
         var summary = new RuntimePreviewSummary("Board AI Strategy", 5);
 
         Assert.AreEqual(
-            "Preview updated: Board AI Strategy (5 slides).",
+            "**Preview updated:** Board AI Strategy (5 slides).",
             summary.ToChatMessage());
     }
 
@@ -52,7 +52,7 @@ public sealed class RuntimePreviewSummaryTests
 
         Assert.AreEqual("", summary.Title);
         Assert.AreEqual(0, summary.SlideCount);
-        Assert.AreEqual("Preview updated from the local Agent runtime.", summary.ToChatMessage());
+        Assert.AreEqual("**Preview updated** from the local Agent runtime.", summary.ToChatMessage());
         Assert.AreEqual("Preview ready.", summary.ToStatusText(null));
     }
 }

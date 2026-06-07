@@ -43,7 +43,7 @@ public sealed class RuntimeResearchBriefSummaryTests
             },
             summary.Questions.ToArray());
         Assert.AreEqual(
-            "Research brief: AI strategy for executive committee. Constraints: Style: McKinsey, Slides: 4. Questions: Clarify the decision the deck must support.; Identify the audience's current belief and desired shift.; List the proof points needed for executive confidence.",
+            "**Research brief:** AI strategy for executive committee. **Constraints:** Style: McKinsey, Slides: 4. **Questions:** Clarify the decision the deck must support.; Identify the audience's current belief and desired shift.; List the proof points needed for executive confidence.",
             summary.ToChatMessage());
         Assert.IsFalse(summary.ToChatMessage().Contains("api_key", StringComparison.OrdinalIgnoreCase));
     }

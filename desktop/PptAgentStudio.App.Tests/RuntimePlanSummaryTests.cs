@@ -44,7 +44,7 @@ public sealed class RuntimePlanSummaryTests
             FirstSteps: ["Research context", "Structure story", "Draft 3 slides"]);
 
         Assert.AreEqual(
-            "Plan ready: AI Strategy (3 slides). Next: Research context, Structure story, Draft 3 slides.",
+            "**Plan ready:** AI Strategy (3 slides). **Next:** Research context, Structure story, Draft 3 slides.",
             summary.ToChatMessage());
     }
 
@@ -58,7 +58,7 @@ public sealed class RuntimePlanSummaryTests
             ActiveStepTitle: "Draft 3 slides");
 
         Assert.AreEqual(
-            "Plan ready: AI Strategy (3 slides). Active: Draft 3 slides. Next: Research context, Structure story, Draft 3 slides.",
+            "**Plan ready:** AI Strategy (3 slides). **Active:** Draft 3 slides. **Next:** Research context, Structure story, Draft 3 slides.",
             summary.ToChatMessage());
     }
 
@@ -84,6 +84,6 @@ public sealed class RuntimePlanSummaryTests
         var summary = RuntimePlanSummary.FromPayload(document.RootElement);
 
         Assert.AreEqual("completed", summary.Status);
-        Assert.AreEqual("Plan completed: AI Strategy (3 slides).", summary.ToChatMessage());
+        Assert.AreEqual("**Plan completed:** AI Strategy (3 slides).", summary.ToChatMessage());
     }
 }
