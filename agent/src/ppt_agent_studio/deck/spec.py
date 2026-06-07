@@ -47,6 +47,7 @@ class DeckSpec:
     revision: int
     slides: list[SlideSpec] = field(default_factory=list)
     theme: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.revision < 0:
@@ -57,6 +58,7 @@ class DeckSpec:
         object.__setattr__(self, "deck_id", self.deck_id.strip())
         object.__setattr__(self, "title", title)
         object.__setattr__(self, "theme", dict(self.theme) if isinstance(self.theme, dict) else {})
+        object.__setattr__(self, "metadata", dict(self.metadata) if isinstance(self.metadata, dict) else {})
 
     def to_dict(self) -> dict[str, Any]:
         payload = {
@@ -67,6 +69,8 @@ class DeckSpec:
         }
         if self.theme:
             payload["theme"] = dict(self.theme)
+        if self.metadata:
+            payload["metadata"] = dict(self.metadata)
         return payload
 
 
@@ -90,7 +94,14 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
             )
         )
     raw_theme = outline.get("theme") if isinstance(outline.get("theme"), dict) else {}
-    return DeckSpec(deck_id=deck_id, title=title, revision=revision, slides=slides, theme=raw_theme)
+    return DeckSpec(
+        deck_id=deck_id,
+        title=title,
+        revision=revision,
+        slides=slides,
+        theme=raw_theme,
+        metadata=_metadata_from_outline(outline),
+    )
 
 
 def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
@@ -131,6 +142,30 @@ def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
 def _speaker_notes_from_outline_slide(slide: dict[str, Any]) -> str:
     for key in ("speaker_notes", "notes", "talk_track"):
         value = slide.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _metadata_from_outline(outline: dict[str, Any]) -> dict[str, str]:
+    raw_metadata = outline.get("metadata") if isinstance(outline.get("metadata"), dict) else {}
+    audience = _first_text_value(raw_metadata, ("audience", "target_audience")) or _first_text_value(
+        outline, ("audience", "target_audience")
+    )
+    style = _first_text_value(raw_metadata, ("style", "visual_style", "tone")) or _first_text_value(
+        outline, ("style", "visual_style", "tone")
+    )
+    metadata: dict[str, str] = {}
+    if audience:
+        metadata["audience"] = audience
+    if style:
+        metadata["style"] = style
+    return metadata
+
+
+def _first_text_value(source: dict[str, Any], keys: tuple[str, ...]) -> str:
+    for key in keys:
+        value = source.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
     return ""

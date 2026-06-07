@@ -152,6 +152,29 @@ def test_agent_session_preserves_planner_theme_for_preview_and_export(tmp_path):
     assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "2563EB"
 
 
+def test_agent_session_preserves_prompt_metadata_for_preview_and_export(tmp_path):
+    session = AgentSession(session_id="session_metadata", deck_id="deck_metadata", artifact_dir=tmp_path)
+
+    async def collect():
+        return [
+            event
+            async for event in session.submit_user_message(
+                "Make a 3 page AI strategy deck for the executive committee, style McKinsey"
+            )
+        ]
+
+    events = asyncio.run(collect())
+    presentation = Presentation(events[7].payload["path"])
+
+    assert events[3].payload["deck"]["metadata"] == {
+        "audience": "executive committee",
+        "style": "McKinsey",
+    }
+    assert '<meta name="ppt-agent-audience" content="executive committee" />' in events[5].payload["html"]
+    assert presentation.core_properties.subject == "executive committee"
+    assert presentation.core_properties.keywords == "McKinsey"
+
+
 def test_agent_session_uses_tool_registry_for_deck_and_preview():
     calls = []
     registry = ToolRegistry()

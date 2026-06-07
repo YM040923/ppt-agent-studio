@@ -17,8 +17,10 @@ class FallbackOutlinePlanner:
     async def create_outline(self, prompt: str) -> dict[str, object]:
         topic = prompt.removesuffix(".").strip()
         slide_count = _slide_count_from_prompt(prompt)
+        metadata = _metadata_from_prompt(prompt)
         return {
             "deck_title": topic,
+            "metadata": metadata,
             "theme": _theme_from_prompt(prompt),
             "slides": _fallback_slides(topic, slide_count),
         }
@@ -37,6 +39,8 @@ class LLMOutlinePlanner:
         outline = json.loads(_extract_json(response))
         if not isinstance(outline, dict):
             raise ValueError("outline response must be a JSON object")
+        if not isinstance(outline.get("metadata"), dict):
+            outline["metadata"] = _metadata_from_prompt(prompt)
         if not isinstance(outline.get("theme"), dict):
             outline["theme"] = _theme_from_prompt(prompt)
         if not _has_usable_slides(outline):
@@ -102,6 +106,43 @@ def _theme_from_prompt(prompt: str) -> dict[str, str]:
         "text": "#111827",
         "accent": "#0F766E",
     }
+
+
+def _metadata_from_prompt(prompt: str) -> dict[str, str]:
+    metadata: dict[str, str] = {}
+    audience = _first_prompt_match(
+        prompt,
+        (
+            r"\btarget\s+audience\s*(?:is|:|=)?\s*(?P<value>[^,.;]+)",
+            r"\baudience\s*(?:is|:|=)\s*(?P<value>[^,.;]+)",
+            r"\bfor\s+(?:the\s+)?(?P<value>[^,.;]+)",
+            r"(?:\u76ee\u6807\u53d7\u4f17|\u53d7\u4f17)\s*(?:\u662f|:|：)?\s*(?P<value>[^,，。；;]+)",
+        ),
+    )
+    style = _first_prompt_match(
+        prompt,
+        (
+            r"\bstyle\s*(?:is|:|=)?\s*(?P<value>[^,.;]+)",
+            r"\btone\s*(?:is|:|=)\s*(?P<value>[^,.;]+)",
+            r"(?P<value>mckinsey|bcg|bain|consulting)\s+style\b",
+            r"(?:\u98ce\u683c|\u98a8\u683c)\s*(?:\u662f|:|：)?\s*(?P<value>[^,，。；;]+)",
+        ),
+    )
+    if audience:
+        metadata["audience"] = audience
+    if style:
+        metadata["style"] = style
+    return metadata
+
+
+def _first_prompt_match(prompt: str, patterns: tuple[str, ...]) -> str:
+    for pattern in patterns:
+        match = re.search(pattern, prompt, flags=re.IGNORECASE)
+        if match:
+            value = match.group("value").strip(" \t\r\n'\"")
+            if value:
+                return value
+    return ""
 
 
 def _slide_count_from_prompt(prompt: str) -> int:

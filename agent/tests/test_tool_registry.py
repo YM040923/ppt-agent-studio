@@ -128,6 +128,7 @@ def test_default_registry_updates_adds_and_removes_slides():
         "deck_id": "deck_001",
         "title": "AI Strategy",
         "revision": 3,
+        "metadata": {"audience": "board", "style": "consulting"},
         "slides": [
             {
                 "slide_id": "s1",
@@ -186,6 +187,7 @@ def test_default_registry_updates_adds_and_removes_slides():
 
     assert removed["revision"] == 6
     assert [slide["slide_id"] for slide in removed["slides"]] == ["s3", "s2"]
+    assert removed["metadata"] == {"audience": "board", "style": "consulting"}
 
 
 def test_default_registry_runs_research_and_theme_tools():

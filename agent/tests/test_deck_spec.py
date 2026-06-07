@@ -20,6 +20,10 @@ def test_deck_from_outline_preserves_slide_intent_and_revision():
                 "prototype_hint": "content",
             },
         ],
+        "metadata": {
+            "audience": "executive committee",
+            "style": "McKinsey",
+        },
     }
 
     deck = deck_from_outline(outline, deck_id="deck_001", revision=3)
@@ -27,6 +31,7 @@ def test_deck_from_outline_preserves_slide_intent_and_revision():
     assert deck.deck_id == "deck_001"
     assert deck.revision == 3
     assert deck.title == "Board AI Strategy"
+    assert deck.metadata == {"audience": "executive committee", "style": "McKinsey"}
     assert deck.slides[0].layout == "cover"
     assert deck.slides[0].speaker_notes == "Open by framing the board decision and the expected outcome."
     assert deck.slides[1].blocks[0]["type"] == "point"
@@ -76,6 +81,7 @@ def test_deck_to_dict_is_json_ready():
                 speaker_notes="Keep this to 60 seconds.",
             )
         ],
+        metadata={"audience": "board", "style": "consulting"},
     )
 
     payload = deck.to_dict()
@@ -84,3 +90,4 @@ def test_deck_to_dict_is_json_ready():
     assert payload["slides"][0]["slide_id"] == "s1"
     assert payload["slides"][0]["blocks"][0]["text"] == "Executive readout"
     assert payload["slides"][0]["speaker_notes"] == "Keep this to 60 seconds."
+    assert payload["metadata"] == {"audience": "board", "style": "consulting"}

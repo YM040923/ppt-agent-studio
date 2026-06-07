@@ -71,6 +71,7 @@ def test_preview_document_wraps_deck_html_for_webview2():
         title="Ops",
         revision=1,
         slides=[SlideSpec(slide_id="s1", title="Ops", layout="cover", blocks=[])],
+        metadata={"audience": "Board <committee>", "style": "McKinsey & concise"},
     )
 
     document = render_preview_document(deck)
@@ -79,6 +80,8 @@ def test_preview_document_wraps_deck_html_for_webview2():
     assert "<style>" in document
     assert 'class="deck"' in document
     assert "font-family: Segoe UI" in document
+    assert '<meta name="ppt-agent-audience" content="Board &lt;committee&gt;" />' in document
+    assert '<meta name="ppt-agent-style" content="McKinsey &amp; concise" />' in document
 
 
 def test_preview_document_exposes_webview_interaction_api():

@@ -11,6 +11,10 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
         "deck_id": "deck_001",
         "title": "AI Strategy",
         "revision": 1,
+        "metadata": {
+            "audience": "executive committee",
+            "style": "McKinsey",
+        },
         "slides": [
             {
                 "slide_id": "s1",
@@ -53,6 +57,8 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
     assert "Sequence" in text
     assert "Ship in measurable waves." in text
     assert "Open with the decision the board needs to make." in presentation.slides[0].notes_slide.notes_text_frame.text
+    assert presentation.core_properties.subject == "executive committee"
+    assert presentation.core_properties.keywords == "McKinsey"
 
 
 def test_pptx_export_tool_applies_theme_to_editable_shapes(tmp_path):

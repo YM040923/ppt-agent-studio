@@ -182,6 +182,38 @@ def test_fallback_outline_planner_preserves_prompt_topic():
     assert len(outline["slides"]) == 3
 
 
+def test_fallback_outline_planner_extracts_audience_and_style_metadata():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline(
+            "Make a 6 page AI strategy deck for the executive committee, style McKinsey"
+        )
+
+    outline = asyncio.run(run())
+
+    assert outline["metadata"] == {
+        "audience": "executive committee",
+        "style": "McKinsey",
+    }
+
+
+def test_fallback_outline_planner_extracts_chinese_audience_and_style_metadata():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline(
+            "\u76ee\u6807\u53d7\u4f17\u662f\u9ad8\u5c42\u7ba1\u7406\u8005\uff0c\u98ce\u683c\u9ea6\u80af\u9521"
+        )
+
+    outline = asyncio.run(run())
+
+    assert outline["metadata"] == {
+        "audience": "\u9ad8\u5c42\u7ba1\u7406\u8005",
+        "style": "\u9ea6\u80af\u9521",
+    }
+
+
 def test_fallback_outline_planner_respects_requested_slide_count():
     planner = FallbackOutlinePlanner()
 

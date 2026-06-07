@@ -127,6 +127,13 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
     presentation = Presentation()
     presentation.slide_width = Inches(13.333)
     presentation.slide_height = Inches(7.5)
+    presentation.core_properties.title = deck.title
+    audience = _metadata_text(deck, "audience")
+    style = _metadata_text(deck, "style")
+    if audience:
+        presentation.core_properties.subject = audience
+    if style:
+        presentation.core_properties.keywords = style
     blank_layout = presentation.slide_layouts[6]
 
     for slide in deck.slides:
@@ -229,6 +236,7 @@ def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
         revision=int(raw_deck.get("revision") or 0),
         slides=slides,
         theme=raw_deck.get("theme") if isinstance(raw_deck.get("theme"), dict) else {},
+        metadata=raw_deck.get("metadata") if isinstance(raw_deck.get("metadata"), dict) else {},
     )
 
 
@@ -256,6 +264,7 @@ def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
         revision=deck.revision + 1,
         slides=slides,
         theme=deck.theme,
+        metadata=deck.metadata,
     )
 
 
@@ -309,3 +318,8 @@ def _theme_rgb(deck: DeckSpec, key: str, fallback: str) -> RGBColor:
     if len(value) == 8:
         value = value[:6]
     return RGBColor(int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16))
+
+
+def _metadata_text(deck: DeckSpec, key: str) -> str:
+    value = deck.metadata.get(key)
+    return value.strip() if isinstance(value, str) else ""

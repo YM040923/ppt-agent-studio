@@ -14,12 +14,14 @@ def render_preview_document(deck: DeckSpec) -> str:
     slide_background = _theme_color(deck, "slide_background", "#fff")
     slide_text = _theme_color(deck, "text", "#111827")
     slide_accent = _theme_color(deck, "accent", "#2563EB")
+    metadata_tags = _metadata_meta_tags(deck)
     return (
         "<!doctype html>\n"
         '<html lang="en">\n'
         "<head>\n"
         '<meta charset="utf-8" />\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1" />\n'
+        f"{metadata_tags}"
         "<style>\n"
         ":root { "
         f"--preview-background: {preview_background}; "
@@ -88,6 +90,15 @@ def _theme_color(deck: DeckSpec, key: str, fallback: str) -> str:
     if isinstance(value, str) and _HEX_COLOR.fullmatch(value.strip()):
         return value.strip()
     return fallback
+
+
+def _metadata_meta_tags(deck: DeckSpec) -> str:
+    tags = []
+    for key in ("audience", "style"):
+        value = deck.metadata.get(key)
+        if isinstance(value, str) and value.strip():
+            tags.append(f'<meta name="ppt-agent-{key}" content="{escape(value.strip())}" />\n')
+    return "".join(tags)
 
 
 def _preview_interaction_script() -> str:

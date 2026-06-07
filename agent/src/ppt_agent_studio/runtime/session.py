@@ -126,6 +126,7 @@ class AgentSession:
             revision=int(payload.get("revision") or 0),
             slides=slides,
             theme=payload.get("theme") if isinstance(payload.get("theme"), dict) else {},
+            metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {},
         )
 
     @staticmethod
