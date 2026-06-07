@@ -28,6 +28,8 @@ The deterministic MVP session emits this turn sequence:
 user.message
 plan.updated
 tool.completed
+plan.updated
+tool.completed
 deck.updated
 tool.completed
 preview.ready
@@ -36,9 +38,11 @@ pptx.ready
 plan.updated
 ```
 
-This sequence is intentionally small. It proves state ordering, live preview synchronization, editable artifact creation, and completed-plan reporting before adding richer tool execution and cancellation.
+This sequence is intentionally small. It proves state ordering, research brief collection, live preview synchronization, editable artifact creation, and completed-plan reporting before adding richer tool execution and cancellation.
 
 `plan.updated` carries both the raw outline and a deck-specific `DeckPlan`. The outline preserves the planner result for debugging, while `DeckPlan` gives the desktop app future-ready step IDs, titles, statuses, and slide counts for progress UI.
+
+The first `tool.completed` in a turn reports `research.collect_brief`; the following `plan.updated` carries the safe research brief and moves the draft step to running. Later tool events report DeckSpec creation, preview rendering, and PPTX export.
 
 `tool.completed` is a safe progress event emitted after a deterministic tool succeeds and before the related product sync event. Its payload includes `tool_name`, `status`, and a short `summary`; it does not carry raw tool outputs or secrets. The desktop app displays it in chat but keeps the turn open until `error` or the final completed `plan.updated`.
 

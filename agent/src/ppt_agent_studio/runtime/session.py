@@ -41,10 +41,26 @@ class AgentSession:
         next_revision = self._deck_revision + 1
         plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
         plan.status = "running"
-        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("research_context", "running")
         plan.update_step_status("structure_story", "completed")
-        plan.update_step_status("draft_slides", "running")
         yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+        research_result = await self._tool_registry.run(
+            "research.collect_brief",
+            self._research_arguments(outline, text),
+        )
+        research_brief = research_result.payload.get("brief") if isinstance(research_result.payload.get("brief"), dict) else {}
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("draft_slides", "running")
+        yield self._event(
+            "tool.completed",
+            {
+                "tool_name": "research.collect_brief",
+                "status": "completed",
+                "summary": "Collected research brief.",
+            },
+        )
+        yield self._event("plan.updated", {"outline": outline, "research_brief": research_brief, "plan": plan.to_dict()})
 
         self._deck_revision = next_revision
         deck_result = await self._tool_registry.run(
@@ -128,6 +144,22 @@ class AgentSession:
             theme=payload.get("theme") if isinstance(payload.get("theme"), dict) else {},
             metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {},
         )
+
+    @staticmethod
+    def _research_arguments(outline: dict[str, object], prompt: str) -> dict[str, object]:
+        metadata = outline.get("metadata") if isinstance(outline.get("metadata"), dict) else {}
+        topic = str(outline.get("deck_title") or outline.get("title") or prompt).strip() or prompt
+        audience = str(metadata.get("audience") or "").strip() or "general business audience"
+        style = str(metadata.get("style") or "").strip()
+        constraints = [f"Style: {style}"] if style else []
+        raw_slides = outline.get("slides")
+        if isinstance(raw_slides, list) and raw_slides:
+            constraints.append(f"Slides: {len(raw_slides)}")
+        return {
+            "topic": topic,
+            "audience": audience,
+            "constraints": constraints,
+        }
 
     @staticmethod
     def _safe_artifact_name(value: str) -> str:

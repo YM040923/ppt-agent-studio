@@ -88,6 +88,8 @@ def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
         "user.message",
         "plan.updated",
         "tool.completed",
+        "plan.updated",
+        "tool.completed",
         "deck.updated",
         "tool.completed",
         "preview.ready",
@@ -95,13 +97,15 @@ def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
         "pptx.ready",
         "plan.updated",
     ]
-    assert payloads[2]["payload"]["tool_name"] == "deck.create_from_outline"
-    assert payloads[3]["deck_revision"] == 1
-    assert payloads[4]["payload"]["tool_name"] == "preview.render_html"
-    assert payloads[5]["payload"]["html"].startswith("<!doctype html>")
-    assert payloads[6]["payload"]["tool_name"] == "pptx.export"
-    assert payloads[7]["payload"]["path"].endswith("deck_001-r1.pptx")
-    assert payloads[8]["payload"]["plan"]["status"] == "completed"
+    assert payloads[2]["payload"]["tool_name"] == "research.collect_brief"
+    assert payloads[3]["payload"]["research_brief"]["topic"] == "Make a board AI strategy deck"
+    assert payloads[4]["payload"]["tool_name"] == "deck.create_from_outline"
+    assert payloads[5]["deck_revision"] == 1
+    assert payloads[6]["payload"]["tool_name"] == "preview.render_html"
+    assert payloads[7]["payload"]["html"].startswith("<!doctype html>")
+    assert payloads[8]["payload"]["tool_name"] == "pptx.export"
+    assert payloads[9]["payload"]["path"].endswith("deck_001-r1.pptx")
+    assert payloads[10]["payload"]["plan"]["status"] == "completed"
 
 
 def test_handle_invalid_json_returns_error_event():

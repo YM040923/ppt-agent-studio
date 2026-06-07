@@ -57,6 +57,8 @@ def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
         "user.message",
         "plan.updated",
         "tool.completed",
+        "plan.updated",
+        "tool.completed",
         "deck.updated",
         "tool.completed",
         "preview.ready",
@@ -64,39 +66,47 @@ def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
         "pptx.ready",
         "plan.updated",
     ]
-    assert [event.seq for event in events] == list(range(1, 10))
+    assert [event.seq for event in events] == list(range(1, 12))
     assert events[1].payload["plan"]["plan_id"] == "deck_001-r1-plan"
     assert events[1].payload["plan"]["status"] == "running"
     assert events[1].payload["plan"]["slide_count"] == 5
-    assert events[1].payload["plan"]["steps"][0]["status"] == "completed"
+    assert events[1].payload["plan"]["steps"][0]["status"] == "running"
     assert events[1].payload["plan"]["steps"][1]["status"] == "completed"
     assert events[1].payload["plan"]["steps"][2]["step_id"] == "draft_slides"
     assert events[1].payload["plan"]["steps"][2]["title"] == "Draft 5 slides"
-    assert events[1].payload["plan"]["steps"][2]["status"] == "running"
-    assert events[8].payload["plan"]["status"] == "completed"
-    assert all(step["status"] == "completed" for step in events[8].payload["plan"]["steps"])
+    assert events[1].payload["plan"]["steps"][2]["status"] == "pending"
     assert events[2].payload == {
+        "tool_name": "research.collect_brief",
+        "status": "completed",
+        "summary": "Collected research brief.",
+    }
+    assert events[3].payload["research_brief"]["audience"] == "general business audience"
+    assert events[3].payload["plan"]["steps"][0]["status"] == "completed"
+    assert events[3].payload["plan"]["steps"][2]["status"] == "running"
+    assert events[4].payload == {
         "tool_name": "deck.create_from_outline",
         "status": "completed",
         "summary": "Created deck from outline.",
     }
-    assert events[2].deck_revision == 1
-    assert events[3].deck_revision == 1
-    assert events[4].payload == {
+    assert events[4].deck_revision == 1
+    assert events[5].deck_revision == 1
+    assert events[6].payload == {
         "tool_name": "preview.render_html",
         "status": "completed",
         "summary": "Rendered live preview HTML.",
     }
-    assert events[5].payload["html"].startswith("<!doctype html>")
-    assert "board AI strategy" in events[5].payload["html"]
-    assert events[6].payload == {
+    assert events[7].payload["html"].startswith("<!doctype html>")
+    assert "board AI strategy" in events[7].payload["html"]
+    assert events[8].payload == {
         "tool_name": "pptx.export",
         "status": "completed",
         "summary": "Exported editable PPTX artifact.",
     }
-    assert events[7].payload["path"].endswith("deck_001-r1.pptx")
-    assert events[7].payload["slide_count"] == 5
-    assert len(Presentation(events[7].payload["path"]).slides) == 5
+    assert events[9].payload["path"].endswith("deck_001-r1.pptx")
+    assert events[9].payload["slide_count"] == 5
+    assert len(Presentation(events[9].payload["path"]).slides) == 5
+    assert events[10].payload["plan"]["status"] == "completed"
+    assert all(step["status"] == "completed" for step in events[10].payload["plan"]["steps"])
 
 
 def test_agent_session_ignores_empty_user_message():
@@ -128,9 +138,9 @@ def test_agent_session_uses_injected_outline_planner(tmp_path):
 
     assert planner.prompts == ["Make a CFO margin story"]
     assert events[1].payload["outline"]["deck_title"] == "Planner Deck"
-    assert events[3].payload["deck"]["title"] == "Planner Deck"
-    assert "Planner Deck" in events[5].payload["html"]
-    assert events[7].payload["slide_count"] == 1
+    assert events[5].payload["deck"]["title"] == "Planner Deck"
+    assert "Planner Deck" in events[7].payload["html"]
+    assert events[9].payload["slide_count"] == 1
 
 
 def test_agent_session_preserves_planner_theme_for_preview_and_export(tmp_path):
@@ -145,10 +155,10 @@ def test_agent_session_preserves_planner_theme_for_preview_and_export(tmp_path):
         return [event async for event in session.submit_user_message("Make an executive deck")]
 
     events = asyncio.run(collect())
-    presentation = Presentation(events[7].payload["path"])
+    presentation = Presentation(events[9].payload["path"])
 
-    assert events[3].payload["deck"]["theme"]["name"] == "executive-consulting"
-    assert "--slide-accent: #2563EB;" in events[5].payload["html"]
+    assert events[5].payload["deck"]["theme"]["name"] == "executive-consulting"
+    assert "--slide-accent: #2563EB;" in events[7].payload["html"]
     assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "2563EB"
 
 
@@ -164,13 +174,14 @@ def test_agent_session_preserves_prompt_metadata_for_preview_and_export(tmp_path
         ]
 
     events = asyncio.run(collect())
-    presentation = Presentation(events[7].payload["path"])
+    presentation = Presentation(events[9].payload["path"])
 
-    assert events[3].payload["deck"]["metadata"] == {
+    assert events[3].payload["research_brief"]["audience"] == "executive committee"
+    assert events[5].payload["deck"]["metadata"] == {
         "audience": "executive committee",
         "style": "McKinsey",
     }
-    assert '<meta name="ppt-agent-audience" content="executive committee" />' in events[5].payload["html"]
+    assert '<meta name="ppt-agent-audience" content="executive committee" />' in events[7].payload["html"]
     assert presentation.core_properties.subject == "executive committee"
     assert presentation.core_properties.keywords == "McKinsey"
 
@@ -214,6 +225,14 @@ def test_agent_session_uses_tool_registry_for_deck_and_preview():
     )
     registry.register(
         ToolDefinition(
+            name="research.collect_brief",
+            description="Collect research brief.",
+            input_schema={"type": "object"},
+        ),
+        lambda args: calls.append(("research.collect_brief", args["audience"])) or ToolResult(payload={"brief": args}),
+    )
+    registry.register(
+        ToolDefinition(
             name="pptx.export",
             description="Export a deck.",
             input_schema={"type": "object"},
@@ -228,9 +247,10 @@ def test_agent_session_uses_tool_registry_for_deck_and_preview():
     events = asyncio.run(collect())
 
     assert calls == [
+        ("research.collect_brief", "general business audience"),
         ("deck.create_from_outline", "deck_004"),
         ("preview.render_html", "Custom Deck"),
     ]
-    assert events[3].payload["deck"]["title"] == "Custom Deck"
-    assert events[5].payload["html"] == "<!doctype html><title>Custom</title>"
-    assert events[7].payload["path"].endswith("deck_004-r1.pptx")
+    assert events[5].payload["deck"]["title"] == "Custom Deck"
+    assert events[7].payload["html"] == "<!doctype html><title>Custom</title>"
+    assert events[9].payload["path"].endswith("deck_004-r1.pptx")
