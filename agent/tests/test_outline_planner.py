@@ -116,6 +116,20 @@ def test_llm_outline_planner_adds_deck_title_when_model_omits_it():
     assert outline["deck_title"] == "Board AI Strategy"
 
 
+def test_llm_outline_planner_falls_back_when_provider_returns_non_json():
+    chat_client = FakeChatClient("I can help with that, but here is prose instead of JSON.")
+    planner = LLMOutlinePlanner(chat_client=chat_client)
+
+    async def run():
+        return await planner.create_outline("Make a 4 page AI strategy deck")
+
+    outline = asyncio.run(run())
+
+    assert outline["deck_title"] == "AI Strategy"
+    assert len(outline["slides"]) == 4
+    assert outline["slides"][-1]["title"] == "Implementation roadmap"
+
+
 def test_llm_outline_planner_adds_fallback_slides_when_model_omits_them():
     chat_client = FakeChatClient(
         """

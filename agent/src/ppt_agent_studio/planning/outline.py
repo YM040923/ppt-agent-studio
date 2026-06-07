@@ -15,15 +15,7 @@ class OutlinePlanner(Protocol):
 
 class FallbackOutlinePlanner:
     async def create_outline(self, prompt: str) -> dict[str, object]:
-        topic = _topic_from_prompt(prompt)
-        slide_count = _slide_count_from_prompt(prompt)
-        metadata = _metadata_from_prompt(prompt)
-        return {
-            "deck_title": topic,
-            "metadata": metadata,
-            "theme": _theme_from_prompt(prompt),
-            "slides": _fallback_slides(topic, slide_count),
-        }
+        return _fallback_outline(prompt)
 
 
 class LLMOutlinePlanner:
@@ -36,9 +28,12 @@ class LLMOutlinePlanner:
             {"role": "user", "content": prompt},
         ]
         response = await self._chat_client.complete(messages=messages, temperature=0.2)
-        outline = json.loads(_extract_json(response))
+        try:
+            outline = json.loads(_extract_json(response))
+        except json.JSONDecodeError:
+            return _fallback_outline(prompt)
         if not isinstance(outline, dict):
-            raise ValueError("outline response must be a JSON object")
+            return _fallback_outline(prompt)
         if not str(outline.get("deck_title") or "").strip():
             outline["deck_title"] = str(outline.get("title") or _topic_from_prompt(prompt))
         if not isinstance(outline.get("metadata"), dict):
@@ -52,6 +47,18 @@ class LLMOutlinePlanner:
         else:
             outline["slides"] = _normalized_llm_slides(outline, prompt)
         return outline
+
+
+def _fallback_outline(prompt: str) -> dict[str, object]:
+    topic = _topic_from_prompt(prompt)
+    slide_count = _slide_count_from_prompt(prompt)
+    metadata = _metadata_from_prompt(prompt)
+    return {
+        "deck_title": topic,
+        "metadata": metadata,
+        "theme": _theme_from_prompt(prompt),
+        "slides": _fallback_slides(topic, slide_count),
+    }
 
 
 def _extract_json(text: str) -> str:
