@@ -108,7 +108,7 @@ def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
         "plan.updated",
     ]
     assert payloads[2]["payload"]["tool_name"] == "research.collect_brief"
-    assert payloads[3]["payload"]["research_brief"]["topic"] == "Make a board AI strategy deck"
+    assert payloads[3]["payload"]["research_brief"]["topic"] == "Board AI Strategy"
     assert payloads[4]["payload"]["tool_name"] == "deck.create_from_outline"
     assert payloads[5]["deck_revision"] == 1
     assert payloads[6]["payload"]["tool_name"] == "preview.render_html"

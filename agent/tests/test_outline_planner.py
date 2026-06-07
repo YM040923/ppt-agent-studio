@@ -170,7 +170,7 @@ def test_llm_outline_planner_backfills_when_model_returns_too_few_slides():
     assert outline["slides"][-1]["title"] == "Implementation roadmap"
 
 
-def test_fallback_outline_planner_preserves_prompt_topic():
+def test_fallback_outline_planner_derives_clean_prompt_topic():
     planner = FallbackOutlinePlanner()
 
     async def run():
@@ -178,8 +178,34 @@ def test_fallback_outline_planner_preserves_prompt_topic():
 
     outline = asyncio.run(run())
 
-    assert outline["deck_title"] == "Make a revenue growth deck"
+    assert outline["deck_title"] == "Revenue Growth"
     assert len(outline["slides"]) == 3
+
+
+def test_fallback_outline_planner_derives_clean_english_deck_title():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline("Make a 5 slide board AI strategy deck in McKinsey style")
+
+    outline = asyncio.run(run())
+
+    assert outline["deck_title"] == "Board AI Strategy"
+    assert outline["slides"][0]["title"] == "Board AI Strategy"
+
+
+def test_fallback_outline_planner_derives_clean_chinese_deck_title():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline(
+            "\u5e2e\u6211\u505a\u4e00\u4e2a\u5173\u4e8e AI \u8f6c\u578b\u7684 20 \u9875 PPT"
+        )
+
+    outline = asyncio.run(run())
+
+    assert outline["deck_title"] == "AI \u8f6c\u578b"
+    assert outline["slides"][0]["title"] == "AI \u8f6c\u578b"
 
 
 def test_fallback_outline_planner_extracts_audience_and_style_metadata():

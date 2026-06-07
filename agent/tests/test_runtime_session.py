@@ -96,7 +96,7 @@ def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
         "summary": "Rendered live preview HTML.",
     }
     assert events[7].payload["html"].startswith("<!doctype html>")
-    assert "board AI strategy" in events[7].payload["html"]
+    assert "Board AI Strategy" in events[7].payload["html"]
     assert events[8].payload == {
         "tool_name": "pptx.export",
         "status": "completed",

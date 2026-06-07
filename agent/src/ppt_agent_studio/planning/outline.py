@@ -15,7 +15,7 @@ class OutlinePlanner(Protocol):
 
 class FallbackOutlinePlanner:
     async def create_outline(self, prompt: str) -> dict[str, object]:
-        topic = prompt.removesuffix(".").strip()
+        topic = _topic_from_prompt(prompt)
         slide_count = _slide_count_from_prompt(prompt)
         metadata = _metadata_from_prompt(prompt)
         return {
@@ -44,7 +44,7 @@ class LLMOutlinePlanner:
         if not isinstance(outline.get("theme"), dict):
             outline["theme"] = _theme_from_prompt(prompt)
         if not _has_usable_slides(outline):
-            title = str(outline.get("deck_title") or outline.get("title") or prompt.removesuffix(".").strip())
+            title = str(outline.get("deck_title") or outline.get("title") or _topic_from_prompt(prompt))
             outline["deck_title"] = title or "Untitled Deck"
             outline["slides"] = _fallback_slides(outline["deck_title"], _slide_count_from_prompt(prompt))
         else:
@@ -86,6 +86,48 @@ def _normalized_llm_slides(outline: dict[str, object], prompt: str) -> list[dict
     title = str(outline.get("deck_title") or outline.get("title") or prompt.removesuffix(".").strip())
     fallback_slides = _fallback_slides(title or "Untitled Deck", target_count)
     return [*slides, *fallback_slides[len(slides) : target_count]]
+
+
+def _topic_from_prompt(prompt: str) -> str:
+    cleaned = prompt.removesuffix(".").strip()
+    chinese_topic = _first_prompt_match(
+        prompt,
+        (
+            r"(?:\u5173\u4e8e|\u95dc\u65bc)\s*(?P<value>.+?)\s*(?:\u7684)?\s*(?:\d{1,3}|[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u4e24\u5169]{1,3})?\s*(?:\u9875|\u9801|\u5f20|\u5f35|PPT|ppt)",
+        ),
+    )
+    if chinese_topic:
+        return chinese_topic
+
+    english_topic = _english_topic_from_prompt(cleaned)
+    return english_topic or cleaned or "Untitled Deck"
+
+
+def _english_topic_from_prompt(prompt: str) -> str:
+    value = re.sub(
+        r"^(?:make|create|draft|build|generate)\s+(?:me\s+)?(?:a|an|the)?\s*",
+        "",
+        prompt,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r"\b\d{1,3}\s*(?:slides?|pages?)\b", "", value, count=1, flags=re.IGNORECASE)
+    value = re.sub(r"\b(?:deck|presentation|ppt)\b.*$", "", value, flags=re.IGNORECASE)
+    value = re.sub(r"\s+", " ", value).strip(" -:,.")
+    if not value:
+        return ""
+    return _business_title(value)
+
+
+def _business_title(value: str) -> str:
+    acronyms = {"ai", "api", "cfo", "cio", "ceo", "cto", "it", "ppt", "roi"}
+    words = []
+    for word in value.split():
+        normalized = word.casefold().strip(".,:;")
+        if normalized in acronyms:
+            words.append(word.upper())
+        else:
+            words.append(f"{word[:1].upper()}{word[1:].lower()}")
+    return " ".join(words)
 
 
 def _theme_from_prompt(prompt: str) -> dict[str, str]:
