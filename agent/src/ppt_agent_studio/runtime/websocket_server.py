@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import json
 import os
-from collections.abc import Iterable
+from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
 from ppt_agent_studio.llm.config import OpenAICompatibleConfig
@@ -49,12 +49,18 @@ def _agent_error_message(error: Exception) -> str:
 
 
 async def handle_client_message(raw_message: str) -> list[str]:
+    return [response async for response in iter_client_responses(raw_message)]
+
+
+async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
     try:
         message = json.loads(raw_message)
     except json.JSONDecodeError:
-        return [_error_json("Invalid JSON")]
+        yield _error_json("Invalid JSON")
+        return
     if not isinstance(message, dict):
-        return [_error_json("Message must be a JSON object")]
+        yield _error_json("Message must be a JSON object")
+        return
 
     message_type = str(message.get("type") or "").strip()
     session_id = str(message.get("session_id") or "session")
@@ -67,28 +73,34 @@ async def handle_client_message(raw_message: str) -> list[str]:
             type="runtime.config",
             payload={"llm": config.safe_summary(), "planner": _planner_summary(config)},
         )
-        return [_event_json(event)]
+        yield _event_json(event)
+        return
 
     if message_type != "user.message":
-        return [_error_json(f"Unsupported message type: {message_type or '<empty>'}")]
+        yield _error_json(f"Unsupported message type: {message_type or '<empty>'}")
+        return
 
     payload = message.get("payload") if isinstance(message.get("payload"), dict) else {}
     text = str(payload.get("text") or "")
     deck_id = str(message.get("deck_id") or "deck")
-    session = AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
+    session = _build_agent_session(session_id=session_id, deck_id=deck_id)
 
-    out: list[str] = []
+    response_count = 0
     try:
         async for event in session.submit_user_message(text):
-            out.append(_event_json(event))
+            response_count += 1
+            yield _event_json(event)
     except Exception as error:
-        out.append(_error_json(_agent_error_message(error), seq=len(out) + 1, session_id=session_id))
-    return out
+        yield _error_json(_agent_error_message(error), seq=response_count + 1, session_id=session_id)
+
+
+def _build_agent_session(session_id: str, deck_id: str) -> AgentSession:
+    return AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
 
 
 async def websocket_handler(websocket: Any) -> None:
     async for raw_message in websocket:
-        for response in await handle_client_message(str(raw_message)):
+        async for response in iter_client_responses(str(raw_message)):
             await websocket.send(response)
 
 

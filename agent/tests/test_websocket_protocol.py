@@ -2,12 +2,68 @@ import asyncio
 import json
 
 from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner
+from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.runtime.websocket_server import _build_outline_planner, handle_client_message
+from ppt_agent_studio.runtime.websocket_server import iter_client_responses
 
 
 class FailingOutlinePlanner:
     async def create_outline(self, prompt: str):
         raise RuntimeError("secret-value from provider")
+
+
+class BlockingSession:
+    def __init__(self, release_next_event: asyncio.Event):
+        self._release_next_event = release_next_event
+
+    async def submit_user_message(self, message: str):
+        yield AgentEvent(
+            seq=1,
+            session_id="session_001",
+            type="user.message",
+            payload={"text": message},
+        )
+        await self._release_next_event.wait()
+        yield AgentEvent(
+            seq=2,
+            session_id="session_001",
+            type="plan.updated",
+            payload={"plan": {"status": "completed"}},
+        )
+
+
+def test_iter_client_responses_streams_events_without_waiting_for_full_turn(monkeypatch):
+    release_next_event = asyncio.Event()
+    monkeypatch.setattr(
+        "ppt_agent_studio.runtime.websocket_server._build_agent_session",
+        lambda session_id, deck_id: BlockingSession(release_next_event),
+    )
+
+    async def run():
+        stream = iter_client_responses(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_001",
+                    "deck_id": "deck_001",
+                    "payload": {"text": "Make a strategy deck"},
+                }
+            )
+        )
+        first = await asyncio.wait_for(anext(stream), timeout=0.1)
+        second_task = asyncio.create_task(anext(stream))
+        await asyncio.sleep(0.01)
+        second_waiting_on_release = not second_task.done()
+        release_next_event.set()
+        second = await asyncio.wait_for(second_task, timeout=0.1)
+        return json.loads(first), second_waiting_on_release, json.loads(second)
+
+    first, second_waiting_on_release, second = asyncio.run(run())
+
+    assert first["type"] == "user.message"
+    assert second_waiting_on_release is True
+    assert second["type"] == "plan.updated"
+    assert second["payload"]["plan"]["status"] == "completed"
 
 
 def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
