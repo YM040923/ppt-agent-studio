@@ -19,8 +19,7 @@ public sealed record AgentRuntimeEvent(
 public sealed class AgentSessionClient
 {
     private readonly Uri _endpoint;
-    private readonly string _sessionId;
-    private readonly string _deckId;
+    private readonly AgentWorkspaceIdentity _identity;
 
     public AgentSessionClient(
         string endpoint = "ws://127.0.0.1:8765",
@@ -28,8 +27,12 @@ public sealed class AgentSessionClient
         string deckId = "desktop-deck")
     {
         _endpoint = new Uri(endpoint);
-        _sessionId = sessionId;
-        _deckId = deckId;
+        _identity = new AgentWorkspaceIdentity(sessionId, deckId);
+    }
+
+    public void StartNewDeck()
+    {
+        _identity.StartNewDeck();
     }
 
     public async IAsyncEnumerable<AgentRuntimeEvent> SendUserMessageAsync(
@@ -42,8 +45,8 @@ public sealed class AgentSessionClient
         var request = JsonSerializer.Serialize(new
         {
             type = "user.message",
-            session_id = _sessionId,
-            deck_id = _deckId,
+            session_id = _identity.SessionId,
+            deck_id = _identity.DeckId,
             payload = new { text }
         });
         await socket.SendAsync(
@@ -79,7 +82,7 @@ public sealed class AgentSessionClient
         var request = JsonSerializer.Serialize(new
         {
             type = "runtime.config",
-            session_id = _sessionId
+            session_id = _identity.SessionId
         });
         await socket.SendAsync(
             Encoding.UTF8.GetBytes(request),

@@ -29,6 +29,14 @@ public sealed class MainPageMarkupTests
         StringAssert.Contains(source, "researchSummary.ToChatMessage()");
     }
 
+    [TestMethod]
+    public void NewDeckStartsFreshRuntimeDeckIdentity()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "_agentClient.StartNewDeck()");
+    }
+
     private static string FindMainPageXaml()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

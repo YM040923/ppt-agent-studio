@@ -102,6 +102,7 @@ public partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private void NewDeck()
     {
+        _agentClient.StartNewDeck();
         _workspaceDeckState.Reset();
         InputText = "";
         PreviewHtml = InitialPreviewHtml;
