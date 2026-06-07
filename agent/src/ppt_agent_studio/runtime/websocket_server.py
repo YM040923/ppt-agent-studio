@@ -12,6 +12,7 @@ from ppt_agent_studio.llm.config import OpenAICompatibleConfig
 from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner, OutlinePlanner
 from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.runtime.session import AgentSession
+from ppt_agent_studio.tools.catalog import core_tool_definitions
 
 
 _AGENT_SESSIONS: dict[tuple[str, str], AgentSession] = {}
@@ -55,6 +56,10 @@ def _env_file_summary() -> dict[str, object]:
         "path": str(resolved),
         "exists": resolved.exists(),
     }
+
+
+def _tool_catalog_summary() -> list[dict[str, object]]:
+    return [definition.to_dict() for definition in core_tool_definitions()]
 
 
 def _requested_planner_mode() -> str:
@@ -116,6 +121,16 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
                 "artifacts": _artifact_summary(),
                 "env_file": _env_file_summary(),
             },
+        )
+        yield _event_json(event)
+        return
+
+    if message_type == "runtime.tools":
+        event = AgentEvent(
+            seq=1,
+            session_id=session_id,
+            type="runtime.tools",
+            payload={"tools": _tool_catalog_summary()},
         )
         yield _event_json(event)
         return

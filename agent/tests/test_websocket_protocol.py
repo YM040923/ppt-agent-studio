@@ -365,6 +365,30 @@ def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypa
     }
 
 
+def test_handle_runtime_tools_returns_core_tool_catalog():
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.tools",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+    tools = payload["payload"]["tools"]
+    names = {tool["name"] for tool in tools}
+
+    assert len(messages) == 1
+    assert payload["type"] == "runtime.tools"
+    assert payload["session_id"] == "session_001"
+    assert "deck.create_from_outline" in names
+    assert "pptx.export" in names
+    assert all(tool["input_schema"]["type"] == "object" for tool in tools)
+
+
 def test_build_outline_planner_defaults_to_fallback(monkeypatch, tmp_path):
     monkeypatch.delenv("PPT_AGENT_PLANNER", raising=False)
     monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
