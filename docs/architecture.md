@@ -38,7 +38,7 @@ pptx.ready
 plan.updated
 ```
 
-This sequence is intentionally small. It proves state ordering, research brief collection, live preview synchronization, editable artifact creation, and completed-plan reporting before adding richer tool execution and cancellation.
+This sequence is intentionally small. It proves state ordering, research brief collection, live preview synchronization, editable artifact creation, and completed-plan reporting before adding richer tool execution.
 
 `plan.updated` carries both the raw outline and a deck-specific `DeckPlan`. The outline preserves the planner result for debugging, while `DeckPlan` gives the desktop app future-ready step IDs, titles, statuses, and slide counts for progress UI.
 
@@ -61,6 +61,8 @@ The server streams one JSON event per WebSocket message. The desktop client clos
 
 Runtime Agent sessions are cached by `(session_id, deck_id)` inside the Python process. This lets the desktop client reconnect for each user turn while preserving DeckSpec revision numbers, event ordering, and the latest deck state for that workspace.
 
+The desktop app filters deck-scoped runtime events by the active deck id before mutating preview or export state. This protects the UI when a user starts a new deck or cancels a turn while delayed messages from an older deck are still in flight.
+
 When the desktop app starts a new deck workspace, it first asks the runtime to discard the current cached deck session:
 
 ```json
@@ -74,6 +76,8 @@ When the desktop app starts a new deck workspace, it first asks the runtime to d
 The response is a single `session.reset` event with payload `{ "deck_id": "...", "cleared": true|false }`. If the runtime is offline, the desktop still clears local UI state and advances to a new deck identity.
 
 During development the WinUI app starts the sidecar automatically if `127.0.0.1:8765` is not already listening. The locator walks up from the app base directory until it finds `agent/src`, and `PPT_AGENT_RUNTIME_ROOT` can override the repository root. The Python executable defaults to `python`; set `PPT_AGENT_PYTHON` to use a specific interpreter. PPTX artifacts are written to `artifacts/decks` by default; set `PPT_AGENT_ARTIFACTS_DIR` to use another directory.
+
+The desktop client passes a cancellation token into the current WebSocket turn. The `Cancel` command requests cancellation immediately, and starting a new deck also cancels the in-flight turn before clearing local UI state.
 
 The desktop app or a test client can ask for a redacted runtime configuration summary:
 

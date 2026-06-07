@@ -8,6 +8,7 @@ PPT Agent Studio is a Windows-native, presentation-focused AI Agent. It is inspi
 - Left pane: chat-first Agent interaction.
 - Right pane: live PPT preview rendered through WebView2.
 - Chat messages render Markdown and code blocks, and can expose inline actions such as `Demo Deck` on the starter message and `Open PPTX` when an editable export is ready.
+- The command bar can start a new deck, run a demo deck, cancel an in-flight Agent turn, show the latest PPTX export, and open runtime settings.
 - Python Agent runtime for planning, tool calling, DeckSpec state, preview rendering, and editable PPTX export.
 - OpenAI-compatible configuration, including third-party endpoints via `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL`.
 
@@ -35,6 +36,8 @@ dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
 On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether an API key is present, which planner is active, where PPTX artifacts are written, and which env file is being checked. The key value is never displayed.
 
 The Python runtime keeps Agent session state by `session_id` and `deck_id`, so repeated desktop turns can advance DeckSpec revisions instead of restarting from revision 1. When the user starts a new deck, the desktop app sends `session.reset` for the current deck before advancing to the next runtime deck identity.
+
+The desktop app filters deck-scoped runtime events by the active deck id. This keeps delayed messages from an older deck from overwriting the current preview or latest PPTX export after a reset.
 
 When the desktop app starts the runtime sidecar, it pins `PPT_AGENT_ARTIFACTS_DIR` to the repository `artifacts/decks` directory so generated PPTX files land in a predictable project-local location.
 
