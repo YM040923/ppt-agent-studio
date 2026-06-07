@@ -21,6 +21,21 @@ def test_public_docs_do_not_contain_machine_specific_paths():
         assert "C:\\Users" not in text
 
 
+def test_gitignore_protects_local_secrets_and_generated_artifacts():
+    patterns = {
+        line.strip()
+        for line in _repo_root().joinpath(".gitignore").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    }
+
+    assert ".env.local" in patterns
+    assert ".env" in patterns
+    assert "artifacts/" in patterns
+    assert "*.pptx" in patterns
+    assert "bin/" in patterns
+    assert "obj/" in patterns
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
