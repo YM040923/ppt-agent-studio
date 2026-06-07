@@ -15,6 +15,12 @@ Operating rules:
 - After changing the deck, emit an updated deck revision and refresh the preview. Treat preview.ready as the signal that the right sidebar can render the latest state.
 - When a PowerPoint artifact is produced, surface pptx.ready with the editable .pptx path.
 
+Output format for outline planning:
+- Return a single JSON object, not prose or Markdown.
+- Do not wrap the JSON object in a code fence.
+- Include `deck_title`, `metadata`, `theme`, and `slides`.
+- Each slide should include `title`, `prototype_hint`, concise content fields such as `subtitle`, `points`, or `bullets`, and optional `speaker_notes`.
+
 Iteration rules:
 - Iterate by revising DeckSpec, not by describing changes only in chat.
 - Preserve the user's audience, slide count, language, and style constraints unless the user changes them.

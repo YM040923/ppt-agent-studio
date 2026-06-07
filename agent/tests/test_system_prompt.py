@@ -33,6 +33,15 @@ def test_system_prompt_requires_theme_tokens_for_deckspec():
     assert "hex" in prompt.lower()
 
 
+def test_system_prompt_requires_json_outline_output():
+    prompt = PPT_AGENT_SYSTEM_PROMPT
+
+    assert "JSON object" in prompt
+    assert "deck_title" in prompt
+    assert "slides" in prompt
+    assert "Do not wrap" in prompt
+
+
 def test_system_prompt_forbids_secret_exposure():
     prompt = PPT_AGENT_SYSTEM_PROMPT
 
