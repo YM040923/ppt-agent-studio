@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from collections.abc import AsyncIterator
 
@@ -37,6 +38,11 @@ class AgentSession:
             return
 
         yield self._event("user.message", {"text": text})
+        if self.deck is not None and self._is_add_slide_request(text):
+            async for event in self._submit_add_slide_follow_up(text):
+                yield event
+            return
+
         outline = await self._outline_planner.create_outline(text)
         next_revision = self._deck_revision + 1
         plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
@@ -71,6 +77,82 @@ class AgentSession:
         self.deck = self._deck_from_payload(deck_payload)
         plan.update_step_status("draft_slides", "completed")
         yield self._tool_completed_event("deck.create_from_outline", "Created deck from outline.")
+        yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
+
+        preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
+        plan.update_step_status("render_preview", "completed")
+        yield self._tool_completed_event("preview.render_html", "Rendered live preview HTML.")
+        yield self._deck_event(
+            "preview.ready",
+            {
+                "html": str(preview_result.payload["html"]),
+                "deck_id": self.deck.deck_id,
+                "revision": self.deck.revision,
+                "deck_title": self.deck.title,
+                "slide_count": len(self.deck.slides),
+            },
+        )
+
+        pptx_path = self._artifact_dir / f"{self._safe_artifact_name(self.deck_id)}-r{self._deck_revision}.pptx"
+        pptx_result = await self._tool_registry.run(
+            "pptx.export",
+            {"deck": self.deck.to_dict(), "output_path": str(pptx_path)},
+        )
+        plan.update_step_status("export_pptx", "completed")
+        yield self._tool_completed_event("pptx.export", "Exported editable PPTX artifact.")
+        yield self._deck_event("pptx.ready", dict(pptx_result.payload))
+
+        plan.status = "completed"
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+    async def _submit_add_slide_follow_up(self, text: str) -> AsyncIterator[AgentEvent]:
+        if self.deck is None:
+            return
+
+        next_revision = self._deck_revision + 1
+        title = self._follow_up_slide_title(text)
+        outline = {
+            "deck_title": self.deck.title,
+            "slides": [{"title": slide.title} for slide in self.deck.slides] + [{"title": title}],
+        }
+        plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        plan.status = "running"
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "running")
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+        slide = {
+            "slide_id": f"s{len(self.deck.slides) + 1}",
+            "title": title,
+            "layout": "content",
+            "blocks": [
+                {
+                    "type": "point",
+                    "label": "Why it matters",
+                    "body": f"Add executive-level context on {title}.",
+                },
+                {
+                    "type": "point",
+                    "label": "Evidence to gather",
+                    "body": "Quantify impact, trade-offs, and ownership.",
+                },
+                {
+                    "type": "point",
+                    "label": "Decision lens",
+                    "body": "Clarify the recommendation and next action.",
+                },
+            ],
+            "speaker_notes": f"Use this slide to pressure-test the recommendation around {title}.",
+        }
+        deck_result = await self._tool_registry.run(
+            "deck.add_slide",
+            {"deck": self.deck.to_dict(), "slide": slide},
+        )
+        self.deck = self._deck_from_payload(deck_result.payload["deck"])
+        self._deck_revision = self.deck.revision
+        plan.update_step_status("draft_slides", "completed")
+        yield self._tool_completed_event("deck.add_slide", "Added follow-up slide.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
@@ -169,6 +251,23 @@ class AgentSession:
             "audience": audience,
             "constraints": constraints,
         }
+
+    @staticmethod
+    def _is_add_slide_request(prompt: str) -> bool:
+        if re.search(r"\b(add|append)\b", prompt, flags=re.IGNORECASE):
+            return True
+        return any(token in prompt for token in ["新增", "增加", "加一页", "加一张", "加一个"])
+
+    @staticmethod
+    def _follow_up_slide_title(prompt: str) -> str:
+        cleaned = re.sub(
+            r"\b(please|add|append|create|a|an|slide|page|about)\b",
+            " ",
+            prompt,
+            flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(r"\s+", " ", cleaned).strip(" .:-")
+        return cleaned.title()[:80] if cleaned else "Additional Insight"
 
     @staticmethod
     def _safe_artifact_name(value: str) -> str:

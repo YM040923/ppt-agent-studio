@@ -190,6 +190,60 @@ def test_agent_session_preserves_prompt_metadata_for_preview_and_export(tmp_path
     assert presentation.core_properties.keywords == "McKinsey"
 
 
+def test_agent_session_appends_slide_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_followup", deck_id="deck_followup", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Add a risk mitigation slide")]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert [event.type for event in events] == [
+        "user.message",
+        "plan.updated",
+        "tool.completed",
+        "deck.updated",
+        "tool.completed",
+        "preview.ready",
+        "tool.completed",
+        "pptx.ready",
+        "plan.updated",
+    ]
+    presentation = Presentation(events[7].payload["path"])
+    assert [event.seq for event in events] == list(range(12, 21))
+    assert events[2].payload == {
+        "tool_name": "deck.add_slide",
+        "status": "completed",
+        "summary": "Added follow-up slide.",
+    }
+    assert events[3].deck_revision == 2
+    assert events[3].payload["deck"]["revision"] == 2
+    assert events[3].payload["deck"]["slides"][-1]["title"] == "Risk Mitigation"
+    assert events[5].payload["slide_count"] == 6
+    assert events[7].payload["slide_count"] == 6
+    assert len(presentation.slides) == 6
+    assert events[8].payload["plan"]["status"] == "completed"
+
+
+def test_agent_session_does_not_treat_address_as_add_slide_request(tmp_path):
+    session = AgentSession(session_id="session_followup_words", deck_id="deck_followup_words", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Address market sizing gaps")]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert events[2].payload["tool_name"] == "research.collect_brief"
+
+
 def test_agent_session_uses_tool_registry_for_deck_and_preview():
     calls = []
     registry = ToolRegistry()

@@ -14,7 +14,7 @@ PPT Agent Studio is a Windows-native, presentation-focused AI Agent. It is inspi
 
 ## Current MVP Runtime
 
-The first runtime increments include a deterministic local `AgentSession`. It accepts a user message, emits ordered Agent events, collects a safe research brief, builds a starter `DeckSpec`, renders a full HTML preview document, and exposes a basic `pptx.export` tool. The runtime also emits safe `tool.completed` progress events so the WinUI chat pane can show what the Agent has just finished without exposing raw tool payloads or secrets. This gives the WinUI client a stable event contract before live model calls are added.
+The first runtime increments include a deterministic local `AgentSession`. It accepts a user message, emits ordered Agent events, collects a safe research brief, builds a starter `DeckSpec`, renders a full HTML preview document, and exposes a basic `pptx.export` tool. Follow-up add-slide requests mutate the existing DeckSpec through `deck.add_slide`, refresh the preview, and export a new revision instead of rebuilding the deck from scratch. The runtime also emits safe `tool.completed` progress events so the WinUI chat pane can show what the Agent has just finished without exposing raw tool payloads or secrets. This gives the WinUI client a stable event contract before live model calls are added.
 
 The runtime now has a planner boundary. By default it uses the deterministic fallback planner. Set `PPT_AGENT_PLANNER=llm` together with a valid OpenAI-compatible API key to route outline planning through the model-backed planner.
 
