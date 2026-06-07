@@ -330,7 +330,7 @@ def test_fallback_outline_planner_respects_requested_slide_count():
 
     assert len(outline["slides"]) == 20
     assert outline["slides"][0]["prototype_hint"] == "cover"
-    assert outline["slides"][-1]["title"] == "Implementation roadmap"
+    assert outline["slides"][-1]["title"] == "\u5b9e\u65bd\u8def\u7ebf\u56fe"
 
 
 def test_fallback_outline_planner_caps_large_requested_slide_count():
@@ -379,6 +379,26 @@ def test_fallback_outline_planner_reads_real_chinese_number_slide_count():
     outline = asyncio.run(run())
 
     assert len(outline["slides"]) == 20
+
+
+def test_fallback_outline_planner_preserves_chinese_slide_language():
+    planner = FallbackOutlinePlanner()
+
+    async def run():
+        return await planner.create_outline(
+            "\u5e2e\u6211\u505a\u4e00\u4e2a\u5173\u4e8e AI \u8f6c\u578b\u7684 5 \u9875 PPT\uff0c"
+            "\u76ee\u6807\u53d7\u4f17\u662f\u9ad8\u5c42\u7ba1\u7406\u8005\uff0c"
+            "\u98ce\u683c\u9ea6\u80af\u9521"
+        )
+
+    outline = asyncio.run(run())
+    titles = [slide["title"] for slide in outline["slides"]]
+
+    assert titles[0] == "AI \u8f6c\u578b"
+    assert titles[1] == "\u6267\u884c\u6458\u8981"
+    assert titles[-1] == "\u5b9e\u65bd\u8def\u7ebf\u56fe"
+    assert "Executive summary" not in titles
+    assert outline["slides"][1]["points"][0]["label"] == "\u63a8\u8350\u65b9\u6848"
 
 
 def test_fallback_outline_planner_derives_executive_consulting_theme():
