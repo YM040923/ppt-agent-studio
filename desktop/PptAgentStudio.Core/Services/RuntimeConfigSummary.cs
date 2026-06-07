@@ -13,7 +13,8 @@ public sealed record RuntimeConfigSummary(
     string EnvFilePath = "",
     bool EnvFileExists = false,
     string RuntimeName = "ppt-agent-studio",
-    string RuntimeVersion = "")
+    string RuntimeVersion = "",
+    string EndpointKind = "cloud")
 {
     public static RuntimeConfigSummary FromPayload(JsonElement payload)
     {
@@ -62,7 +63,8 @@ public sealed record RuntimeConfigSummary(
             EnvFilePath: envFilePath,
             EnvFileExists: envFileExists,
             RuntimeName: runtimeName,
-            RuntimeVersion: runtimeVersion);
+            RuntimeVersion: runtimeVersion,
+            EndpointKind: ReadEndpointKind(llm));
     }
 
     public string ToStatusText()
@@ -93,6 +95,7 @@ public sealed record RuntimeConfigSummary(
         lines.AddRange(
             [
                 $"Endpoint: {BaseUrl}",
+                $"Endpoint type: {EndpointKind}",
                 $"Model: {Model}",
                 $"Planner: {plannerActive}",
                 $"PPTX directory: {ArtifactDirectory}",
@@ -111,5 +114,15 @@ public sealed record RuntimeConfigSummary(
         }
 
         return value.GetString() ?? "fallback";
+    }
+
+    private static string ReadEndpointKind(JsonElement llm)
+    {
+        if (!llm.TryGetProperty("endpoint_kind", out var value))
+        {
+            return "cloud";
+        }
+
+        return string.IsNullOrWhiteSpace(value.GetString()) ? "cloud" : value.GetString()!;
     }
 }

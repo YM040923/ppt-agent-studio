@@ -16,7 +16,8 @@ public sealed class RuntimeConfigSummaryTests
                 "base_url": "https://provider.example/v1",
                 "model": "gpt-compatible-model",
                 "has_api_key": true,
-                "has_extra_headers": true
+                "has_extra_headers": true,
+                "endpoint_kind": "cloud"
               },
               "runtime": {
                 "name": "ppt-agent-studio",
@@ -42,6 +43,7 @@ public sealed class RuntimeConfigSummaryTests
         Assert.AreEqual("gpt-compatible-model", summary.Model);
         Assert.IsTrue(summary.HasApiKey);
         Assert.IsTrue(summary.HasExtraHeaders);
+        Assert.AreEqual("cloud", summary.EndpointKind);
         Assert.AreEqual("ppt-agent-studio", summary.RuntimeName);
         Assert.AreEqual("0.1.0", summary.RuntimeVersion);
         Assert.AreEqual("llm", summary.PlannerRequested);
@@ -118,6 +120,7 @@ public sealed class RuntimeConfigSummaryTests
             """
             Runtime: ppt-agent-studio 0.1.0
             Endpoint: https://provider.example/v1
+            Endpoint type: cloud
             Model: gpt-compatible-model
             Planner: llm
             PPTX directory: E:\MyProjects\ppt-agent-studio\artifacts\decks

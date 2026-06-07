@@ -279,6 +279,7 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch, tmp_p
             "model": "gpt-compatible-model",
             "has_api_key": True,
             "has_extra_headers": False,
+            "endpoint_kind": "cloud",
         },
         "runtime": {
             "name": "ppt-agent-studio",

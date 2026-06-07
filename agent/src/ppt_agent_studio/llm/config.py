@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
+from ipaddress import ip_address
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 @dataclass(frozen=True, repr=False)
@@ -16,6 +18,18 @@ class OpenAICompatibleConfig:
     @property
     def has_api_key(self) -> bool:
         return bool(self.api_key.strip())
+
+    @property
+    def endpoint_kind(self) -> str:
+        parsed = urlparse(self.base_url)
+        host = (parsed.hostname or "").strip().lower()
+        if host == "localhost":
+            return "local"
+        try:
+            address = ip_address(host)
+        except ValueError:
+            return "cloud"
+        return "local" if address.is_loopback else "cloud"
 
     @classmethod
     def from_env(cls, env_file: str | os.PathLike[str] | None = None) -> "OpenAICompatibleConfig":
@@ -42,6 +56,7 @@ class OpenAICompatibleConfig:
             "model": self.model,
             "has_api_key": self.has_api_key,
             "has_extra_headers": bool(self.extra_headers),
+            "endpoint_kind": self.endpoint_kind,
         }
 
 

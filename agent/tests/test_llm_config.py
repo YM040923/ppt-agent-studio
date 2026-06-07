@@ -15,6 +15,23 @@ def test_openai_compatible_config_reads_third_party_endpoint(monkeypatch):
     assert config.model == "gpt-compatible-model"
     assert config.has_api_key is True
     assert config.extra_headers == {"X-Provider": "tenant-001", "X-Trace": "deck"}
+    assert config.safe_summary()["endpoint_kind"] == "cloud"
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://localhost:1234/v1",
+        "http://127.0.0.1:11434/v1",
+        "http://[::1]:8000/v1",
+    ],
+)
+def test_openai_compatible_config_marks_loopback_endpoints_as_local(monkeypatch, base_url):
+    monkeypatch.setenv("OPENAI_BASE_URL", base_url)
+
+    config = OpenAICompatibleConfig.from_env()
+
+    assert config.safe_summary()["endpoint_kind"] == "local"
 
 
 def test_openai_compatible_config_reads_env_file_when_env_is_missing(monkeypatch, tmp_path):
