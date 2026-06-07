@@ -58,6 +58,7 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
     assert "AI Strategy" in text
     assert "Board briefing" in text
     assert "Focus the operating model." in text
+    assert "\u2022 Focus the operating model." in text
     assert "Sequence" in text
     assert "Ship in measurable waves." in text
     point_shape = next(shape for shape in presentation.slides[1].shapes if hasattr(shape, "text") and "Sequence" in shape.text)

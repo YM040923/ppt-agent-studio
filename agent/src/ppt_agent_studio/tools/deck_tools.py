@@ -355,7 +355,10 @@ def _block_text(block: dict[str, Any]) -> str:
         if label and body:
             return f"{label}: {body}"
         return label or body
-    return str(block.get("text") or "").strip()
+    text = str(block.get("text") or "").strip()
+    if text and block_type in {"bullet", "summary_item", "toc_item"}:
+        return f"\u2022 {text}"
+    return text
 
 
 def _theme_rgb(deck: DeckSpec, key: str, fallback: str) -> RGBColor:
