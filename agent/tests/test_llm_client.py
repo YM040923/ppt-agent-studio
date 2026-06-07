@@ -33,6 +33,7 @@ def test_chat_client_posts_openai_compatible_request_and_parses_text():
         base_url="https://provider.example/v1",
         api_key="secret-value",
         model="gpt-compatible-model",
+        extra_headers={"X-Provider": "tenant-001"},
     )
 
     async def run():
@@ -51,6 +52,7 @@ def test_chat_client_posts_openai_compatible_request_and_parses_text():
     assert text == "A concise executive story."
     assert captured["url"] == "https://provider.example/v1/chat/completions"
     assert captured["headers"]["authorization"] == "Bearer secret-value"
+    assert captured["headers"]["x-provider"] == "tenant-001"
     assert captured["body"] == {
         "model": "gpt-compatible-model",
         "messages": [

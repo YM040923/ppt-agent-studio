@@ -73,10 +73,11 @@ Copy `.env.example` to `.env.local`, then fill in your local or third-party Open
 OPENAI_BASE_URL=https://your-provider.example/v1
 OPENAI_API_KEY=your-secret-key
 OPENAI_MODEL=your-compatible-model
+OPENAI_EXTRA_HEADERS={"X-Provider":"tenant-id"}
 PPT_AGENT_PLANNER=llm
 ```
 
-Do not commit `.env.local`.
+`OPENAI_EXTRA_HEADERS` is optional and must be a JSON object. It is sent to the model provider, but runtime status only reports whether extra headers are configured; names and values are not displayed. Do not commit `.env.local`.
 
 Desktop sidecar overrides such as `PPT_AGENT_RUNTIME_ROOT` and `PPT_AGENT_PYTHON` are read before Python starts, so set them in the shell that launches the WinUI app rather than inside `.env.local`.
 
@@ -86,7 +87,7 @@ The runtime exposes a safe configuration probe over WebSocket:
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-It reports the configured endpoint, model, active planner mode, PPTX artifact directory, env file path/existence, and whether an API key is present without returning the key.
+It reports the configured endpoint, model, active planner mode, PPTX artifact directory, env file path/existence, whether an API key is present, and whether extra provider headers are configured without returning secret values.
 
 The Python runtime includes an injectable OpenAI-compatible chat client and an LLM outline planner. The planner accepts fenced JSON or prose-wrapped JSON from compatible providers, fills in a safe DeckSpec theme when the model omits one, backfills deterministic slides when the model returns fewer slides than the user explicitly requested, falls back to deterministic slides if the model returns no usable slides, and caps oversized model outlines at 30 slides for MVP responsiveness. The default Agent turn still uses the deterministic fallback planner unless `PPT_AGENT_PLANNER=llm` and `OPENAI_API_KEY` are both configured, so the MVP remains testable without a network call or API key.
 

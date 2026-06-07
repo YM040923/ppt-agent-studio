@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -10,6 +11,7 @@ class OpenAICompatibleConfig:
     base_url: str
     api_key: str
     model: str
+    extra_headers: dict[str, str] = field(default_factory=dict)
 
     @property
     def has_api_key(self) -> bool:
@@ -22,6 +24,7 @@ class OpenAICompatibleConfig:
             base_url=_config_value("OPENAI_BASE_URL", "https://api.openai.com/v1", file_values).strip().rstrip("/"),
             api_key=_config_value("OPENAI_API_KEY", "", file_values).strip(),
             model=_config_value("OPENAI_MODEL", "gpt-4.1-mini", file_values).strip(),
+            extra_headers=_extra_headers_from_config(_config_value("OPENAI_EXTRA_HEADERS", "", file_values)),
         )
 
     def __repr__(self) -> str:
@@ -29,7 +32,8 @@ class OpenAICompatibleConfig:
             "OpenAICompatibleConfig("
             f"base_url={self.base_url!r}, "
             f"model={self.model!r}, "
-            f"has_api_key={self.has_api_key!r})"
+            f"has_api_key={self.has_api_key!r}, "
+            f"has_extra_headers={bool(self.extra_headers)!r})"
         )
 
     def safe_summary(self) -> dict[str, object]:
@@ -37,6 +41,7 @@ class OpenAICompatibleConfig:
             "base_url": self.base_url,
             "model": self.model,
             "has_api_key": self.has_api_key,
+            "has_extra_headers": bool(self.extra_headers),
         }
 
 
@@ -71,3 +76,21 @@ def _strip_env_value(value: str) -> str:
     if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
         return value[1:-1]
     return value
+
+
+def _extra_headers_from_config(value: str) -> dict[str, str]:
+    if not value.strip():
+        return {}
+    parsed = json.loads(value)
+    if not isinstance(parsed, dict):
+        raise ValueError("OPENAI_EXTRA_HEADERS must be a JSON object")
+
+    headers: dict[str, str] = {}
+    for raw_name, raw_value in parsed.items():
+        name = str(raw_name).strip()
+        if not name or not isinstance(raw_value, str):
+            continue
+        header_value = raw_value.strip()
+        if header_value:
+            headers[name] = header_value
+    return headers

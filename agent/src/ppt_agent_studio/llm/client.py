@@ -30,11 +30,15 @@ class OpenAICompatibleChatClient:
         }
         client = self._http_client or httpx.AsyncClient()
         close_client = self._http_client is None
+        headers = {
+            **self.config.extra_headers,
+            "Authorization": f"Bearer {self.config.api_key}",
+        }
         try:
             response = await client.post(
                 f"{self.config.base_url}/chat/completions",
                 json=payload,
-                headers={"Authorization": f"Bearer {self.config.api_key}"},
+                headers=headers,
             )
             response.raise_for_status()
             data = response.json()

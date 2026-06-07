@@ -67,7 +67,7 @@ The desktop app or a test client can ask for a redacted runtime configuration su
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-The response is a single `runtime.config` event. It includes `base_url`, `model`, `has_api_key`, planner `requested`/`active` modes, the PPTX artifact directory, and the env file `path`/`exists` status, but never returns the API key value.
+The response is a single `runtime.config` event. It includes `base_url`, `model`, `has_api_key`, `has_extra_headers`, planner `requested`/`active` modes, the PPTX artifact directory, and the env file `path`/`exists` status, but never returns API key or header values.
 
 The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner. The Settings dialog also shows the project-local PPTX artifact directory and env file status so users can find exported decks and confirm whether `.env.local` is being picked up.
 
@@ -92,12 +92,15 @@ The runtime uses OpenAI-compatible configuration keys:
 - `OPENAI_BASE_URL`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
+- `OPENAI_EXTRA_HEADERS`
 - `PPT_AGENT_PLANNER`
 
 This supports official OpenAI endpoints and third-party compatible providers without changing desktop code.
 
 The Python runtime reads these values from process environment variables first, then falls back to `.env.local` in the repository root. Set `PPT_AGENT_ENV_FILE` to point at a different local env file when needed.
 
-`OpenAICompatibleChatClient` posts to `{OPENAI_BASE_URL}/chat/completions` with the configured model and bearer token. It accepts an injected `httpx.AsyncClient`, so runtime tests can use `httpx.MockTransport` and avoid real network calls or secret exposure. The `LLMOutlinePlanner` uses this client plus the core system prompt to request a JSON DeckSpec outline, while `FallbackOutlinePlanner` remains the default for offline MVP runs.
+`OPENAI_EXTRA_HEADERS` is an optional JSON object for provider-specific request headers. `runtime.config` only returns the boolean `has_extra_headers`; header names and values are treated as hidden configuration.
+
+`OpenAICompatibleChatClient` posts to `{OPENAI_BASE_URL}/chat/completions` with the configured model, bearer token, and optional extra headers. It accepts an injected `httpx.AsyncClient`, so runtime tests can use `httpx.MockTransport` and avoid real network calls or secret exposure. The `LLMOutlinePlanner` uses this client plus the core system prompt to request a JSON DeckSpec outline, while `FallbackOutlinePlanner` remains the default for offline MVP runs.
 
 The core system prompt is stored in `ppt_agent_studio.prompts`. It scopes the Agent to presentation work, requires DeckSpec-backed revisions, ties deck mutations to `preview.ready` and `pptx.ready`, and forbids revealing API keys or hidden configuration.

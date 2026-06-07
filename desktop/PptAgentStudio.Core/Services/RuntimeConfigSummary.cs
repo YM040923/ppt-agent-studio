@@ -8,6 +8,7 @@ public sealed record RuntimeConfigSummary(
     bool HasApiKey,
     string PlannerRequested,
     string PlannerActive,
+    bool HasExtraHeaders = false,
     string ArtifactDirectory = "",
     string EnvFilePath = "",
     bool EnvFileExists = false)
@@ -40,6 +41,7 @@ public sealed record RuntimeConfigSummary(
             HasApiKey: llm.TryGetProperty("has_api_key", out var hasApiKey) && hasApiKey.GetBoolean(),
             PlannerRequested: ReadPlannerValue(hasPlanner, planner, "requested"),
             PlannerActive: ReadPlannerValue(hasPlanner, planner, "active"),
+            HasExtraHeaders: llm.TryGetProperty("has_extra_headers", out var hasExtraHeaders) && hasExtraHeaders.GetBoolean(),
             ArtifactDirectory: artifactDirectory,
             EnvFilePath: envFilePath,
             EnvFileExists: envFileExists);
@@ -48,17 +50,19 @@ public sealed record RuntimeConfigSummary(
     public string ToStatusText()
     {
         var keyState = HasApiKey ? "API key configured." : "API key missing.";
+        var extraHeadersState = HasExtraHeaders ? " Extra headers configured." : "";
         var plannerRequested = string.IsNullOrWhiteSpace(PlannerRequested) ? "fallback" : PlannerRequested;
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
         var plannerState = plannerRequested == plannerActive
             ? $"Planner: {plannerActive}."
             : $"Planner: {plannerActive} (requested {plannerRequested}).";
-        return $"Local Agent runtime ready. Model: {Model} at {BaseUrl}. {keyState} {plannerState}";
+        return $"Local Agent runtime ready. Model: {Model} at {BaseUrl}. {keyState}{extraHeadersState} {plannerState}";
     }
 
     public string ToSettingsText()
     {
         var keyState = HasApiKey ? "configured" : "missing";
+        var extraHeadersState = HasExtraHeaders ? "configured" : "not configured";
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
         var envFileState = EnvFileExists ? "found" : "missing";
         return $"""
@@ -68,6 +72,7 @@ public sealed record RuntimeConfigSummary(
             PPTX directory: {ArtifactDirectory}
             Env file: {EnvFilePath} ({envFileState})
             API key: {keyState}
+            Extra headers: {extraHeadersState}
             """.ReplaceLineEndings();
     }
 

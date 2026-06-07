@@ -15,7 +15,8 @@ public sealed class RuntimeConfigSummaryTests
               "llm": {
                 "base_url": "https://provider.example/v1",
                 "model": "gpt-compatible-model",
-                "has_api_key": true
+                "has_api_key": true,
+                "has_extra_headers": true
               },
               "planner": {
                 "requested": "llm",
@@ -36,6 +37,7 @@ public sealed class RuntimeConfigSummaryTests
         Assert.AreEqual("https://provider.example/v1", summary.BaseUrl);
         Assert.AreEqual("gpt-compatible-model", summary.Model);
         Assert.IsTrue(summary.HasApiKey);
+        Assert.IsTrue(summary.HasExtraHeaders);
         Assert.AreEqual("llm", summary.PlannerRequested);
         Assert.AreEqual("llm", summary.PlannerActive);
         Assert.AreEqual(@"E:\MyProjects\ppt-agent-studio\artifacts\decks", summary.ArtifactDirectory);
@@ -52,6 +54,7 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: true,
             PlannerRequested: "llm",
             PlannerActive: "llm",
+            HasExtraHeaders: true,
             ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
             EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
             EnvFileExists: true);
@@ -59,7 +62,7 @@ public sealed class RuntimeConfigSummaryTests
         var status = summary.ToStatusText();
 
         Assert.AreEqual(
-            "Local Agent runtime ready. Model: gpt-compatible-model at https://provider.example/v1. API key configured. Planner: llm.",
+            "Local Agent runtime ready. Model: gpt-compatible-model at https://provider.example/v1. API key configured. Extra headers configured. Planner: llm.",
             status);
         Assert.IsFalse(status.Contains("secret", StringComparison.OrdinalIgnoreCase));
     }
@@ -73,6 +76,7 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: false,
             PlannerRequested: "llm",
             PlannerActive: "fallback",
+            HasExtraHeaders: false,
             ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
             EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
             EnvFileExists: false);
@@ -93,6 +97,7 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: true,
             PlannerRequested: "llm",
             PlannerActive: "llm",
+            HasExtraHeaders: true,
             ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
             EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
             EnvFileExists: true);
@@ -107,6 +112,7 @@ public sealed class RuntimeConfigSummaryTests
             PPTX directory: E:\MyProjects\ppt-agent-studio\artifacts\decks
             Env file: E:\MyProjects\ppt-agent-studio\.env.local (found)
             API key: configured
+            Extra headers: configured
             """.ReplaceLineEndings(),
             settingsText);
         Assert.IsFalse(settingsText.Contains("secret", StringComparison.OrdinalIgnoreCase));
