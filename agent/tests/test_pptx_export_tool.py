@@ -60,6 +60,11 @@ def test_pptx_export_tool_writes_editable_deck(tmp_path):
     assert "Focus the operating model." in text
     assert "Sequence" in text
     assert "Ship in measurable waves." in text
+    point_shape = next(shape for shape in presentation.slides[1].shapes if hasattr(shape, "text") and "Sequence" in shape.text)
+    point_runs = point_shape.text_frame.paragraphs[0].runs
+    assert [run.text for run in point_runs] == ["Sequence", ": Ship in measurable waves."]
+    assert point_runs[0].font.bold is True
+    assert point_runs[1].font.bold is False
     assert "Open with the decision the board needs to make." in presentation.slides[0].notes_slide.notes_text_frame.text
     assert presentation.core_properties.subject == "executive committee"
     assert presentation.core_properties.keywords == "McKinsey"

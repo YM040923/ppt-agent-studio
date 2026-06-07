@@ -173,17 +173,29 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
             block_text = _block_text(block)
             if not block_text:
                 continue
-            _add_textbox(
-                ppt_slide,
-                left=0.85,
-                top=y,
-                width=11.1,
-                height=0.5,
-                text=block_text,
-                font_size=18,
-                bold=block.get("type") == "subtitle",
-                font_color=text_color,
-            )
+            if block.get("type") == "point":
+                _add_point_textbox(
+                    ppt_slide,
+                    left=0.85,
+                    top=y,
+                    width=11.1,
+                    height=0.5,
+                    label=str(block.get("label") or "").strip(),
+                    body=str(block.get("body") or "").strip(),
+                    font_color=text_color,
+                )
+            else:
+                _add_textbox(
+                    ppt_slide,
+                    left=0.85,
+                    top=y,
+                    width=11.1,
+                    height=0.5,
+                    text=block_text,
+                    font_size=18,
+                    bold=block.get("type") == "subtitle",
+                    font_color=text_color,
+                )
             y += 0.58
 
     presentation.save(output_path)
@@ -305,6 +317,34 @@ def _add_textbox(
     run.font.bold = bold
     if font_color is not None:
         run.font.color.rgb = font_color
+
+
+def _add_point_textbox(
+    slide: Any,
+    left: float,
+    top: float,
+    width: float,
+    height: float,
+    label: str,
+    body: str,
+    font_color: RGBColor | None = None,
+) -> None:
+    shape = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
+    paragraph = shape.text_frame.paragraphs[0]
+    if label:
+        label_run = paragraph.add_run()
+        label_run.text = label
+        label_run.font.size = Pt(18)
+        label_run.font.bold = True
+        if font_color is not None:
+            label_run.font.color.rgb = font_color
+    if body:
+        body_run = paragraph.add_run()
+        body_run.text = f": {body}" if label else body
+        body_run.font.size = Pt(18)
+        body_run.font.bold = False
+        if font_color is not None:
+            body_run.font.color.rgb = font_color
 
 
 def _block_text(block: dict[str, Any]) -> str:
