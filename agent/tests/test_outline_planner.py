@@ -118,6 +118,33 @@ def test_llm_outline_planner_adds_fallback_slides_when_model_omits_them():
     assert outline["slides"][-1]["title"] == "Implementation roadmap"
 
 
+def test_llm_outline_planner_caps_excessive_model_slides():
+    slides_json = ",\n".join(
+        f'{{"title": "Slide {index}", "prototype_hint": "content"}}'
+        for index in range(1, 36)
+    )
+    chat_client = FakeChatClient(
+        f"""
+        {{
+          "deck_title": "Oversized Deck",
+          "slides": [
+            {slides_json}
+          ]
+        }}
+        """
+    )
+    planner = LLMOutlinePlanner(chat_client=chat_client)
+
+    async def run():
+        return await planner.create_outline("Make a 100 page board strategy deck")
+
+    outline = asyncio.run(run())
+
+    assert len(outline["slides"]) == 30
+    assert outline["slides"][0]["title"] == "Slide 1"
+    assert outline["slides"][-1]["title"] == "Slide 30"
+
+
 def test_fallback_outline_planner_preserves_prompt_topic():
     planner = FallbackOutlinePlanner()
 

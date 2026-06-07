@@ -43,6 +43,8 @@ class LLMOutlinePlanner:
             title = str(outline.get("deck_title") or outline.get("title") or prompt.removesuffix(".").strip())
             outline["deck_title"] = title or "Untitled Deck"
             outline["slides"] = _fallback_slides(outline["deck_title"], _slide_count_from_prompt(prompt))
+        else:
+            outline["slides"] = _usable_slides(outline)[:30]
         return outline
 
 
@@ -59,8 +61,14 @@ def _extract_json(text: str) -> str:
 
 
 def _has_usable_slides(outline: dict[str, object]) -> bool:
+    return len(_usable_slides(outline)) > 0
+
+
+def _usable_slides(outline: dict[str, object]) -> list[dict[str, object]]:
     slides = outline.get("slides")
-    return isinstance(slides, list) and any(isinstance(slide, dict) for slide in slides)
+    if not isinstance(slides, list):
+        return []
+    return [slide for slide in slides if isinstance(slide, dict)]
 
 
 def _theme_from_prompt(prompt: str) -> dict[str, str]:
