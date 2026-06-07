@@ -32,9 +32,12 @@ public sealed class AgentSessionClient
 
     public async Task StartNewDeckAsync(CancellationToken cancellationToken = default)
     {
+        using var resetCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        resetCancellation.CancelAfter(TimeSpan.FromSeconds(1));
+
         try
         {
-            await ResetCurrentDeckAsync(cancellationToken);
+            await ResetCurrentDeckAsync(resetCancellation.Token);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

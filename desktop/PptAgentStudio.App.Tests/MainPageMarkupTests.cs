@@ -66,6 +66,7 @@ public sealed class MainPageMarkupTests
 
         StringAssert.Contains(source, "type = \"session.reset\"");
         StringAssert.Contains(source, "ResetCurrentDeckAsync");
+        StringAssert.Contains(source, "CancelAfter(TimeSpan.FromSeconds(1))");
         StringAssert.Contains(source, "_identity.StartNewDeck()");
     }
 
