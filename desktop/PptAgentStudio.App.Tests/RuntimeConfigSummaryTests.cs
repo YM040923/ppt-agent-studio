@@ -20,6 +20,9 @@ public sealed class RuntimeConfigSummaryTests
               "planner": {
                 "requested": "llm",
                 "active": "llm"
+              },
+              "artifacts": {
+                "directory": "E:\\MyProjects\\ppt-agent-studio\\artifacts\\decks"
               }
             }
             """);
@@ -31,6 +34,7 @@ public sealed class RuntimeConfigSummaryTests
         Assert.IsTrue(summary.HasApiKey);
         Assert.AreEqual("llm", summary.PlannerRequested);
         Assert.AreEqual("llm", summary.PlannerActive);
+        Assert.AreEqual(@"E:\MyProjects\ppt-agent-studio\artifacts\decks", summary.ArtifactDirectory);
     }
 
     [TestMethod]
@@ -41,7 +45,8 @@ public sealed class RuntimeConfigSummaryTests
             Model: "gpt-compatible-model",
             HasApiKey: true,
             PlannerRequested: "llm",
-            PlannerActive: "llm");
+            PlannerActive: "llm",
+            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks");
 
         var status = summary.ToStatusText();
 
@@ -59,7 +64,8 @@ public sealed class RuntimeConfigSummaryTests
             Model: "gpt-4.1-mini",
             HasApiKey: false,
             PlannerRequested: "llm",
-            PlannerActive: "fallback");
+            PlannerActive: "fallback",
+            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks");
 
         var status = summary.ToStatusText();
 
@@ -76,7 +82,8 @@ public sealed class RuntimeConfigSummaryTests
             Model: "gpt-compatible-model",
             HasApiKey: true,
             PlannerRequested: "llm",
-            PlannerActive: "llm");
+            PlannerActive: "llm",
+            ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks");
 
         var settingsText = summary.ToSettingsText();
 
@@ -85,6 +92,7 @@ public sealed class RuntimeConfigSummaryTests
             Endpoint: https://provider.example/v1
             Model: gpt-compatible-model
             Planner: llm
+            PPTX directory: E:\MyProjects\ppt-agent-studio\artifacts\decks
             API key: configured
             """.ReplaceLineEndings(),
             settingsText);

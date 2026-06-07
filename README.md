@@ -31,7 +31,7 @@ Then run the desktop app:
 dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
 ```
 
-On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether an API key is present, and which planner is active. The key value is never displayed.
+On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether an API key is present, which planner is active, and where PPTX artifacts are written. The key value is never displayed.
 
 When the desktop app starts the runtime sidecar, it pins `PPT_AGENT_ARTIFACTS_DIR` to the repository `artifacts/decks` directory so generated PPTX files land in a predictable project-local location.
 
@@ -72,7 +72,7 @@ The runtime exposes a safe configuration probe over WebSocket:
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-It reports the configured endpoint, model, active planner mode, and whether an API key is present without returning the key.
+It reports the configured endpoint, model, active planner mode, PPTX artifact directory, and whether an API key is present without returning the key.
 
 The Python runtime includes an injectable OpenAI-compatible chat client and an LLM outline planner. The planner accepts fenced JSON or prose-wrapped JSON from compatible providers, fills in a safe DeckSpec theme when the model omits one, backfills deterministic slides when the model returns fewer slides than the user explicitly requested, falls back to deterministic slides if the model returns no usable slides, and caps oversized model outlines at 30 slides for MVP responsiveness. The default Agent turn still uses the deterministic fallback planner unless `PPT_AGENT_PLANNER=llm` and `OPENAI_API_KEY` are both configured, so the MVP remains testable without a network call or API key.
 

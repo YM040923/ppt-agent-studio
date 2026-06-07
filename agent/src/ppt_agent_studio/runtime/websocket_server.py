@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 from collections.abc import AsyncIterator, Iterable
+from pathlib import Path
 from typing import Any
 
 from ppt_agent_studio.llm.config import OpenAICompatibleConfig
@@ -33,6 +34,12 @@ def _planner_summary(config: OpenAICompatibleConfig) -> dict[str, str]:
     return {
         "requested": _requested_planner_mode(),
         "active": _active_planner_mode(config),
+    }
+
+
+def _artifact_summary() -> dict[str, str]:
+    return {
+        "directory": str(Path(os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks"))),
     }
 
 
@@ -71,7 +78,11 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
             seq=1,
             session_id=session_id,
             type="runtime.config",
-            payload={"llm": config.safe_summary(), "planner": _planner_summary(config)},
+            payload={
+                "llm": config.safe_summary(),
+                "planner": _planner_summary(config),
+                "artifacts": _artifact_summary(),
+            },
         )
         yield _event_json(event)
         return

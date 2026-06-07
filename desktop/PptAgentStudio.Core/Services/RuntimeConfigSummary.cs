@@ -7,18 +7,27 @@ public sealed record RuntimeConfigSummary(
     string Model,
     bool HasApiKey,
     string PlannerRequested,
-    string PlannerActive)
+    string PlannerActive,
+    string ArtifactDirectory = "")
 {
     public static RuntimeConfigSummary FromPayload(JsonElement payload)
     {
         var llm = payload.GetProperty("llm");
         var hasPlanner = payload.TryGetProperty("planner", out var planner);
+        var artifactDirectory = "";
+        if (payload.TryGetProperty("artifacts", out var artifacts)
+            && artifacts.TryGetProperty("directory", out var directory))
+        {
+            artifactDirectory = directory.GetString() ?? "";
+        }
+
         return new RuntimeConfigSummary(
             BaseUrl: llm.GetProperty("base_url").GetString() ?? "",
             Model: llm.GetProperty("model").GetString() ?? "",
             HasApiKey: llm.TryGetProperty("has_api_key", out var hasApiKey) && hasApiKey.GetBoolean(),
             PlannerRequested: ReadPlannerValue(hasPlanner, planner, "requested"),
-            PlannerActive: ReadPlannerValue(hasPlanner, planner, "active"));
+            PlannerActive: ReadPlannerValue(hasPlanner, planner, "active"),
+            ArtifactDirectory: artifactDirectory);
     }
 
     public string ToStatusText()
@@ -40,6 +49,7 @@ public sealed record RuntimeConfigSummary(
             Endpoint: {BaseUrl}
             Model: {Model}
             Planner: {plannerActive}
+            PPTX directory: {ArtifactDirectory}
             API key: {keyState}
             """.ReplaceLineEndings();
     }
