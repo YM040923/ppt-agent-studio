@@ -44,6 +44,27 @@ public sealed class PreviewPaneStateTests
     }
 
     [TestMethod]
+    public void ResetSlidePositionReturnsPreviewToFirstSlide()
+    {
+        var state = new PreviewPaneState();
+
+        state.SetSlideCount(4);
+        state.GoNext();
+        state.GoNext();
+
+        state.ResetSlidePosition();
+
+        Assert.AreEqual(0, state.CurrentSlideIndex);
+        Assert.AreEqual("1 / 4", state.PageText);
+
+        state.SetSlideCount(0);
+        state.ResetSlidePosition();
+
+        Assert.AreEqual(0, state.CurrentSlideIndex);
+        Assert.AreEqual("0 / 0", state.PageText);
+    }
+
+    [TestMethod]
     public void ZoomStaysWithinPreviewBounds()
     {
         var state = new PreviewPaneState();

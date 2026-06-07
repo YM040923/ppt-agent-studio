@@ -36,6 +36,11 @@ public sealed class PreviewPaneState
         CurrentSlideIndex = ClampSlideIndex(CurrentSlideIndex + 1);
     }
 
+    public void ResetSlidePosition()
+    {
+        CurrentSlideIndex = ClampSlideIndex(0);
+    }
+
     public void ZoomIn()
     {
         ZoomPercent = Math.Min(MaximumZoomPercent, ZoomPercent + ZoomStepPercent);
