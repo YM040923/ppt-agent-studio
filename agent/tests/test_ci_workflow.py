@@ -8,6 +8,7 @@ def test_ci_runs_offline_demo_smoke():
     assert "--artifact-dir artifacts\\ci-demo" in workflow
     assert "ppt-agent-studio-demo" in workflow
     assert "artifacts/ci-demo/**" in workflow
+    assert "if-no-files-found: error" in workflow
 
 
 def _repo_root() -> Path:

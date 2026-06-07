@@ -28,6 +28,7 @@ jobs:
         with:
           name: ppt-agent-studio-demo
           path: artifacts/ci-demo/**
+          if-no-files-found: error
 
   desktop:
     runs-on: windows-latest
@@ -54,3 +55,4 @@ jobs:
         with:
           name: ppt-agent-studio-msix
           path: desktop/PptAgentStudio.App/AppPackages/**/*.msix
+          if-no-files-found: error
