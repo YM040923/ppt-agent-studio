@@ -18,6 +18,10 @@ public sealed class RuntimeConfigSummaryTests
                 "has_api_key": true,
                 "has_extra_headers": true
               },
+              "runtime": {
+                "name": "ppt-agent-studio",
+                "version": "0.1.0"
+              },
               "planner": {
                 "requested": "llm",
                 "active": "llm"
@@ -38,6 +42,8 @@ public sealed class RuntimeConfigSummaryTests
         Assert.AreEqual("gpt-compatible-model", summary.Model);
         Assert.IsTrue(summary.HasApiKey);
         Assert.IsTrue(summary.HasExtraHeaders);
+        Assert.AreEqual("ppt-agent-studio", summary.RuntimeName);
+        Assert.AreEqual("0.1.0", summary.RuntimeVersion);
         Assert.AreEqual("llm", summary.PlannerRequested);
         Assert.AreEqual("llm", summary.PlannerActive);
         Assert.AreEqual(@"E:\MyProjects\ppt-agent-studio\artifacts\decks", summary.ArtifactDirectory);
@@ -57,7 +63,9 @@ public sealed class RuntimeConfigSummaryTests
             HasExtraHeaders: true,
             ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
             EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
-            EnvFileExists: true);
+            EnvFileExists: true,
+            RuntimeName: "ppt-agent-studio",
+            RuntimeVersion: "0.1.0");
 
         var status = summary.ToStatusText();
 
@@ -100,12 +108,15 @@ public sealed class RuntimeConfigSummaryTests
             HasExtraHeaders: true,
             ArtifactDirectory: @"E:\MyProjects\ppt-agent-studio\artifacts\decks",
             EnvFilePath: @"E:\MyProjects\ppt-agent-studio\.env.local",
-            EnvFileExists: true);
+            EnvFileExists: true,
+            RuntimeName: "ppt-agent-studio",
+            RuntimeVersion: "0.1.0");
 
         var settingsText = summary.ToSettingsText();
 
         Assert.AreEqual(
             """
+            Runtime: ppt-agent-studio 0.1.0
             Endpoint: https://provider.example/v1
             Model: gpt-compatible-model
             Planner: llm

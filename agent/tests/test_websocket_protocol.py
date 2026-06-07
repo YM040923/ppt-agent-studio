@@ -280,6 +280,10 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch, tmp_p
             "has_api_key": True,
             "has_extra_headers": False,
         },
+        "runtime": {
+            "name": "ppt-agent-studio",
+            "version": "0.1.0",
+        },
         "planner": {
             "requested": "llm",
             "active": "llm",

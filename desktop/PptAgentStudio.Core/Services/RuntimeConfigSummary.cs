@@ -11,7 +11,9 @@ public sealed record RuntimeConfigSummary(
     bool HasExtraHeaders = false,
     string ArtifactDirectory = "",
     string EnvFilePath = "",
-    bool EnvFileExists = false)
+    bool EnvFileExists = false,
+    string RuntimeName = "ppt-agent-studio",
+    string RuntimeVersion = "")
 {
     public static RuntimeConfigSummary FromPayload(JsonElement payload)
     {
@@ -34,6 +36,20 @@ public sealed record RuntimeConfigSummary(
 
             envFileExists = envFile.TryGetProperty("exists", out var exists) && exists.GetBoolean();
         }
+        var runtimeName = "ppt-agent-studio";
+        var runtimeVersion = "";
+        if (payload.TryGetProperty("runtime", out var runtime))
+        {
+            if (runtime.TryGetProperty("name", out var name))
+            {
+                runtimeName = name.GetString() ?? runtimeName;
+            }
+
+            if (runtime.TryGetProperty("version", out var version))
+            {
+                runtimeVersion = version.GetString() ?? "";
+            }
+        }
 
         return new RuntimeConfigSummary(
             BaseUrl: llm.GetProperty("base_url").GetString() ?? "",
@@ -44,7 +60,9 @@ public sealed record RuntimeConfigSummary(
             HasExtraHeaders: llm.TryGetProperty("has_extra_headers", out var hasExtraHeaders) && hasExtraHeaders.GetBoolean(),
             ArtifactDirectory: artifactDirectory,
             EnvFilePath: envFilePath,
-            EnvFileExists: envFileExists);
+            EnvFileExists: envFileExists,
+            RuntimeName: runtimeName,
+            RuntimeVersion: runtimeVersion);
     }
 
     public string ToStatusText()
@@ -65,15 +83,24 @@ public sealed record RuntimeConfigSummary(
         var extraHeadersState = HasExtraHeaders ? "configured" : "not configured";
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
         var envFileState = EnvFileExists ? "found" : "missing";
-        return $"""
-            Endpoint: {BaseUrl}
-            Model: {Model}
-            Planner: {plannerActive}
-            PPTX directory: {ArtifactDirectory}
-            Env file: {EnvFilePath} ({envFileState})
-            API key: {keyState}
-            Extra headers: {extraHeadersState}
-            """.ReplaceLineEndings();
+        var lines = new List<string>();
+        if (!string.IsNullOrWhiteSpace(RuntimeVersion))
+        {
+            var runtimeName = string.IsNullOrWhiteSpace(RuntimeName) ? "ppt-agent-studio" : RuntimeName;
+            lines.Add($"Runtime: {runtimeName} {RuntimeVersion}");
+        }
+
+        lines.AddRange(
+            [
+                $"Endpoint: {BaseUrl}",
+                $"Model: {Model}",
+                $"Planner: {plannerActive}",
+                $"PPTX directory: {ArtifactDirectory}",
+                $"Env file: {EnvFilePath} ({envFileState})",
+                $"API key: {keyState}",
+                $"Extra headers: {extraHeadersState}"
+            ]);
+        return string.Join(Environment.NewLine, lines);
     }
 
     private static string ReadPlannerValue(bool hasPlanner, JsonElement planner, string propertyName)

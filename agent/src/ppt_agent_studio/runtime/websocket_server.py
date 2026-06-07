@@ -8,6 +8,7 @@ from collections.abc import AsyncIterator, Iterable
 from pathlib import Path
 from typing import Any
 
+from ppt_agent_studio import __version__
 from ppt_agent_studio.llm.config import OpenAICompatibleConfig
 from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner, OutlinePlanner
 from ppt_agent_studio.protocol.events import AgentEvent
@@ -44,6 +45,13 @@ def _planner_summary(config: OpenAICompatibleConfig) -> dict[str, str]:
 def _artifact_summary() -> dict[str, str]:
     return {
         "directory": str(Path(os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks"))),
+    }
+
+
+def _runtime_summary() -> dict[str, str]:
+    return {
+        "name": "ppt-agent-studio",
+        "version": __version__,
     }
 
 
@@ -117,6 +125,7 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
             type="runtime.config",
             payload={
                 "llm": config.safe_summary(),
+                "runtime": _runtime_summary(),
                 "planner": _planner_summary(config),
                 "artifacts": _artifact_summary(),
                 "env_file": _env_file_summary(),
