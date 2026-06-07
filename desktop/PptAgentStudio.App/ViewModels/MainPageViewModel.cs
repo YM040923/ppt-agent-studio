@@ -14,6 +14,15 @@ public sealed class ChatMessageItem
     public string Role { get; init; } = "";
 
     public string Content { get; init; } = "";
+
+    public IReadOnlyList<ChatMessageAction> Actions { get; init; } = [];
+}
+
+public sealed class ChatMessageAction
+{
+    public string Label { get; init; } = "";
+
+    public string Kind { get; init; } = "";
 }
 
 public partial class MainPageViewModel : ObservableObject
@@ -255,7 +264,15 @@ public partial class MainPageViewModel : ObservableObject
                 Messages.Add(new ChatMessageItem
                 {
                     Role = "Assistant",
-                    Content = pptxSummary.ToChatMessage()
+                    Content = pptxSummary.ToChatMessage(),
+                    Actions =
+                    [
+                        new ChatMessageAction
+                        {
+                            Label = "Open PPTX",
+                            Kind = "open_pptx"
+                        }
+                    ]
                 });
                 break;
             case "preview.ready":

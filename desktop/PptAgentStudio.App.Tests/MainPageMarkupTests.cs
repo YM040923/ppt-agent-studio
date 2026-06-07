@@ -61,6 +61,42 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ChatMessagesCanRenderActionButtons()
+    {
+        var page = XDocument.Load(FindMainPageXaml());
+        XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+        var actions = page
+            .Descendants(xaml + "ItemsControl")
+            .Single(element => element.Attribute("ItemsSource")?.Value == "{x:Bind Actions}");
+        var button = actions
+            .Descendants(xaml + "Button")
+            .Single(element => element.Attribute("Click")?.Value == "ChatMessageAction_Click");
+
+        Assert.AreEqual("{x:Bind Label}", button.Attribute("Content")?.Value);
+        Assert.AreEqual("{x:Bind Kind}", button.Attribute("Tag")?.Value);
+    }
+
+    [TestMethod]
+    public void ViewModelAddsOpenPptxActionToExportReadyMessage()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "new ChatMessageAction");
+        StringAssert.Contains(source, "Open PPTX");
+        StringAssert.Contains(source, "open_pptx");
+    }
+
+    [TestMethod]
+    public void ChatMessageActionHandlerRoutesOpenPptxToExportCommand()
+    {
+        var source = File.ReadAllText(FindMainPageCodeBehind());
+
+        StringAssert.Contains(source, "ChatMessageAction_Click");
+        StringAssert.Contains(source, "ViewModel.ExportLatestCommand.Execute(null)");
+    }
+
+    [TestMethod]
     public void NewDeckStartsFreshRuntimeDeckIdentity()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
@@ -111,6 +147,23 @@ public sealed class MainPageMarkupTests
         }
 
         throw new FileNotFoundException("MainPageViewModel.cs was not found.");
+    }
+
+    private static string FindMainPageCodeBehind()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "desktop", "PptAgentStudio.App", "MainPage.xaml.cs");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new FileNotFoundException("MainPage.xaml.cs was not found.");
     }
 
     private static string FindAgentSessionClient()

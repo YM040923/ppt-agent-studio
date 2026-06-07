@@ -52,6 +52,21 @@
                                     <StackPanel Spacing="6">
                                         <TextBlock Text="{x:Bind Role}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                         <TextBlock Text="{x:Bind Content}" TextWrapping="WrapWholeWords" />
+                                        <ItemsControl ItemsSource="{x:Bind Actions}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ChatMessageAction">
+                                                    <Button
+                                                        Content="{x:Bind Label}"
+                                                        Tag="{x:Bind Kind}"
+                                                        Click="ChatMessageAction_Click" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                     </StackPanel>
                                 </Border>
                             </Grid>

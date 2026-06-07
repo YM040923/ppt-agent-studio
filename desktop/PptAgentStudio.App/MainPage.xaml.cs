@@ -109,6 +109,14 @@ public sealed partial class MainPage : Page
         await dialog.ShowAsync();
     }
 
+    private void ChatMessageAction_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: "open_pptx" } && ViewModel.ExportLatestCommand.CanExecute(null))
+        {
+            ViewModel.ExportLatestCommand.Execute(null);
+        }
+    }
+
     private async Task InitializePreviewInteractionAsync()
     {
         if (PreviewWebView.CoreWebView2 is null)
