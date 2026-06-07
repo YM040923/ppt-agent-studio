@@ -100,9 +100,9 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void NewDeck()
+    private async Task NewDeck()
     {
-        _agentClient.StartNewDeck();
+        await _agentClient.StartNewDeckAsync();
         _workspaceDeckState.Reset();
         InputText = "";
         PreviewHtml = InitialPreviewHtml;

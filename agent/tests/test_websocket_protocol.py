@@ -145,6 +145,56 @@ def test_handle_user_message_reuses_session_state_for_same_deck(monkeypatch, tmp
     assert second_turn[9]["payload"]["path"].endswith("deck_stateful-r2.pptx")
 
 
+def test_handle_session_reset_clears_cached_deck(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
+
+    async def run_turn(text: str):
+        messages = await handle_client_message(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_reset",
+                    "deck_id": "deck_reset",
+                    "payload": {"text": text},
+                }
+            )
+        )
+        return [json.loads(item) for item in messages]
+
+    async def reset_deck():
+        messages = await handle_client_message(
+            json.dumps(
+                {
+                    "type": "session.reset",
+                    "session_id": "session_reset",
+                    "deck_id": "deck_reset",
+                }
+            )
+        )
+        return [json.loads(item) for item in messages]
+
+    first_turn = asyncio.run(run_turn("Make a 2 page AI strategy deck"))
+    reset_events = asyncio.run(reset_deck())
+    second_turn = asyncio.run(run_turn("Make a fresh 2 page AI strategy deck"))
+
+    assert first_turn[0]["seq"] == 1
+    assert first_turn[5]["deck_revision"] == 1
+    assert reset_events == [
+        {
+            "seq": 1,
+            "session_id": "session_reset",
+            "type": "session.reset",
+            "payload": {
+                "deck_id": "deck_reset",
+                "cleared": True,
+            },
+        }
+    ]
+    assert second_turn[0]["seq"] == 1
+    assert second_turn[5]["deck_revision"] == 1
+    assert second_turn[9]["payload"]["path"].endswith("deck_reset-r1.pptx")
+
+
 def test_handle_invalid_json_returns_error_event():
     async def run():
         return await handle_client_message("{")

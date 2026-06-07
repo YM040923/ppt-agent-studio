@@ -30,8 +30,20 @@ public sealed class AgentSessionClient
         _identity = new AgentWorkspaceIdentity(sessionId, deckId);
     }
 
-    public void StartNewDeck()
+    public async Task StartNewDeckAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            await ResetCurrentDeckAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+        }
+
         _identity.StartNewDeck();
     }
 
@@ -94,6 +106,32 @@ public sealed class AgentSessionClient
         var runtimeEvent = ParseEvent(message);
         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "config received", cancellationToken);
         return RuntimeConfigSummary.FromPayload(runtimeEvent.Payload);
+    }
+
+    private async Task ResetCurrentDeckAsync(CancellationToken cancellationToken)
+    {
+        using var socket = new ClientWebSocket();
+        await socket.ConnectAsync(_endpoint, cancellationToken);
+
+        var request = JsonSerializer.Serialize(new
+        {
+            type = "session.reset",
+            session_id = _identity.SessionId,
+            deck_id = _identity.DeckId
+        });
+        await socket.SendAsync(
+            Encoding.UTF8.GetBytes(request),
+            WebSocketMessageType.Text,
+            true,
+            cancellationToken);
+
+        var message = await ReceiveTextAsync(socket, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            _ = ParseEvent(message);
+        }
+
+        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "session reset", cancellationToken);
     }
 
     private static AgentRuntimeEvent ParseEvent(string json)

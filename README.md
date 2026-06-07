@@ -33,7 +33,7 @@ dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
 
 On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether an API key is present, which planner is active, where PPTX artifacts are written, and which env file is being checked. The key value is never displayed.
 
-The Python runtime keeps Agent session state by `session_id` and `deck_id`, so repeated desktop turns can advance DeckSpec revisions instead of restarting from revision 1.
+The Python runtime keeps Agent session state by `session_id` and `deck_id`, so repeated desktop turns can advance DeckSpec revisions instead of restarting from revision 1. When the user starts a new deck, the desktop app sends `session.reset` for the current deck before advancing to the next runtime deck identity.
 
 When the desktop app starts the runtime sidecar, it pins `PPT_AGENT_ARTIFACTS_DIR` to the repository `artifacts/decks` directory so generated PPTX files land in a predictable project-local location.
 

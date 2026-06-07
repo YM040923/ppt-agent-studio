@@ -61,6 +61,18 @@ The server streams one JSON event per WebSocket message. The desktop client clos
 
 Runtime Agent sessions are cached by `(session_id, deck_id)` inside the Python process. This lets the desktop client reconnect for each user turn while preserving DeckSpec revision numbers, event ordering, and the latest deck state for that workspace.
 
+When the desktop app starts a new deck workspace, it first asks the runtime to discard the current cached deck session:
+
+```json
+{
+  "type": "session.reset",
+  "session_id": "desktop-session",
+  "deck_id": "desktop-deck"
+}
+```
+
+The response is a single `session.reset` event with payload `{ "deck_id": "...", "cleared": true|false }`. If the runtime is offline, the desktop still clears local UI state and advances to a new deck identity.
+
 During development the WinUI app starts the sidecar automatically if `127.0.0.1:8765` is not already listening. The locator walks up from the app base directory until it finds `agent/src`, and `PPT_AGENT_RUNTIME_ROOT` can override the repository root. The Python executable defaults to `python`; set `PPT_AGENT_PYTHON` to use a specific interpreter. PPTX artifacts are written to `artifacts/decks` by default; set `PPT_AGENT_ARTIFACTS_DIR` to use another directory.
 
 The desktop app or a test client can ask for a redacted runtime configuration summary:

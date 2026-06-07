@@ -34,7 +34,17 @@ public sealed class MainPageMarkupTests
     {
         var source = File.ReadAllText(FindMainPageViewModel());
 
-        StringAssert.Contains(source, "_agentClient.StartNewDeck()");
+        StringAssert.Contains(source, "await _agentClient.StartNewDeckAsync()");
+    }
+
+    [TestMethod]
+    public void AgentSessionClientSendsRuntimeSessionReset()
+    {
+        var source = File.ReadAllText(FindAgentSessionClient());
+
+        StringAssert.Contains(source, "type = \"session.reset\"");
+        StringAssert.Contains(source, "ResetCurrentDeckAsync");
+        StringAssert.Contains(source, "_identity.StartNewDeck()");
     }
 
     private static string FindMainPageXaml()
@@ -69,5 +79,22 @@ public sealed class MainPageMarkupTests
         }
 
         throw new FileNotFoundException("MainPageViewModel.cs was not found.");
+    }
+
+    private static string FindAgentSessionClient()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "desktop", "PptAgentStudio.App", "Services", "AgentSessionClient.cs");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new FileNotFoundException("AgentSessionClient.cs was not found.");
     }
 }

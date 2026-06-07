@@ -86,6 +86,20 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
     message_type = str(message.get("type") or "").strip()
     session_id = str(message.get("session_id") or "session")
 
+    if message_type == "session.reset":
+        deck_id = str(message.get("deck_id") or "deck")
+        event = AgentEvent(
+            seq=1,
+            session_id=session_id,
+            type="session.reset",
+            payload={
+                "deck_id": deck_id,
+                "cleared": _reset_agent_session(session_id, deck_id),
+            },
+        )
+        yield _event_json(event)
+        return
+
     if message_type == "runtime.config":
         config = OpenAICompatibleConfig.from_env()
         event = AgentEvent(
@@ -127,6 +141,10 @@ def _build_agent_session(session_id: str, deck_id: str) -> AgentSession:
         session = AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
         _AGENT_SESSIONS[key] = session
     return session
+
+
+def _reset_agent_session(session_id: str, deck_id: str) -> bool:
+    return _AGENT_SESSIONS.pop((session_id, deck_id), None) is not None
 
 
 def _clear_agent_sessions() -> None:
