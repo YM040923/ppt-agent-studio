@@ -281,6 +281,48 @@ def test_agent_session_removes_last_slide_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
+def test_agent_session_updates_slide_title_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_update", deck_id="deck_update", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [
+            event
+            async for event in session.submit_user_message(
+                "Update the first slide title to Executive AI Roadmap"
+            )
+        ]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert [event.type for event in events] == [
+        "user.message",
+        "plan.updated",
+        "tool.completed",
+        "deck.updated",
+        "tool.completed",
+        "preview.ready",
+        "tool.completed",
+        "pptx.ready",
+        "plan.updated",
+    ]
+    presentation = Presentation(events[7].payload["path"])
+    assert events[2].payload == {
+        "tool_name": "deck.update_slide",
+        "status": "completed",
+        "summary": "Updated follow-up slide.",
+    }
+    assert events[3].payload["deck"]["revision"] == 2
+    assert events[3].payload["deck"]["slides"][0]["title"] == "Executive AI Roadmap"
+    assert "Executive AI Roadmap" in events[5].payload["html"]
+    assert events[7].payload["slide_count"] == 5
+    assert presentation.slides[0].shapes[2].text_frame.paragraphs[0].runs[0].text == "Executive AI Roadmap"
+    assert events[8].payload["plan"]["status"] == "completed"
+
+
 def test_agent_session_uses_tool_registry_for_deck_and_preview():
     calls = []
     registry = ToolRegistry()
