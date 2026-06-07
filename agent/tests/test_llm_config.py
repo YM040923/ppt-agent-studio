@@ -81,6 +81,16 @@ def test_openai_compatible_config_redacts_key():
     assert "secret-tenant" not in str(config.safe_summary())
 
 
+def test_openai_compatible_config_treats_example_placeholder_key_as_missing(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "replace-with-your-api-key")
+
+    config = OpenAICompatibleConfig.from_env()
+
+    assert config.api_key == ""
+    assert config.has_api_key is False
+    assert config.safe_summary()["has_api_key"] is False
+
+
 def test_openai_compatible_config_rejects_invalid_extra_headers_without_value(monkeypatch):
     monkeypatch.setenv("OPENAI_EXTRA_HEADERS", "secret-tenant")
 

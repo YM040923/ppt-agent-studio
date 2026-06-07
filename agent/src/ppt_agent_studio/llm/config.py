@@ -22,7 +22,7 @@ class OpenAICompatibleConfig:
         file_values = _read_env_file(env_file if env_file is not None else os.getenv("PPT_AGENT_ENV_FILE", ".env.local"))
         return cls(
             base_url=_config_value("OPENAI_BASE_URL", "https://api.openai.com/v1", file_values).strip().rstrip("/"),
-            api_key=_config_value("OPENAI_API_KEY", "", file_values).strip(),
+            api_key=_api_key_from_config(_config_value("OPENAI_API_KEY", "", file_values)),
             model=_config_value("OPENAI_MODEL", "gpt-4.1-mini", file_values).strip(),
             extra_headers=_extra_headers_from_config(_config_value("OPENAI_EXTRA_HEADERS", "", file_values)),
         )
@@ -50,6 +50,13 @@ def _config_value(name: str, default: str, file_values: dict[str, str]) -> str:
     if value is not None:
         return value
     return file_values.get(name, default)
+
+
+def _api_key_from_config(value: str) -> str:
+    key = value.strip()
+    if key.casefold() in {"replace-with-your-api-key", "your-secret-key", "your-api-key"}:
+        return ""
+    return key
 
 
 def _read_env_file(env_file: str | os.PathLike[str] | None) -> dict[str, str]:
