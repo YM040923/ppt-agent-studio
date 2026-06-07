@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 import pytest
 
@@ -24,6 +25,13 @@ def test_core_tool_catalog_lists_mvp_interfaces():
         "design.apply_theme",
     }.issubset(set(names))
     assert all(definition.input_schema.get("type") == "object" for definition in definitions)
+
+
+def test_tool_catalog_document_lists_core_tools():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    for definition in core_tool_definitions():
+        assert f"## `{definition.name}`" in docs
 
 
 def test_tool_registry_rejects_duplicate_tools():
@@ -239,3 +247,12 @@ def test_default_registry_runs_research_and_theme_tools():
     }
     assert "--preview-background: #111827;" in preview_html
     assert "--slide-background: #F8FAFC;" in preview_html
+
+
+def _repo_root() -> Path:
+    directory = Path(__file__).resolve()
+    while directory != directory.parent:
+        if directory.joinpath("docs").exists() and directory.joinpath("agent").exists():
+            return directory
+        directory = directory.parent
+    raise FileNotFoundError("repository root was not found")
