@@ -295,8 +295,9 @@ public partial class MainPageViewModel : ObservableObject
                 {
                     PreviewHtml = html.GetString() ?? PreviewHtml;
                 }
-                SessionStatus = $"Preview ready at revision {runtimeEvent.DeckRevision}.";
-                Messages.Add(new ChatMessageItem { Role = "Assistant", Content = "Preview updated from the local Agent runtime." });
+                var previewSummary = RuntimePreviewSummary.FromPayload(runtimeEvent.Payload);
+                SessionStatus = previewSummary.ToStatusText(runtimeEvent.DeckRevision);
+                Messages.Add(new ChatMessageItem { Role = "Assistant", Content = previewSummary.ToChatMessage() });
                 break;
             case "error":
                 var message = runtimeEvent.Payload.TryGetProperty("message", out var error)

@@ -75,6 +75,15 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelUsesPreviewSummaryForReadyEvents()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "RuntimePreviewSummary.FromPayload");
+        StringAssert.Contains(source, "previewSummary.ToChatMessage()");
+    }
+
+    [TestMethod]
     public void ChatMessagesCanRenderActionButtons()
     {
         var page = XDocument.Load(FindMainPageXaml());

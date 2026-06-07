@@ -112,6 +112,8 @@ def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
     assert payloads[4]["payload"]["tool_name"] == "deck.create_from_outline"
     assert payloads[5]["deck_revision"] == 1
     assert payloads[6]["payload"]["tool_name"] == "preview.render_html"
+    assert payloads[7]["payload"]["deck_title"] == "Board AI Strategy"
+    assert payloads[7]["payload"]["slide_count"] == 3
     assert payloads[7]["payload"]["html"].startswith("<!doctype html>")
     assert payloads[8]["payload"]["tool_name"] == "pptx.export"
     assert payloads[9]["payload"]["path"].endswith("deck_001-r1.pptx")

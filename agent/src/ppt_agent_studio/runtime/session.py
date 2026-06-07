@@ -76,7 +76,16 @@ class AgentSession:
         preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
         plan.update_step_status("render_preview", "completed")
         yield self._tool_completed_event("preview.render_html", "Rendered live preview HTML.")
-        yield self._deck_event("preview.ready", {"html": str(preview_result.payload["html"])})
+        yield self._deck_event(
+            "preview.ready",
+            {
+                "html": str(preview_result.payload["html"]),
+                "deck_id": self.deck.deck_id,
+                "revision": self.deck.revision,
+                "deck_title": self.deck.title,
+                "slide_count": len(self.deck.slides),
+            },
+        )
 
         pptx_path = self._artifact_dir / f"{self._safe_artifact_name(self.deck_id)}-r{self._deck_revision}.pptx"
         pptx_result = await self._tool_registry.run(

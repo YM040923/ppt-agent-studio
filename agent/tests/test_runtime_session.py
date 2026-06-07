@@ -95,6 +95,10 @@ def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
         "status": "completed",
         "summary": "Rendered live preview HTML.",
     }
+    assert events[7].payload["deck_id"] == "deck_001"
+    assert events[7].payload["revision"] == 1
+    assert events[7].payload["deck_title"] == "Board AI Strategy"
+    assert events[7].payload["slide_count"] == 5
     assert events[7].payload["html"].startswith("<!doctype html>")
     assert "Board AI Strategy" in events[7].payload["html"]
     assert events[8].payload == {
