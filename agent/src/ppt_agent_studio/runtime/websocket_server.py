@@ -14,6 +14,9 @@ from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.runtime.session import AgentSession
 
 
+_AGENT_SESSIONS: dict[tuple[str, str], AgentSession] = {}
+
+
 def _event_json(event: AgentEvent) -> str:
     return json.dumps(event.to_dict(), ensure_ascii=False)
 
@@ -118,7 +121,16 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
 
 
 def _build_agent_session(session_id: str, deck_id: str) -> AgentSession:
-    return AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
+    key = (session_id, deck_id)
+    session = _AGENT_SESSIONS.get(key)
+    if session is None:
+        session = AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
+        _AGENT_SESSIONS[key] = session
+    return session
+
+
+def _clear_agent_sessions() -> None:
+    _AGENT_SESSIONS.clear()
 
 
 async def websocket_handler(websocket: Any) -> None:

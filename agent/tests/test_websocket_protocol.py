@@ -1,10 +1,20 @@
 import asyncio
 import json
 
+import pytest
+
 from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner
 from ppt_agent_studio.protocol.events import AgentEvent
+from ppt_agent_studio.runtime.websocket_server import _clear_agent_sessions
 from ppt_agent_studio.runtime.websocket_server import _build_outline_planner, handle_client_message
 from ppt_agent_studio.runtime.websocket_server import iter_client_responses
+
+
+@pytest.fixture(autouse=True)
+def clear_agent_session_cache():
+    _clear_agent_sessions()
+    yield
+    _clear_agent_sessions()
 
 
 class FailingOutlinePlanner:
@@ -106,6 +116,33 @@ def test_handle_user_message_returns_json_event_lines(monkeypatch, tmp_path):
     assert payloads[8]["payload"]["tool_name"] == "pptx.export"
     assert payloads[9]["payload"]["path"].endswith("deck_001-r1.pptx")
     assert payloads[10]["payload"]["plan"]["status"] == "completed"
+
+
+def test_handle_user_message_reuses_session_state_for_same_deck(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
+
+    async def run_turn(text: str):
+        messages = await handle_client_message(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_stateful",
+                    "deck_id": "deck_stateful",
+                    "payload": {"text": text},
+                }
+            )
+        )
+        return [json.loads(item) for item in messages]
+
+    first_turn = asyncio.run(run_turn("Make a 2 page AI strategy deck"))
+    second_turn = asyncio.run(run_turn("Revise it for the board"))
+
+    assert first_turn[0]["seq"] == 1
+    assert first_turn[5]["deck_revision"] == 1
+    assert first_turn[9]["payload"]["path"].endswith("deck_stateful-r1.pptx")
+    assert second_turn[0]["seq"] == 12
+    assert second_turn[5]["deck_revision"] == 2
+    assert second_turn[9]["payload"]["path"].endswith("deck_stateful-r2.pptx")
 
 
 def test_handle_invalid_json_returns_error_event():
