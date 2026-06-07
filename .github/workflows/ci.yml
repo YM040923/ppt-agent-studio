@@ -11,8 +11,8 @@ jobs:
   python:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install runtime
@@ -25,8 +25,8 @@ jobs:
   desktop:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
       - name: Build WinUI app
@@ -43,7 +43,7 @@ jobs:
           -p:AppxBundle=Never
           -p:PublishTrimmed=false
       - name: Upload MSIX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ppt-agent-studio-msix
           path: desktop/PptAgentStudio.App/AppPackages/**/*.msix
