@@ -365,6 +365,31 @@ def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypa
     }
 
 
+def test_handle_runtime_config_treats_placeholder_key_as_missing(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.setenv("OPENAI_API_KEY", "replace-with-your-api-key")
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["payload"]["llm"]["has_api_key"] is False
+    assert payload["payload"]["planner"] == {
+        "requested": "llm",
+        "active": "fallback",
+    }
+
+
 def test_handle_runtime_tools_returns_core_tool_catalog():
     async def run():
         return await handle_client_message(
