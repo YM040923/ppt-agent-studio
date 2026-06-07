@@ -147,6 +147,46 @@ def test_handle_user_message_reuses_session_state_for_same_deck(monkeypatch, tmp
     assert second_turn[9]["payload"]["path"].endswith("deck_stateful-r2.pptx")
 
 
+def test_handle_user_message_follow_up_adds_slide_to_cached_deck(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
+
+    async def run_turn(text: str):
+        messages = await handle_client_message(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_followup",
+                    "deck_id": "deck_followup",
+                    "payload": {"text": text},
+                }
+            )
+        )
+        return [json.loads(item) for item in messages]
+
+    first_turn = asyncio.run(run_turn("Make a 2 page AI strategy deck"))
+    second_turn = asyncio.run(run_turn("Add a risk mitigation slide"))
+
+    assert first_turn[5]["payload"]["deck"]["revision"] == 1
+    assert len(first_turn[5]["payload"]["deck"]["slides"]) == 2
+    assert [event["type"] for event in second_turn] == [
+        "user.message",
+        "plan.updated",
+        "tool.completed",
+        "deck.updated",
+        "tool.completed",
+        "preview.ready",
+        "tool.completed",
+        "pptx.ready",
+        "plan.updated",
+    ]
+    assert second_turn[2]["payload"]["tool_name"] == "deck.add_slide"
+    assert second_turn[3]["deck_revision"] == 2
+    assert second_turn[3]["payload"]["deck"]["revision"] == 2
+    assert len(second_turn[3]["payload"]["deck"]["slides"]) == 3
+    assert second_turn[5]["payload"]["slide_count"] == 3
+    assert second_turn[7]["payload"]["path"].endswith("deck_followup-r2.pptx")
+
+
 def test_handle_session_reset_clears_cached_deck(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
 
