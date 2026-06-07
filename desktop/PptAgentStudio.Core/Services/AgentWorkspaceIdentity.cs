@@ -21,4 +21,10 @@ public sealed class AgentWorkspaceIdentity
         _deckSerial += 1;
         DeckId = $"{_baseDeckId}-{_deckSerial}";
     }
+
+    public bool AcceptsDeckEvent(string? deckId)
+    {
+        return string.IsNullOrWhiteSpace(deckId)
+            || string.Equals(deckId, DeckId, StringComparison.Ordinal);
+    }
 }

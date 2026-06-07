@@ -235,6 +235,11 @@ public partial class MainPageViewModel : ObservableObject
 
     private void ApplyRuntimeEvent(AgentRuntimeEvent runtimeEvent)
     {
+        if (!_agentClient.AcceptsDeckEvent(runtimeEvent.DeckId))
+        {
+            return;
+        }
+
         switch (runtimeEvent.Type)
         {
             case "plan.updated":

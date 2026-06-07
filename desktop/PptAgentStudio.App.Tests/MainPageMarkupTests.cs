@@ -173,6 +173,14 @@ public sealed class MainPageMarkupTests
         StringAssert.Contains(source, "_identity.StartNewDeck()");
     }
 
+    [TestMethod]
+    public void ViewModelIgnoresStaleDeckEvents()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "_agentClient.AcceptsDeckEvent(runtimeEvent.DeckId)");
+    }
+
     private static string FindMainPageXaml()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

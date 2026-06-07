@@ -27,4 +27,19 @@ public sealed class AgentWorkspaceIdentityTests
         Assert.AreEqual("desktop-deck-2", firstNewDeckId);
         Assert.AreEqual("desktop-deck-3", identity.DeckId);
     }
+
+    [TestMethod]
+    public void AcceptsOnlyCurrentDeckEvents()
+    {
+        var identity = new AgentWorkspaceIdentity("desktop-session", "desktop-deck");
+
+        Assert.IsTrue(identity.AcceptsDeckEvent(null));
+        Assert.IsTrue(identity.AcceptsDeckEvent(""));
+        Assert.IsTrue(identity.AcceptsDeckEvent("desktop-deck"));
+
+        identity.StartNewDeck();
+
+        Assert.IsFalse(identity.AcceptsDeckEvent("desktop-deck"));
+        Assert.IsTrue(identity.AcceptsDeckEvent("desktop-deck-2"));
+    }
 }

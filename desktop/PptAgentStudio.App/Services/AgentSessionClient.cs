@@ -50,6 +50,11 @@ public sealed class AgentSessionClient
         _identity.StartNewDeck();
     }
 
+    public bool AcceptsDeckEvent(string? deckId)
+    {
+        return _identity.AcceptsDeckEvent(deckId);
+    }
+
     public async IAsyncEnumerable<AgentRuntimeEvent> SendUserMessageAsync(
         string text,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
