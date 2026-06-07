@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using PptAgentStudio_App.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace PptAgentStudio_App.ViewModels;
@@ -112,11 +114,31 @@ public partial class MainPageViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanExportLatest))]
     private void ExportLatest()
     {
-        SessionStatus = $"Latest editable PPTX export: {_workspaceDeckState.LastPptxPath}";
+        var pptxPath = _workspaceDeckState.LastPptxPath;
+        if (!File.Exists(pptxPath))
+        {
+            SessionStatus = $"Latest editable PPTX export was not found: {pptxPath}";
+            Messages.Add(new ChatMessageItem
+            {
+                Role = "Assistant",
+                Content = SessionStatus
+            });
+            return;
+        }
+
+        var launchPlan = ExportLaunchPlan.CreateRevealInExplorer(pptxPath);
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = launchPlan.FileName,
+            Arguments = launchPlan.Arguments,
+            UseShellExecute = false,
+        });
+
+        SessionStatus = $"Opened latest editable PPTX location: {pptxPath}";
         Messages.Add(new ChatMessageItem
         {
             Role = "Assistant",
-            Content = $"Latest editable PPTX export: {_workspaceDeckState.LastPptxPath}"
+            Content = $"Opened latest editable PPTX location: {pptxPath}"
         });
     }
 

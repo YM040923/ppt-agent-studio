@@ -35,6 +35,8 @@ On startup the desktop app probes `runtime.config` and shows the configured mode
 
 When the desktop app starts the runtime sidecar, it pins `PPT_AGENT_ARTIFACTS_DIR` to the repository `artifacts/decks` directory so generated PPTX files land in a predictable project-local location.
 
+After a deck is generated, the `Open PPTX` command locates the latest editable PowerPoint export in File Explorer.
+
 ## Repository Layout
 
 ```text
