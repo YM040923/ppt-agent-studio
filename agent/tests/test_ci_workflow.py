@@ -18,6 +18,17 @@ def test_ci_avoids_duplicate_pr_branch_push_runs():
     assert "push:\n    branches: [main]" in workflow
 
 
+def test_ci_packages_and_uploads_unsigned_msix():
+    workflow = _repo_root().joinpath(".github", "workflows", "ci.yml").read_text(encoding="utf-8")
+
+    assert "Package unsigned MSIX" in workflow
+    assert "-p:GenerateAppxPackageOnBuild=true" in workflow
+    assert "-p:AppxPackageSigningEnabled=false" in workflow
+    assert "-p:UapAppxPackageBuildMode=SideloadOnly" in workflow
+    assert "ppt-agent-studio-msix" in workflow
+    assert "desktop/PptAgentStudio.App/AppPackages/**/*.msix" in workflow
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
