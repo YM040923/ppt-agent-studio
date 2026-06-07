@@ -29,6 +29,7 @@ def test_preview_html_escapes_text_and_renders_all_slides():
     assert html.count('class="slide') == 2
     assert "Risk &lt; Review" in html
     assert "Q2 &amp; Q3" in html
+    assert "\u2022 Reduce dependency on &lt;single vendor&gt;" in html
     assert 'class="speaker-notes"' in html
     assert "Open with the risk trade-off" in html
     assert "<single vendor>" not in html

@@ -82,6 +82,8 @@ def _render_block(block: dict[str, object]) -> str:
         body = escape(str(block.get("body") or ""))
         return f'<article class="point"><strong>{label}</strong><p>{body}</p></article>'
     text = escape(str(block.get("text") or ""))
+    if text and block_type in {"bullet", "summary_item", "toc_item"}:
+        text = f"\u2022 {text}"
     return f'<p class="block block-{escape(block_type)}">{text}</p>'
 
 
