@@ -63,7 +63,7 @@ public sealed class AgentSessionClient
             var runtimeEvent = ParseEvent(message);
             yield return runtimeEvent;
 
-            if (runtimeEvent.Type == "preview.ready" || runtimeEvent.Type == "error")
+            if (AgentTurnCompletionPolicy.ShouldEndTurn(runtimeEvent.Type, runtimeEvent.Payload))
             {
                 await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "turn complete", cancellationToken);
                 yield break;
