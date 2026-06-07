@@ -56,6 +56,10 @@ class AgentSession:
         plan.update_step_status("draft_slides", "completed")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
+        preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
+        plan.update_step_status("render_preview", "completed")
+        yield self._deck_event("preview.ready", {"html": str(preview_result.payload["html"])})
+
         pptx_path = self._artifact_dir / f"{self._safe_artifact_name(self.deck_id)}-r{self._deck_revision}.pptx"
         pptx_result = await self._tool_registry.run(
             "pptx.export",
@@ -64,11 +68,8 @@ class AgentSession:
         plan.update_step_status("export_pptx", "completed")
         yield self._deck_event("pptx.ready", dict(pptx_result.payload))
 
-        preview_result = await self._tool_registry.run("preview.render_html", {"deck": self.deck.to_dict()})
-        plan.update_step_status("render_preview", "completed")
         plan.status = "completed"
         yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
-        yield self._deck_event("preview.ready", {"html": str(preview_result.payload["html"])})
 
     def _event(self, event_type: str, payload: dict[str, object]) -> AgentEvent:
         self._seq += 1
