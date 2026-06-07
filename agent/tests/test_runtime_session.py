@@ -360,6 +360,7 @@ def test_agent_session_applies_dark_theme_on_follow_up_request(tmp_path):
         "text": "#F9FAFB",
         "accent": "#38BDF8",
     }
+    assert events[5].payload["theme_name"] == "executive-dark"
     assert "--slide-background: #111827;" in events[5].payload["html"]
     assert "--slide-text: #F9FAFB;" in events[5].payload["html"]
     assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "38BDF8"

@@ -272,6 +272,7 @@ class AgentSession:
                 "revision": self.deck.revision,
                 "deck_title": self.deck.title,
                 "slide_count": len(self.deck.slides),
+                "theme_name": str(self.deck.theme.get("name") or ""),
             },
         )
 

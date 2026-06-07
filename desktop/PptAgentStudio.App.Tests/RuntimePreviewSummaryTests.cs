@@ -13,7 +13,8 @@ public sealed class RuntimePreviewSummaryTests
             """
             {
               "deck_title": "Board AI Strategy",
-              "slide_count": 5
+              "slide_count": 5,
+              "theme_name": "executive-dark"
             }
             """);
 
@@ -21,25 +22,26 @@ public sealed class RuntimePreviewSummaryTests
 
         Assert.AreEqual("Board AI Strategy", summary.Title);
         Assert.AreEqual(5, summary.SlideCount);
+        Assert.AreEqual("executive-dark", summary.ThemeName);
     }
 
     [TestMethod]
     public void ToChatMessageShowsPreviewSlideCount()
     {
-        var summary = new RuntimePreviewSummary("Board AI Strategy", 5);
+        var summary = new RuntimePreviewSummary("Board AI Strategy", 5, "executive-dark");
 
         Assert.AreEqual(
-            "**Preview updated:** Board AI Strategy (5 slides).",
+            "**Preview updated:** Board AI Strategy (5 slides, theme executive-dark).",
             summary.ToChatMessage());
     }
 
     [TestMethod]
     public void ToStatusTextIncludesRevisionWhenAvailable()
     {
-        var summary = new RuntimePreviewSummary("Board AI Strategy", 5);
+        var summary = new RuntimePreviewSummary("Board AI Strategy", 5, "executive-dark");
 
         Assert.AreEqual(
-            "Preview ready at revision 2: 5 slides.",
+            "Preview ready at revision 2: 5 slides, theme executive-dark.",
             summary.ToStatusText(2));
     }
 

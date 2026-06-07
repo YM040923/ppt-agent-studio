@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace PptAgentStudio_App.Services;
 
-public sealed record RuntimePreviewSummary(string Title, int SlideCount)
+public sealed record RuntimePreviewSummary(string Title, int SlideCount, string ThemeName = "")
 {
     public static RuntimePreviewSummary FromPayload(JsonElement payload)
     {
@@ -21,15 +21,15 @@ public sealed record RuntimePreviewSummary(string Title, int SlideCount)
             slideCount = parsedSlideCount;
         }
 
-        return new RuntimePreviewSummary(title, slideCount);
+        return new RuntimePreviewSummary(title, slideCount, ReadString(payload, "theme_name"));
     }
 
     public string ToChatMessage()
     {
-        var slideText = FormatSlideCount();
-        if (!string.IsNullOrWhiteSpace(Title) && !string.IsNullOrWhiteSpace(slideText))
+        var detailText = FormatDetails();
+        if (!string.IsNullOrWhiteSpace(Title) && !string.IsNullOrWhiteSpace(detailText))
         {
-            return $"**Preview updated:** {Title} ({slideText}).";
+            return $"**Preview updated:** {Title} ({detailText}).";
         }
 
         if (!string.IsNullOrWhiteSpace(Title))
@@ -37,9 +37,9 @@ public sealed record RuntimePreviewSummary(string Title, int SlideCount)
             return $"**Preview updated:** {Title}.";
         }
 
-        if (!string.IsNullOrWhiteSpace(slideText))
+        if (!string.IsNullOrWhiteSpace(detailText))
         {
-            return $"**Preview updated:** {slideText}.";
+            return $"**Preview updated:** {detailText}.";
         }
 
         return "**Preview updated** from the local Agent runtime.";
@@ -48,13 +48,25 @@ public sealed record RuntimePreviewSummary(string Title, int SlideCount)
     public string ToStatusText(int? deckRevision)
     {
         var revisionText = deckRevision is null ? "" : $" at revision {deckRevision}";
-        var slideText = FormatSlideCount();
-        if (!string.IsNullOrWhiteSpace(slideText))
+        var detailText = FormatDetails();
+        if (!string.IsNullOrWhiteSpace(detailText))
         {
-            return $"Preview ready{revisionText}: {slideText}.";
+            return $"Preview ready{revisionText}: {detailText}.";
         }
 
         return $"Preview ready{revisionText}.";
+    }
+
+    private string FormatDetails()
+    {
+        var slideText = FormatSlideCount();
+        var themeText = string.IsNullOrWhiteSpace(ThemeName) ? "" : $"theme {ThemeName}";
+        if (!string.IsNullOrWhiteSpace(slideText) && !string.IsNullOrWhiteSpace(themeText))
+        {
+            return $"{slideText}, {themeText}";
+        }
+
+        return string.IsNullOrWhiteSpace(slideText) ? themeText : slideText;
     }
 
     private string FormatSlideCount()
