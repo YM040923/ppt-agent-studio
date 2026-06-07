@@ -6,6 +6,8 @@ def test_ci_runs_offline_demo_smoke():
 
     assert "ppt_agent_studio.runtime.demo" in workflow
     assert "--artifact-dir artifacts\\ci-demo" in workflow
+    assert "ppt-agent-studio-demo" in workflow
+    assert "artifacts/ci-demo/**" in workflow
 
 
 def _repo_root() -> Path:
