@@ -21,6 +21,8 @@ jobs:
           python -m pip install -e agent[dev]
       - name: Run tests
         run: python -m pytest agent\tests -q
+      - name: Run offline demo smoke
+        run: python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\ci-demo
 
   desktop:
     runs-on: windows-latest
