@@ -57,6 +57,13 @@ dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj
 dotnet build PptAgentStudio.slnx
 ```
 
+Generate an offline demo deck without calling a model:
+
+```powershell
+$env:PYTHONPATH="E:\MyProjects\ppt-agent-studio\agent\src"
+python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\demo
+```
+
 ## Packaging
 
 Create an unsigned sideload MSIX package locally:
