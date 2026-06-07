@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +24,7 @@ class DemoRunSummary:
     event_count: int
     preview_html_path: Path
     pptx_path: Path
+    summary_json_path: Path
 
 
 async def run_demo(
@@ -66,8 +68,9 @@ async def run_demo(
 
     preview_html_path = output_dir / f"{_safe_artifact_name(deck_id)}-r{deck_revision}.html"
     preview_html_path.write_text(preview_html, encoding="utf-8")
+    summary_json_path = output_dir / f"{_safe_artifact_name(deck_id)}-r{deck_revision}-summary.json"
 
-    return DemoRunSummary(
+    summary = DemoRunSummary(
         session_id=session_id,
         deck_id=deck_id,
         deck_revision=deck_revision,
@@ -76,7 +79,26 @@ async def run_demo(
         event_count=event_count,
         preview_html_path=preview_html_path,
         pptx_path=pptx_path,
+        summary_json_path=summary_json_path,
     )
+    summary_json_path.write_text(
+        json.dumps(
+            {
+                "session_id": summary.session_id,
+                "deck_id": summary.deck_id,
+                "deck_revision": summary.deck_revision,
+                "follow_up": summary.follow_up,
+                "slide_count": summary.slide_count,
+                "event_count": summary.event_count,
+                "preview_html_path": str(summary.preview_html_path),
+                "pptx_path": str(summary.pptx_path),
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return summary
 
 
 def format_summary(summary: DemoRunSummary) -> str:
@@ -93,6 +115,7 @@ def format_summary(summary: DemoRunSummary) -> str:
             f"Events: {summary.event_count}",
             f"Preview HTML: {summary.preview_html_path}",
             f"Editable PPTX: {summary.pptx_path}",
+            f"Run summary: {summary.summary_json_path}",
         ]
     )
     return "\n".join(lines)
