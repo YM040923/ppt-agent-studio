@@ -44,6 +44,14 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelNotifiesSettingsTextAfterRuntimeProbe()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "OnPropertyChanged(nameof(SettingsText))");
+    }
+
+    [TestMethod]
     public void CommandBarExposesDemoDeckShortcut()
     {
         var page = XDocument.Load(FindMainPageXaml());

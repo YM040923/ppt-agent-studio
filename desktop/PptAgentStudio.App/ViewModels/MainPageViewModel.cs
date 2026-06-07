@@ -117,10 +117,12 @@ public partial class MainPageViewModel : ObservableObject
             RuntimeConfig = runtimeConfig;
             RuntimeTools = runtimeTools;
             SessionStatus = $"{runtimeConfig.ToStatusText()} Tools: {runtimeTools.ToolCount}.";
+            OnPropertyChanged(nameof(SettingsText));
         }
         catch (Exception ex)
         {
             SessionStatus = $"Local Agent runtime ready. Config probe failed: {ex.Message}";
+            OnPropertyChanged(nameof(SettingsText));
         }
     }
 
