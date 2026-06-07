@@ -7,7 +7,7 @@ PPT Agent Studio is a Windows-native, presentation-focused AI Agent. It is inspi
 - WinUI 3 desktop shell with Fluent Design, Mica, and a Manus-style split workspace.
 - Left pane: chat-first Agent interaction.
 - Right pane: live PPT preview rendered through WebView2.
-- Chat messages can expose inline actions, including `Demo Deck` on the starter message and `Open PPTX` when an editable export is ready.
+- Chat messages render Markdown and code blocks, and can expose inline actions such as `Demo Deck` on the starter message and `Open PPTX` when an editable export is ready.
 - Python Agent runtime for planning, tool calling, DeckSpec state, preview rendering, and editable PPTX export.
 - OpenAI-compatible configuration, including third-party endpoints via `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `OPENAI_MODEL`.
 

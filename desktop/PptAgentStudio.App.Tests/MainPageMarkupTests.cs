@@ -101,6 +101,31 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ChatMessagesUseMarkdownRenderer()
+    {
+        var page = XDocument.Load(FindMainPageXaml());
+        XNamespace markdown = "using:CommunityToolkit.WinUI.UI.Controls";
+
+        var markdownBlock = page
+            .Descendants(markdown + "MarkdownTextBlock")
+            .Single();
+
+        Assert.AreEqual("{x:Bind Content}", markdownBlock.Attribute("Text")?.Value);
+    }
+
+    [TestMethod]
+    public void DesktopAppReferencesMarkdownControlPackage()
+    {
+        var project = XDocument.Load(FindDesktopAppProject());
+        var packageReferences = project
+            .Descendants("PackageReference")
+            .Select(element => element.Attribute("Include")?.Value)
+            .ToArray();
+
+        CollectionAssert.Contains(packageReferences, "CommunityToolkit.WinUI.UI.Controls.Markdown");
+    }
+
+    [TestMethod]
     public void ViewModelAddsOpenPptxActionToExportReadyMessage()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
@@ -180,6 +205,23 @@ public sealed class MainPageMarkupTests
         }
 
         throw new FileNotFoundException("MainPageViewModel.cs was not found.");
+    }
+
+    private static string FindDesktopAppProject()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "desktop", "PptAgentStudio.App", "PptAgentStudio.App.csproj");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new FileNotFoundException("PptAgentStudio.App.csproj was not found.");
     }
 
     private static string FindMainPageCodeBehind()

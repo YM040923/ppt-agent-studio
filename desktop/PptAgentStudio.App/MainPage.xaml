@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:PptAgentStudio_App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markdown="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:PptAgentStudio_App.ViewModels"
     Loaded="Page_Loaded"
@@ -51,7 +52,7 @@
                                     Background="{ThemeResource ControlFillColorDefaultBrush}">
                                     <StackPanel Spacing="6">
                                         <TextBlock Text="{x:Bind Role}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        <TextBlock Text="{x:Bind Content}" TextWrapping="WrapWholeWords" />
+                                        <markdown:MarkdownTextBlock Text="{x:Bind Content}" />
                                         <ItemsControl ItemsSource="{x:Bind Actions}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
