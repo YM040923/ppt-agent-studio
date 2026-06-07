@@ -33,6 +33,8 @@ dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
 
 On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether an API key is present, and which planner is active. The key value is never displayed.
 
+When the desktop app starts the runtime sidecar, it pins `PPT_AGENT_ARTIFACTS_DIR` to the repository `artifacts/decks` directory so generated PPTX files land in a predictable project-local location.
+
 ## Repository Layout
 
 ```text
