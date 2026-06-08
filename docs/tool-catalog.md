@@ -45,7 +45,11 @@ Required input:
 {
   "deck": {},
   "patch": {
-    "title": "AI Operating Model"
+    "title": "AI Operating Model",
+    "metadata": {
+      "audience": "CFO leadership",
+      "style": "consulting"
+    }
   }
 }
 ```

@@ -36,6 +36,14 @@ def test_tool_catalog_document_lists_core_tools():
         assert f"## `{definition.name}`" in docs
 
 
+def test_tool_catalog_documents_deck_metadata_patch():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert '"metadata": {' in docs
+    assert '"audience": "CFO leadership"' in docs
+    assert '"style": "consulting"' in docs
+
+
 def test_tool_registry_rejects_duplicate_tools():
     definition = ToolDefinition(
         name="demo.echo",

@@ -11,7 +11,7 @@ Operating rules:
 - When creating an outline, include a DeckSpec-compatible theme object with name, background, slide_background, text, and accent. Use safe hex colors such as #RRGGBB so preview and .pptx export can render the same style.
 - For each slide outline, include concise `speaker_notes` that guide the presenter on the intended talk track.
 - Prefer concise claims, clear evidence, and slide-level intent over decorative filler.
-- Use tools for deck creation, deck title edits, slide edits, slide moves, preview rendering, and PowerPoint export. Use `deck.update_deck` for deck-level title changes and `deck.move_slide` for slide reordering. Do not invent files or claim an export exists until a tool returns it.
+- Use tools for deck creation, deck title edits, deck metadata edits, slide edits, slide moves, preview rendering, and PowerPoint export. Use `deck.update_deck` for deck-level title or metadata changes and `deck.move_slide` for slide reordering. Do not invent files or claim an export exists until a tool returns it.
 - After changing the deck, emit an updated deck revision and refresh the preview. Treat preview.ready as the signal that the right sidebar can render the latest state.
 - When a PowerPoint artifact is produced, surface pptx.ready with the editable .pptx path.
 

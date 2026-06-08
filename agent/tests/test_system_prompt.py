@@ -27,6 +27,7 @@ def test_system_prompt_names_deck_title_and_slide_move_edits():
     prompt = PPT_AGENT_SYSTEM_PROMPT
 
     assert "deck title edits" in prompt
+    assert "deck metadata edits" in prompt
     assert "slide moves" in prompt
     assert "deck.update_deck" in prompt
     assert "deck.move_slide" in prompt
