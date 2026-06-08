@@ -21,6 +21,7 @@ class DemoRunSummary:
     deck_revision: int
     prompt: str
     follow_up: str
+    theme_name: str
     slide_count: int
     event_count: int
     preview_html_path: Path
@@ -42,17 +43,19 @@ async def run_demo(
     preview_html = ""
     pptx_path: Path | None = None
     deck_revision = 0
+    theme_name = ""
     slide_count = 0
     event_count = 0
 
     async def consume_turn(text: str) -> None:
-        nonlocal deck_revision, event_count, preview_html, pptx_path, slide_count
+        nonlocal deck_revision, event_count, preview_html, pptx_path, theme_name, slide_count
         async for event in session.submit_user_message(text):
             event_count += 1
             if event.deck_revision is not None:
                 deck_revision = event.deck_revision
             if event.type == "preview.ready":
                 preview_html = str(event.payload.get("html") or "")
+                theme_name = str(event.payload.get("theme_name") or "")
             if event.type == "pptx.ready":
                 pptx_path = Path(str(event.payload.get("path") or ""))
                 slide_count = int(event.payload.get("slide_count") or 0)
@@ -78,6 +81,7 @@ async def run_demo(
         deck_revision=deck_revision,
         prompt=normalized_prompt,
         follow_up=normalized_follow_up,
+        theme_name=theme_name,
         slide_count=slide_count,
         event_count=event_count,
         preview_html_path=preview_html_path,
@@ -92,6 +96,7 @@ async def run_demo(
                 "deck_revision": summary.deck_revision,
                 "prompt": summary.prompt,
                 "follow_up": summary.follow_up,
+                "theme_name": summary.theme_name,
                 "slide_count": summary.slide_count,
                 "event_count": summary.event_count,
                 "preview_html_path": str(summary.preview_html_path),
@@ -114,6 +119,8 @@ def format_summary(summary: DemoRunSummary) -> str:
     ]
     if summary.follow_up:
         lines.append(f"Follow-up: {summary.follow_up}")
+    if summary.theme_name:
+        lines.append(f"Theme: {summary.theme_name}")
     lines.extend(
         [
             f"Slides: {summary.slide_count}",

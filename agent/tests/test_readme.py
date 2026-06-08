@@ -13,6 +13,7 @@ def test_readme_documents_demo_summary_json():
 
     assert "summary JSON" in readme
     assert "demo-deck-r2-summary.json" in readme
+    assert "theme_name" in readme
 
 
 def test_readme_documents_theme_follow_up():

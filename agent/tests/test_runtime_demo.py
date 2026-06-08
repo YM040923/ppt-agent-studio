@@ -18,6 +18,7 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
     assert summary.session_id == "demo-session"
     assert summary.deck_id == "demo-deck"
     assert summary.deck_revision == 1
+    assert summary.theme_name == "executive-consulting"
     assert summary.slide_count == 5
     assert summary.event_count == 11
     assert summary.preview_html_path.exists()
@@ -31,11 +32,13 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
         "deck_revision": 1,
         "prompt": "Make a 5 slide board AI strategy deck in McKinsey style",
         "follow_up": "",
+        "theme_name": "executive-consulting",
         "slide_count": 5,
         "event_count": 11,
         "preview_html_path": str(summary.preview_html_path),
         "pptx_path": str(summary.pptx_path),
     }
+    assert "Theme: executive-consulting" in format_summary(summary)
     assert "Slides: 5" in format_summary(summary)
 
 
