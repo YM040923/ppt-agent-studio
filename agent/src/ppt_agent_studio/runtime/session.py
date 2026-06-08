@@ -51,10 +51,12 @@ class AgentSession:
             async for event in self._submit_remove_slide_follow_up():
                 yield event
             return
-        if self.deck is not None and self._is_dark_theme_request(text):
-            async for event in self._submit_dark_theme_follow_up():
-                yield event
-            return
+        if self.deck is not None:
+            follow_up_theme = self._theme_follow_up_request(text)
+            if follow_up_theme is not None:
+                async for event in self._submit_theme_follow_up(follow_up_theme):
+                    yield event
+                return
 
         outline = await self._outline_planner.create_outline(text)
         next_revision = self._deck_revision + 1
@@ -216,18 +218,11 @@ class AgentSession:
         async for event in self._render_preview_export_and_complete(plan, outline):
             yield event
 
-    async def _submit_dark_theme_follow_up(self) -> AsyncIterator[AgentEvent]:
+    async def _submit_theme_follow_up(self, theme: dict[str, str]) -> AsyncIterator[AgentEvent]:
         if self.deck is None:
             return
 
         next_revision = self._deck_revision + 1
-        theme = {
-            "name": "executive-dark",
-            "background": "#0B1220",
-            "slide_background": "#111827",
-            "text": "#F9FAFB",
-            "accent": "#38BDF8",
-        }
         outline = {
             "deck_title": self.deck.title,
             "theme": theme,
@@ -378,6 +373,36 @@ class AgentSession:
         if re.search(r"\b(theme|style|look)\b.*\b(dark|deep|night)\b", prompt, flags=re.IGNORECASE):
             return True
         return any(token in prompt for token in ["深色", "暗色", "黑色主题", "深色风格"])
+
+    @staticmethod
+    def _is_light_theme_request(prompt: str) -> bool:
+        if re.search(r"\b(light|clean|bright)\b.*\b(theme|style|look)\b", prompt, flags=re.IGNORECASE):
+            return True
+        if re.search(r"\b(theme|style|look)\b.*\b(light|clean|bright)\b", prompt, flags=re.IGNORECASE):
+            return True
+        if re.search(r"\b(consulting|executive-consulting)\b.*\b(theme|style|look)\b", prompt, flags=re.IGNORECASE):
+            return True
+        return False
+
+    @classmethod
+    def _theme_follow_up_request(cls, prompt: str) -> dict[str, str] | None:
+        if cls._is_dark_theme_request(prompt):
+            return {
+                "name": "executive-dark",
+                "background": "#0B1220",
+                "slide_background": "#111827",
+                "text": "#F9FAFB",
+                "accent": "#38BDF8",
+            }
+        if cls._is_light_theme_request(prompt):
+            return {
+                "name": "executive-consulting",
+                "background": "#EEF2F7",
+                "slide_background": "#FFFFFF",
+                "text": "#111827",
+                "accent": "#2563EB",
+            }
+        return None
 
     @staticmethod
     def _slide_title_update_request(prompt: str) -> tuple[str, str] | None:
