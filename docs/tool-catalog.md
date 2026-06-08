@@ -87,6 +87,36 @@ Output:
 }
 ```
 
+## `deck.move_slide`
+
+Repositions a slide inside the current `DeckSpec` by `slide_id`.
+
+Required input:
+
+```json
+{
+  "deck": {},
+  "slide_id": "s2"
+}
+```
+
+Optional input:
+
+```json
+{
+  "after_slide_id": "s4",
+  "before_slide_id": "s1"
+}
+```
+
+Output:
+
+```json
+{
+  "deck": {}
+}
+```
+
 ## `deck.remove_slide`
 
 Removes a slide from the current `DeckSpec` by `slide_id`.

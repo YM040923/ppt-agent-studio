@@ -18,6 +18,7 @@ def test_core_tool_catalog_lists_mvp_interfaces():
         "deck.create_from_outline",
         "deck.update_slide",
         "deck.add_slide",
+        "deck.move_slide",
         "deck.remove_slide",
         "preview.render_html",
         "pptx.export",
@@ -240,6 +241,37 @@ def test_default_registry_adds_slide_before_target():
 
     assert result.payload["deck"]["revision"] == 2
     assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s2"]
+
+
+def test_default_registry_moves_slide_after_target():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_move",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+            {"slide_id": "s3", "title": "Roadmap", "layout": "content", "blocks": []},
+            {"slide_id": "s4", "title": "Appendix", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.move_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "after_slide_id": "s4",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s4", "s2"]
 
 
 def test_default_registry_runs_research_and_theme_tools():

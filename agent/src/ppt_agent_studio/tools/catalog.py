@@ -46,6 +46,20 @@ def core_tool_definitions() -> list[ToolDefinition]:
             },
         ),
         ToolDefinition(
+            name="deck.move_slide",
+            description="Reposition a slide inside the current DeckSpec by slide_id.",
+            input_schema={
+                "type": "object",
+                "required": ["deck", "slide_id"],
+                "properties": {
+                    "deck": {"type": "object"},
+                    "slide_id": {"type": "string"},
+                    "after_slide_id": {"type": "string"},
+                    "before_slide_id": {"type": "string"},
+                },
+            },
+        ),
+        ToolDefinition(
             name="deck.remove_slide",
             description="Remove a slide from the current DeckSpec by slide_id.",
             input_schema={

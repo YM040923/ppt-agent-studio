@@ -24,6 +24,7 @@ def build_default_registry() -> ToolRegistry:
     registry.register(definitions["deck.create_from_outline"], create_deck_from_outline)
     registry.register(definitions["deck.update_slide"], update_slide)
     registry.register(definitions["deck.add_slide"], add_slide)
+    registry.register(definitions["deck.move_slide"], move_slide)
     registry.register(definitions["deck.remove_slide"], remove_slide)
     registry.register(definitions["preview.render_html"], render_preview_html)
     registry.register(definitions["pptx.export"], export_pptx)
@@ -101,6 +102,38 @@ def add_slide(arguments: dict[str, Any]) -> ToolResult:
     else:
         slides.append(new_slide)
     return ToolResult(payload={"deck": _deck_with_slides(deck, slides).to_dict()})
+
+
+def move_slide(arguments: dict[str, Any]) -> ToolResult:
+    deck = _deck_from_arguments(arguments)
+    slide_id = str(arguments.get("slide_id") or "").strip()
+    after_slide_id = str(arguments.get("after_slide_id") or "").strip()
+    before_slide_id = str(arguments.get("before_slide_id") or "").strip()
+    if not slide_id:
+        raise ValueError("slide_id is required")
+    if not before_slide_id and not after_slide_id:
+        raise ValueError("before_slide_id or after_slide_id is required")
+
+    moving_slide = None
+    remaining: list[SlideSpec] = []
+    for slide in deck.slides:
+        if slide.slide_id == slide_id:
+            moving_slide = slide
+        else:
+            remaining.append(slide)
+    if moving_slide is None:
+        raise ValueError(f"slide not found: {slide_id}")
+
+    target_id = before_slide_id or after_slide_id
+    for index, slide in enumerate(remaining):
+        if slide.slide_id != target_id:
+            continue
+        insert_index = index if before_slide_id else index + 1
+        remaining.insert(insert_index, moving_slide)
+        break
+    else:
+        raise ValueError(f"slide not found: {target_id}")
+    return ToolResult(payload={"deck": _deck_with_slides(deck, remaining).to_dict()})
 
 
 def remove_slide(arguments: dict[str, Any]) -> ToolResult:

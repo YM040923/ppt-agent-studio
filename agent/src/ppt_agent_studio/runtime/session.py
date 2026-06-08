@@ -43,6 +43,11 @@ class AgentSession:
             async for event in self._submit_update_slide_title_follow_up(*title_update):
                 yield event
             return
+        move_request = self._slide_move_request(text)
+        if self.deck is not None and move_request is not None:
+            async for event in self._submit_move_slide_follow_up(*move_request):
+                yield event
+            return
         if self.deck is not None and self._is_duplicate_slide_request(text):
             async for event in self._submit_duplicate_slide_follow_up(self._slide_remove_target(text)):
                 yield event
@@ -230,6 +235,64 @@ class AgentSession:
         self._deck_revision = self.deck.revision
         plan.update_step_status("draft_slides", "completed")
         yield self._tool_completed_event("deck.add_slide", f"Duplicated {target_label}.")
+        yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
+
+        async for event in self._render_preview_export_and_complete(plan, outline):
+            yield event
+
+    async def _submit_move_slide_follow_up(
+        self,
+        source: int | str,
+        position: str,
+        target: int | str,
+    ) -> AsyncIterator[AgentEvent]:
+        if self.deck is None or not self.deck.slides:
+            return
+
+        source_slide, source_index, source_label = self._resolve_slide_target(source)
+        target_slide, _, target_label = self._resolve_slide_target(target)
+        if source_slide is None:
+            yield self._event(
+                "error",
+                {"message": f"Slide {source} is not available. Deck has {len(self.deck.slides)} slides."},
+            )
+            return
+        if target_slide is None:
+            yield self._event(
+                "error",
+                {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+            )
+            return
+        if source_slide.slide_id == target_slide.slide_id:
+            yield self._event("error", {"message": "Cannot move a slide relative to itself."})
+            return
+
+        next_revision = self._deck_revision + 1
+        outline_slides = [{"title": slide.title} for slide in self.deck.slides]
+        moving_outline = outline_slides.pop(source_index)
+        remaining_slides = [slide for slide in self.deck.slides if slide.slide_id != source_slide.slide_id]
+        target_index = next(
+            index for index, slide in enumerate(remaining_slides) if slide.slide_id == target_slide.slide_id
+        )
+        outline_slides.insert(target_index if position == "before" else target_index + 1, moving_outline)
+        outline = {
+            "deck_title": self.deck.title,
+            "slides": outline_slides,
+        }
+        plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        plan.status = "running"
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "running")
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+        tool_args = {"deck": self.deck.to_dict(), "slide_id": source_slide.slide_id}
+        tool_args[f"{position}_slide_id"] = target_slide.slide_id
+        deck_result = await self._tool_registry.run("deck.move_slide", tool_args)
+        self.deck = self._deck_from_payload(deck_result.payload["deck"])
+        self._deck_revision = self.deck.revision
+        plan.update_step_status("draft_slides", "completed")
+        yield self._tool_completed_event("deck.move_slide", f"Moved {source_label} {position} {target_label}.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         async for event in self._render_preview_export_and_complete(plan, outline):
@@ -448,6 +511,17 @@ class AgentSession:
             metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {},
         )
 
+    def _resolve_slide_target(self, target: int | str) -> tuple[SlideSpec | None, int, str]:
+        if self.deck is None or not self.deck.slides:
+            return None, -1, f"slide {target}"
+        if isinstance(target, int):
+            target_label = f"slide {target}"
+            if target > len(self.deck.slides):
+                return None, -1, target_label
+            return self.deck.slides[target - 1], target - 1, target_label
+        target_index = 0 if target == "first" else len(self.deck.slides) - 1
+        return self.deck.slides[target_index], target_index, f"{target} slide"
+
     @staticmethod
     def _research_arguments(outline: dict[str, object], prompt: str) -> dict[str, object]:
         metadata = outline.get("metadata") if isinstance(outline.get("metadata"), dict) else {}
@@ -592,6 +666,40 @@ class AgentSession:
                 "accent": "#2563EB",
             }
         return None
+
+    @staticmethod
+    def _slide_move_request(prompt: str) -> tuple[int | str, str, int | str] | None:
+        target_pattern = (
+            r"(?:(?P<{prefix}_target>first|last)\s+(?:slide|page)|"
+            r"(?P<{prefix}_ordinal>second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page)|"
+            r"(?:slide|page)\s+(?P<{prefix}_number>\d+))"
+        )
+        match = re.search(
+            r"\bmove\s+(?:the\s+)?"
+            + target_pattern.format(prefix="source")
+            + r"\s+(?P<position>before|after)\s+(?:the\s+)?"
+            + target_pattern.format(prefix="target")
+            + r"\b",
+            prompt,
+            flags=re.IGNORECASE,
+        )
+        if match is None:
+            return None
+        return (
+            AgentSession._slide_target_from_match(match, "source"),
+            match.group("position").casefold(),
+            AgentSession._slide_target_from_match(match, "target"),
+        )
+
+    @staticmethod
+    def _slide_target_from_match(match: re.Match[str], prefix: str) -> int | str:
+        number = match.group(f"{prefix}_number")
+        if number is not None:
+            return max(1, int(number))
+        ordinal = match.group(f"{prefix}_ordinal")
+        if ordinal is not None:
+            return AgentSession._ordinal_value(ordinal)
+        return match.group(f"{prefix}_target").casefold()
 
     @staticmethod
     def _slide_title_update_request(prompt: str) -> tuple[int | str, str] | None:
