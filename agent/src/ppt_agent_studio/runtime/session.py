@@ -684,7 +684,21 @@ class AgentSession:
             flags=re.IGNORECASE,
         )
         if match is None:
-            return None
+            match = re.search(
+                r"\bmove\s+(?:the\s+)?"
+                + target_pattern.format(prefix="source")
+                + r"\s+to\s+(?:the\s+)?(?P<edge>beginning|start|front|end|back)\b",
+                prompt,
+                flags=re.IGNORECASE,
+            )
+            if match is None:
+                return None
+            edge = match.group("edge").casefold()
+            return (
+                AgentSession._slide_target_from_match(match, "source"),
+                "before" if edge in {"beginning", "start", "front"} else "after",
+                "first" if edge in {"beginning", "start", "front"} else "last",
+            )
         return (
             AgentSession._slide_target_from_match(match, "source"),
             match.group("position").casefold(),
