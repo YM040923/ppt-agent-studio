@@ -361,6 +361,8 @@ class AgentSession:
     def _is_add_slide_request(prompt: str) -> bool:
         if re.search(r"\b(add|append)\b", prompt, flags=re.IGNORECASE):
             return True
+        if re.search(r"\bcreate\b.*\b(slide|page)\b", prompt, flags=re.IGNORECASE):
+            return True
         return any(token in prompt for token in ["新增", "增加", "加一页", "加一张", "加一个"])
 
     @staticmethod

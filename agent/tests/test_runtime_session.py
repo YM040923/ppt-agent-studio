@@ -192,14 +192,14 @@ def test_agent_session_preserves_prompt_metadata_for_preview_and_export(tmp_path
     assert presentation.core_properties.keywords == "McKinsey"
 
 
-def test_agent_session_appends_slide_on_follow_up_request(tmp_path):
+def test_agent_session_creates_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_followup", deck_id="deck_followup", artifact_dir=tmp_path)
 
     async def first_turn():
         return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
 
     async def second_turn():
-        return [event async for event in session.submit_user_message("Add a risk mitigation slide")]
+        return [event async for event in session.submit_user_message("Create a risk mitigation slide")]
 
     asyncio.run(first_turn())
     events = asyncio.run(second_turn())
