@@ -354,7 +354,7 @@ def test_agent_session_applies_dark_theme_on_plain_darker_follow_up_request(tmp_
     assert events[2].payload == {
         "tool_name": "design.apply_theme",
         "status": "completed",
-        "summary": "Applied follow-up theme.",
+        "summary": "Applied theme: executive-dark.",
     }
     assert events[3].payload["deck"]["revision"] == 2
     assert events[3].payload["deck"]["theme"] == {
