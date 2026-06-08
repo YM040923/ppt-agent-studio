@@ -188,6 +188,37 @@ def test_handle_user_message_follow_up_adds_slide_to_cached_deck(monkeypatch, tm
     assert second_turn[7]["payload"]["path"].endswith("deck_followup-r2.pptx")
 
 
+def test_handle_user_message_follow_up_adds_slide_to_beginning(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
+
+    async def run_turn(text: str):
+        messages = await handle_client_message(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_followup_add_beginning",
+                    "deck_id": "deck_followup_add_beginning",
+                    "payload": {"text": text},
+                }
+            )
+        )
+        return [json.loads(item) for item in messages]
+
+    first_turn = asyncio.run(run_turn("Make a 4 page AI strategy deck"))
+    original_first_title = first_turn[5]["payload"]["deck"]["slides"][0]["title"]
+    second_turn = asyncio.run(run_turn("Create an executive summary slide at the beginning"))
+
+    assert second_turn[2]["payload"]["tool_name"] == "deck.add_slide"
+    assert second_turn[2]["payload"]["summary"] == "Added slide: Executive Summary."
+    assert second_turn[3]["deck_revision"] == 2
+    slides = second_turn[3]["payload"]["deck"]["slides"]
+    assert slides[0]["title"] == "Executive Summary"
+    assert slides[1]["title"] == original_first_title
+    assert second_turn[5]["payload"]["slide_count"] == 5
+    assert second_turn[7]["payload"]["slide_count"] == 5
+    assert second_turn[7]["payload"]["path"].endswith("deck_followup_add_beginning-r2.pptx")
+
+
 def test_handle_user_message_follow_up_updates_and_removes_cached_deck(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
 
