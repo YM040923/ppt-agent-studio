@@ -105,7 +105,16 @@ public sealed partial class MainPage : Page
             XamlRoot = XamlRoot,
             Title = "Runtime Settings",
             Content = ViewModel.SettingsText,
+            PrimaryButtonText = "Open Env Folder",
+            IsPrimaryButtonEnabled = ViewModel.OpenEnvFileLocationCommand.CanExecute(null),
             CloseButtonText = "Close"
+        };
+        dialog.PrimaryButtonClick += (_, _) =>
+        {
+            if (ViewModel.OpenEnvFileLocationCommand.CanExecute(null))
+            {
+                ViewModel.OpenEnvFileLocationCommand.Execute(null);
+            }
         };
         await dialog.ShowAsync();
     }

@@ -15,6 +15,12 @@ def test_architecture_documents_runtime_config_requires_api_key():
     assert "`requires_api_key`" in architecture
 
 
+def test_architecture_documents_settings_env_folder_action():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "Open Env Folder" in architecture
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

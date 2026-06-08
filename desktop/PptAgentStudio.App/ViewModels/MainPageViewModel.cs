@@ -118,6 +118,7 @@ public partial class MainPageViewModel : ObservableObject
             RuntimeTools = runtimeTools;
             SessionStatus = $"{runtimeConfig.ToStatusText()} Tools: {runtimeTools.ToolCount}.";
             OnPropertyChanged(nameof(SettingsText));
+            OpenEnvFileLocationCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
@@ -148,6 +149,11 @@ public partial class MainPageViewModel : ObservableObject
     private bool CanExportLatest()
     {
         return _workspaceDeckState.CanExport;
+    }
+
+    private bool CanOpenEnvFileLocation()
+    {
+        return !string.IsNullOrWhiteSpace(RuntimeConfig?.EnvFilePath);
     }
 
     private bool CanGenerateDemo()
@@ -201,6 +207,28 @@ public partial class MainPageViewModel : ObservableObject
             Role = "Assistant",
             Content = $"Opened latest editable PPTX location: {pptxPath}"
         });
+    }
+
+    [RelayCommand(CanExecute = nameof(CanOpenEnvFileLocation))]
+    private void OpenEnvFileLocation()
+    {
+        if (RuntimeConfig is null || string.IsNullOrWhiteSpace(RuntimeConfig.EnvFilePath))
+        {
+            SessionStatus = "Runtime env file path is unavailable.";
+            return;
+        }
+
+        var launchPlan = EnvFileLaunchPlan.CreateOpenEnvLocation(RuntimeConfig.EnvFilePath, RuntimeConfig.EnvFileExists);
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = launchPlan.FileName,
+            Arguments = launchPlan.Arguments,
+            UseShellExecute = false,
+        });
+
+        SessionStatus = RuntimeConfig.EnvFileExists
+            ? $"Opened runtime env file location: {RuntimeConfig.EnvFilePath}"
+            : $"Opened runtime env folder for missing env file: {RuntimeConfig.EnvFilePath}";
     }
 
     private bool CanSend()

@@ -33,7 +33,7 @@ Then run the desktop app:
 dotnet run --project desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
 ```
 
-On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether it came from environment variables, `.env.local`, or defaults, whether an API key is present, which planner is active, where PPTX artifacts are written, and which env file is being checked. The key value is never displayed.
+On startup the desktop app probes `runtime.config` and shows the configured model endpoint, whether it came from environment variables, `.env.local`, or defaults, whether an API key is present, which planner is active, where PPTX artifacts are written, and which env file is being checked. The Settings dialog includes an Open Env Folder action that selects an existing `.env.local` or opens its parent folder when the file is missing. The key value is never displayed.
 
 The Python runtime keeps Agent session state by `session_id` and `deck_id`, so repeated desktop turns can advance DeckSpec revisions instead of restarting from revision 1. When the user starts a new deck, the desktop app sends `session.reset` for the current deck before advancing to the next runtime deck identity.
 

@@ -44,6 +44,18 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void SettingsDialogOffersEnvFileLocationAction()
+    {
+        var viewModelSource = File.ReadAllText(FindMainPageViewModel());
+        var pageSource = File.ReadAllText(FindMainPageCodeBehind());
+
+        StringAssert.Contains(pageSource, "PrimaryButtonText = \"Open Env Folder\"");
+        StringAssert.Contains(pageSource, "ViewModel.OpenEnvFileLocationCommand");
+        StringAssert.Contains(viewModelSource, "OpenEnvFileLocationCommand");
+        StringAssert.Contains(viewModelSource, "EnvFileLaunchPlan.CreateOpenEnvLocation");
+    }
+
+    [TestMethod]
     public void ViewModelNotifiesSettingsTextAfterRuntimeProbe()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
