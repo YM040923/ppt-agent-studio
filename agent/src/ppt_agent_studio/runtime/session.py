@@ -371,6 +371,8 @@ class AgentSession:
 
     @staticmethod
     def _is_dark_theme_request(prompt: str) -> bool:
+        if re.search(r"\b(make\s+(?:it|the\s+deck|the\s+presentation)\s+darker|darken\s+(?:it|the\s+deck|the\s+presentation)|darker)\b", prompt, flags=re.IGNORECASE):
+            return True
         if re.search(r"\b(dark|deep|night)\b.*\b(theme|style|look)\b", prompt, flags=re.IGNORECASE):
             return True
         if re.search(r"\b(theme|style|look)\b.*\b(dark|deep|night)\b", prompt, flags=re.IGNORECASE):
@@ -379,6 +381,8 @@ class AgentSession:
 
     @staticmethod
     def _is_light_theme_request(prompt: str) -> bool:
+        if re.search(r"\b(make\s+(?:it|the\s+deck|the\s+presentation)\s+(?:brighter|lighter)|lighten\s+(?:it|the\s+deck|the\s+presentation)|brighter|lighter)\b", prompt, flags=re.IGNORECASE):
+            return True
         if re.search(r"\b(light|clean|bright)\b.*\b(theme|style|look)\b", prompt, flags=re.IGNORECASE):
             return True
         if re.search(r"\b(theme|style|look)\b.*\b(light|clean|bright)\b", prompt, flags=re.IGNORECASE):

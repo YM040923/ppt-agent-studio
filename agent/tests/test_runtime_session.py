@@ -325,14 +325,14 @@ def test_agent_session_updates_slide_title_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
-def test_agent_session_applies_dark_theme_on_follow_up_request(tmp_path):
+def test_agent_session_applies_dark_theme_on_plain_darker_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_theme_followup", deck_id="deck_theme_followup", artifact_dir=tmp_path)
 
     async def first_turn():
         return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
 
     async def second_turn():
-        return [event async for event in session.submit_user_message("Apply a dark executive theme")]
+        return [event async for event in session.submit_user_message("Make it darker")]
 
     asyncio.run(first_turn())
     events = asyncio.run(second_turn())
@@ -371,7 +371,7 @@ def test_agent_session_applies_dark_theme_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
-def test_agent_session_applies_light_theme_on_follow_up_request(tmp_path):
+def test_agent_session_applies_light_theme_on_plain_brighter_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_light_theme_followup", deck_id="deck_light_theme_followup", artifact_dir=tmp_path)
 
     async def create_deck():
@@ -381,7 +381,7 @@ def test_agent_session_applies_light_theme_on_follow_up_request(tmp_path):
         return [event async for event in session.submit_user_message("Apply a dark executive theme")]
 
     async def apply_light_theme():
-        return [event async for event in session.submit_user_message("Switch back to a clean light consulting theme")]
+        return [event async for event in session.submit_user_message("Make it brighter")]
 
     asyncio.run(create_deck())
     asyncio.run(apply_dark_theme())
