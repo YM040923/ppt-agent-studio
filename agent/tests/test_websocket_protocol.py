@@ -223,6 +223,44 @@ def test_handle_user_message_follow_up_updates_and_removes_cached_deck(monkeypat
     assert third_turn[7]["payload"]["path"].endswith("deck_followup_edit-r3.pptx")
 
 
+def test_handle_user_message_follow_up_renames_deck_and_moves_slide(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
+
+    async def run_turn(text: str):
+        messages = await handle_client_message(
+            json.dumps(
+                {
+                    "type": "user.message",
+                    "session_id": "session_followup_deck_edit",
+                    "deck_id": "deck_followup_deck_edit",
+                    "payload": {"text": text},
+                }
+            )
+        )
+        return [json.loads(item) for item in messages]
+
+    first_turn = asyncio.run(run_turn("Make a 4 page AI strategy deck"))
+    original_slides = first_turn[5]["payload"]["deck"]["slides"]
+    second_turn = asyncio.run(run_turn("Rename the presentation to AI Operating Model"))
+    third_turn = asyncio.run(run_turn("Move slide 4 to the beginning"))
+
+    assert second_turn[2]["payload"]["tool_name"] == "deck.update_deck"
+    assert second_turn[2]["payload"]["summary"] == "Renamed deck: AI Operating Model."
+    assert second_turn[3]["deck_revision"] == 2
+    assert second_turn[3]["payload"]["deck"]["title"] == "AI Operating Model"
+    assert second_turn[5]["payload"]["deck_title"] == "AI Operating Model"
+    assert second_turn[7]["payload"]["deck_title"] == "AI Operating Model"
+
+    assert third_turn[2]["payload"]["tool_name"] == "deck.move_slide"
+    assert third_turn[2]["payload"]["summary"] == "Moved slide 4 before first slide."
+    assert third_turn[3]["deck_revision"] == 3
+    moved_slides = third_turn[3]["payload"]["deck"]["slides"]
+    assert moved_slides[0]["title"] == original_slides[3]["title"]
+    assert moved_slides[1]["title"] == original_slides[0]["title"]
+    assert third_turn[5]["payload"]["slide_count"] == 4
+    assert third_turn[7]["payload"]["path"].endswith("deck_followup_deck_edit-r3.pptx")
+
+
 def test_handle_user_message_follow_up_applies_dark_theme(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", str(tmp_path))
 
