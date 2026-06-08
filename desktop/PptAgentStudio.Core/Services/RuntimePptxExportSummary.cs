@@ -2,11 +2,12 @@ using System.Text.Json;
 
 namespace PptAgentStudio_App.Services;
 
-public sealed record RuntimePptxExportSummary(string Path, int SlideCount, string ThemeName = "")
+public sealed record RuntimePptxExportSummary(string Path, string Title, int SlideCount, string ThemeName = "")
 {
     public static RuntimePptxExportSummary FromPayload(JsonElement payload)
     {
         var path = ReadString(payload, "path");
+        var title = ReadString(payload, "deck_title");
         var themeName = ReadString(payload, "theme_name");
         var slideCount = 0;
         if (payload.TryGetProperty("slide_count", out var slideCountValue)
@@ -17,13 +18,12 @@ public sealed record RuntimePptxExportSummary(string Path, int SlideCount, strin
             slideCount = parsedSlideCount;
         }
 
-        return new RuntimePptxExportSummary(path, slideCount, themeName);
+        return new RuntimePptxExportSummary(path, title, slideCount, themeName);
     }
 
     public string ToChatMessage()
     {
-        var details = DetailParts();
-        var detailText = string.Join(", ", details);
+        var detailText = DisplayText();
 
         if (!string.IsNullOrWhiteSpace(detailText) && !string.IsNullOrWhiteSpace(Path))
         {
@@ -43,9 +43,23 @@ public sealed record RuntimePptxExportSummary(string Path, int SlideCount, strin
     public string ToStatusText(int? deckRevision)
     {
         var revisionText = deckRevision is null ? "" : $" at revision {deckRevision}";
-        var details = DetailParts();
-        var detailText = details.Count == 0 ? "" : $": {string.Join(", ", details)}";
+        var displayText = DisplayText();
+        var detailText = string.IsNullOrWhiteSpace(displayText) ? "" : $": {displayText}";
         return $"PPTX exported{revisionText}{detailText}.";
+    }
+
+    private string DisplayText()
+    {
+        var details = DetailParts();
+        var detailsText = string.Join(", ", details);
+        if (string.IsNullOrWhiteSpace(Title))
+        {
+            return detailsText;
+        }
+
+        return string.IsNullOrWhiteSpace(detailsText)
+            ? Title
+            : $"{Title} ({detailsText})";
     }
 
     private List<string> DetailParts()

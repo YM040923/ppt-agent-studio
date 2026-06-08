@@ -11,8 +11,7 @@ def test_architecture_documents_preview_ready_theme_name():
 def test_architecture_documents_pptx_ready_theme_name():
     architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
 
-    assert "`pptx.ready` payload includes" in architecture
-    assert "`theme_name`" in architecture
+    assert "`pptx.ready` payload includes the exported PowerPoint `path`, `deck_title`, `slide_count`, and `theme_name`" in architecture
 
 
 def test_architecture_documents_runtime_config_requires_api_key():

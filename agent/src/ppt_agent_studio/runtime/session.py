@@ -279,6 +279,7 @@ class AgentSession:
         plan.update_step_status("export_pptx", "completed")
         yield self._tool_completed_event("pptx.export", "Exported editable PPTX artifact.")
         pptx_payload = dict(pptx_result.payload)
+        pptx_payload["deck_title"] = self.deck.title
         pptx_payload["theme_name"] = str(self.deck.theme.get("name") or "")
         yield self._deck_event("pptx.ready", pptx_payload)
 

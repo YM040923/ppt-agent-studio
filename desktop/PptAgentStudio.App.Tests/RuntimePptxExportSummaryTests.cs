@@ -13,6 +13,7 @@ public sealed class RuntimePptxExportSummaryTests
             """
             {
               "path": "E:\\MyProjects\\ppt-agent-studio\\artifacts\\decks\\deck-r1.pptx",
+              "deck_title": "Board AI Strategy",
               "slide_count": 2,
               "theme_name": "executive-dark",
               "secret": "should-not-appear"
@@ -22,12 +23,13 @@ public sealed class RuntimePptxExportSummaryTests
         var summary = RuntimePptxExportSummary.FromPayload(document.RootElement);
 
         Assert.AreEqual(@"E:\MyProjects\ppt-agent-studio\artifacts\decks\deck-r1.pptx", summary.Path);
+        Assert.AreEqual("Board AI Strategy", summary.Title);
         Assert.AreEqual(2, summary.SlideCount);
         Assert.AreEqual("executive-dark", summary.ThemeName);
         Assert.AreEqual(
-            @"**Editable PPTX export is ready:** 2 slides, theme executive-dark at `E:\MyProjects\ppt-agent-studio\artifacts\decks\deck-r1.pptx`",
+            @"**Editable PPTX export is ready:** Board AI Strategy (2 slides, theme executive-dark) at `E:\MyProjects\ppt-agent-studio\artifacts\decks\deck-r1.pptx`",
             summary.ToChatMessage());
-        Assert.AreEqual("PPTX exported at revision 3: 2 slides, theme executive-dark.", summary.ToStatusText(3));
+        Assert.AreEqual("PPTX exported at revision 3: Board AI Strategy (2 slides, theme executive-dark).", summary.ToStatusText(3));
         Assert.IsFalse(summary.ToChatMessage().Contains("secret", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -39,6 +41,7 @@ public sealed class RuntimePptxExportSummaryTests
         var summary = RuntimePptxExportSummary.FromPayload(document.RootElement);
 
         Assert.AreEqual("", summary.Path);
+        Assert.AreEqual("", summary.Title);
         Assert.AreEqual(0, summary.SlideCount);
         Assert.AreEqual("", summary.ThemeName);
         Assert.AreEqual("**Editable PPTX export is ready.**", summary.ToChatMessage());

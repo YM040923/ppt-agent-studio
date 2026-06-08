@@ -246,6 +246,7 @@ def test_handle_user_message_follow_up_applies_dark_theme(monkeypatch, tmp_path)
     assert second_turn[5]["payload"]["theme_name"] == "executive-dark"
     assert "--slide-background: #111827;" in second_turn[5]["payload"]["html"]
     assert second_turn[7]["payload"]["path"].endswith("deck_followup_theme-r2.pptx")
+    assert second_turn[7]["payload"]["deck_title"] == "AI Strategy"
     assert second_turn[7]["payload"]["theme_name"] == "executive-dark"
 
 
