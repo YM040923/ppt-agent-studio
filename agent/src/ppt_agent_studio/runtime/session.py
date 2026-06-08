@@ -151,12 +151,23 @@ class AgentSession:
         async for event in self._render_preview_export_and_complete(plan, outline):
             yield event
 
-    async def _submit_update_slide_title_follow_up(self, target: str, title: str) -> AsyncIterator[AgentEvent]:
+    async def _submit_update_slide_title_follow_up(self, target: int | str, title: str) -> AsyncIterator[AgentEvent]:
         if self.deck is None or not self.deck.slides:
             return
 
         next_revision = self._deck_revision + 1
-        target_slide = self.deck.slides[0] if target == "first" else self.deck.slides[-1]
+        if isinstance(target, int):
+            if target > len(self.deck.slides):
+                yield self._event(
+                    "error",
+                    {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+                )
+                return
+            target_slide = self.deck.slides[target - 1]
+            target_label = f"slide {target}"
+        else:
+            target_slide = self.deck.slides[0] if target == "first" else self.deck.slides[-1]
+            target_label = f"{target} slide"
         outline_slides = [
             {"title": title if slide.slide_id == target_slide.slide_id else slide.title}
             for slide in self.deck.slides
@@ -183,7 +194,7 @@ class AgentSession:
         self.deck = self._deck_from_payload(deck_result.payload["deck"])
         self._deck_revision = self.deck.revision
         plan.update_step_status("draft_slides", "completed")
-        yield self._tool_completed_event("deck.update_slide", f"Renamed {target} slide: {title}.")
+        yield self._tool_completed_event("deck.update_slide", f"Renamed {target_label}: {title}.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         async for event in self._render_preview_export_and_complete(plan, outline):
@@ -433,9 +444,9 @@ class AgentSession:
         return None
 
     @staticmethod
-    def _slide_title_update_request(prompt: str) -> tuple[str, str] | None:
+    def _slide_title_update_request(prompt: str) -> tuple[int | str, str] | None:
         match = re.search(
-            r"\b(?:update|rename)\s+(?:the\s+)?(?P<target>first|last)\s+slide\s+(?:title\s+)?(?:to|as)\s+(?P<title>.+)$",
+            r"\b(?:update|rename)\s+(?:the\s+)?(?:(?P<target>first|last)\s+slide|(?:slide|page)\s+(?P<number>\d+))\s+(?:title\s+)?(?:to|as)\s+(?P<title>.+)$",
             prompt,
             flags=re.IGNORECASE,
         )
@@ -445,6 +456,9 @@ class AgentSession:
         title = match.group("title").strip(" .:-")
         if not title:
             return None
+        number = match.group("number")
+        if number is not None:
+            return max(1, int(number)), title[:80]
         return match.group("target").casefold(), title[:80]
 
     @staticmethod

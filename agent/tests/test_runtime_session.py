@@ -304,7 +304,7 @@ def test_agent_session_rejects_out_of_range_slide_remove_follow_up(tmp_path):
     assert len(session.deck.slides) == 5
 
 
-def test_agent_session_renames_slide_on_follow_up_request(tmp_path):
+def test_agent_session_renames_numbered_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_update", deck_id="deck_update", artifact_dir=tmp_path)
 
     async def first_turn():
@@ -314,7 +314,7 @@ def test_agent_session_renames_slide_on_follow_up_request(tmp_path):
         return [
             event
             async for event in session.submit_user_message(
-                "Rename the first slide to Executive AI Roadmap"
+                "Rename slide 2 to Executive AI Roadmap"
             )
         ]
 
@@ -336,14 +336,33 @@ def test_agent_session_renames_slide_on_follow_up_request(tmp_path):
     assert events[2].payload == {
         "tool_name": "deck.update_slide",
         "status": "completed",
-        "summary": "Renamed first slide: Executive AI Roadmap.",
+        "summary": "Renamed slide 2: Executive AI Roadmap.",
     }
     assert events[3].payload["deck"]["revision"] == 2
-    assert events[3].payload["deck"]["slides"][0]["title"] == "Executive AI Roadmap"
+    assert events[3].payload["deck"]["slides"][1]["title"] == "Executive AI Roadmap"
     assert "Executive AI Roadmap" in events[5].payload["html"]
     assert events[7].payload["slide_count"] == 5
-    assert presentation.slides[0].shapes[2].text_frame.paragraphs[0].runs[0].text == "Executive AI Roadmap"
+    assert presentation.slides[1].shapes[2].text_frame.paragraphs[0].runs[0].text == "Executive AI Roadmap"
     assert events[8].payload["plan"]["status"] == "completed"
+
+
+def test_agent_session_rejects_out_of_range_slide_rename_follow_up(tmp_path):
+    session = AgentSession(session_id="session_update_range", deck_id="deck_update_range", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Rename slide 99 to Appendix")]
+
+    first_events = asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert [event.type for event in events] == ["user.message", "error"]
+    assert events[1].payload == {"message": "Slide 99 is not available. Deck has 5 slides."}
+    assert session.deck is not None
+    assert session.deck.revision == first_events[5].payload["deck"]["revision"]
+    assert len(session.deck.slides) == 5
 
 
 def test_agent_session_applies_dark_theme_on_plain_darker_follow_up_request(tmp_path):
