@@ -107,6 +107,7 @@ async def run_demo(
                 "event_count": summary.event_count,
                 "preview_html_path": str(summary.preview_html_path),
                 "pptx_path": str(summary.pptx_path),
+                "summary_json_path": str(summary.summary_json_path),
             },
             indent=2,
         )

@@ -15,6 +15,7 @@ def test_readme_documents_demo_summary_json():
     assert "demo-deck-r2-summary.json" in readme
     assert "deck_title" in readme
     assert "theme_name" in readme
+    assert "summary_json_path" in readme
 
 
 def test_readme_documents_theme_follow_up():

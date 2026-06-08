@@ -39,6 +39,7 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
         "event_count": 11,
         "preview_html_path": str(summary.preview_html_path),
         "pptx_path": str(summary.pptx_path),
+        "summary_json_path": str(summary.summary_json_path),
     }
     assert "Title: Board AI Strategy" in format_summary(summary)
     assert "Theme: executive-consulting" in format_summary(summary)
