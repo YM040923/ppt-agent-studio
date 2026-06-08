@@ -8,6 +8,17 @@ def test_env_example_does_not_contain_machine_specific_paths():
     assert "C:\\Users" not in text
 
 
+def test_env_example_documents_cloud_and_local_model_profiles():
+    text = _repo_root().joinpath(".env.example").read_text(encoding="utf-8")
+
+    assert "# Cloud OpenAI-compatible example:" in text
+    assert "# OPENAI_BASE_URL=https://api.openai.com/v1" in text
+    assert "# Local model server examples:" in text
+    assert "# OPENAI_BASE_URL=http://127.0.0.1:11434/v1" in text
+    assert "# OPENAI_BASE_URL=http://modelbox.local:8000/v1" in text
+    assert "sk-" not in text
+
+
 def test_public_docs_do_not_contain_machine_specific_paths():
     root = _repo_root()
     docs = [
