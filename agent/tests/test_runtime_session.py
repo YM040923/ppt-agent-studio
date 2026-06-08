@@ -285,6 +285,25 @@ def test_agent_session_removes_numbered_slide_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
+def test_agent_session_rejects_out_of_range_slide_remove_follow_up(tmp_path):
+    session = AgentSession(session_id="session_remove_range", deck_id="deck_remove_range", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Remove slide 99")]
+
+    first_events = asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert [event.type for event in events] == ["user.message", "error"]
+    assert events[1].payload == {"message": "Slide 99 is not available. Deck has 5 slides."}
+    assert session.deck is not None
+    assert session.deck.revision == first_events[5].payload["deck"]["revision"]
+    assert len(session.deck.slides) == 5
+
+
 def test_agent_session_renames_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_update", deck_id="deck_update", artifact_dir=tmp_path)
 

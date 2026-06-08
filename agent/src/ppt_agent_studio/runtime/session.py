@@ -195,6 +195,12 @@ class AgentSession:
 
         next_revision = self._deck_revision + 1
         if isinstance(target, int):
+            if target > len(self.deck.slides):
+                yield self._event(
+                    "error",
+                    {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+                )
+                return
             target_slide = self.deck.slides[target - 1]
             target_label = f"slide {target}"
         else:
