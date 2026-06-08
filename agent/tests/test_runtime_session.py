@@ -192,6 +192,29 @@ def test_agent_session_preserves_prompt_metadata_for_preview_and_export(tmp_path
     assert presentation.core_properties.keywords == "McKinsey"
 
 
+def test_agent_session_renames_deck_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_deck_title", deck_id="deck_title", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Rename the presentation to AI Operating Model")]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert events[2].payload == {
+        "tool_name": "deck.update_deck",
+        "status": "completed",
+        "summary": "Renamed deck: AI Operating Model.",
+    }
+    assert events[3].payload["deck"]["title"] == "AI Operating Model"
+    assert events[5].payload["deck_title"] == "AI Operating Model"
+    assert events[7].payload["deck_title"] == "AI Operating Model"
+    assert events[7].payload["slide_count"] == 5
+
+
 def test_agent_session_creates_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_followup", deck_id="deck_followup", artifact_dir=tmp_path)
 

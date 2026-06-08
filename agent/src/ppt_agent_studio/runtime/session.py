@@ -38,6 +38,11 @@ class AgentSession:
             return
 
         yield self._event("user.message", {"text": text})
+        deck_title_update = self._deck_title_update_request(text)
+        if self.deck is not None and deck_title_update is not None:
+            async for event in self._submit_deck_title_follow_up(deck_title_update):
+                yield event
+            return
         title_update = self._slide_title_update_request(text)
         if self.deck is not None and title_update is not None:
             async for event in self._submit_update_slide_title_follow_up(*title_update):
@@ -235,6 +240,38 @@ class AgentSession:
         self._deck_revision = self.deck.revision
         plan.update_step_status("draft_slides", "completed")
         yield self._tool_completed_event("deck.add_slide", f"Duplicated {target_label}.")
+        yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
+
+        async for event in self._render_preview_export_and_complete(plan, outline):
+            yield event
+
+    async def _submit_deck_title_follow_up(self, title: str) -> AsyncIterator[AgentEvent]:
+        if self.deck is None:
+            return
+
+        next_revision = self._deck_revision + 1
+        outline = {
+            "deck_title": title,
+            "slides": [{"title": slide.title} for slide in self.deck.slides],
+        }
+        plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        plan.status = "running"
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "running")
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+        deck_result = await self._tool_registry.run(
+            "deck.update_deck",
+            {
+                "deck": self.deck.to_dict(),
+                "patch": {"title": title},
+            },
+        )
+        self.deck = self._deck_from_payload(deck_result.payload["deck"])
+        self._deck_revision = self.deck.revision
+        plan.update_step_status("draft_slides", "completed")
+        yield self._tool_completed_event("deck.update_deck", f"Renamed deck: {title}.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         async for event in self._render_preview_export_and_complete(plan, outline):
@@ -714,6 +751,24 @@ class AgentSession:
         if ordinal is not None:
             return AgentSession._ordinal_value(ordinal)
         return match.group(f"{prefix}_target").casefold()
+
+    @staticmethod
+    def _deck_title_update_request(prompt: str) -> str | None:
+        match = re.search(
+            r"\b(?:rename|update)\s+(?:the\s+)?(?:deck|presentation|powerpoint|ppt)\s+(?:title\s+)?(?:to|as)\s+(?P<title>.+)$",
+            prompt,
+            flags=re.IGNORECASE,
+        )
+        if match is None:
+            match = re.search(
+                r"\bchange\s+(?:the\s+)?(?:deck|presentation|powerpoint|ppt)\s+title\s+to\s+(?P<title>.+)$",
+                prompt,
+                flags=re.IGNORECASE,
+            )
+        if match is None:
+            return None
+        title = match.group("title").strip(" .:-")
+        return title[:80] if title else None
 
     @staticmethod
     def _slide_title_update_request(prompt: str) -> tuple[int | str, str] | None:

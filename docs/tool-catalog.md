@@ -35,6 +35,29 @@ Output:
 }
 ```
 
+## `deck.update_deck`
+
+Updates deck-level fields in the current `DeckSpec`.
+
+Required input:
+
+```json
+{
+  "deck": {},
+  "patch": {
+    "title": "AI Operating Model"
+  }
+}
+```
+
+Output:
+
+```json
+{
+  "deck": {}
+}
+```
+
 ## `deck.update_slide`
 
 Updates one slide in the current `DeckSpec` by `slide_id`.

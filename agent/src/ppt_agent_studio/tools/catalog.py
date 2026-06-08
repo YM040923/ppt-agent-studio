@@ -19,6 +19,18 @@ def core_tool_definitions() -> list[ToolDefinition]:
             },
         ),
         ToolDefinition(
+            name="deck.update_deck",
+            description="Update deck-level fields in the current DeckSpec.",
+            input_schema={
+                "type": "object",
+                "required": ["deck", "patch"],
+                "properties": {
+                    "deck": {"type": "object"},
+                    "patch": {"type": "object"},
+                },
+            },
+        ),
+        ToolDefinition(
             name="deck.update_slide",
             description="Update one slide in the current DeckSpec by slide_id.",
             input_schema={

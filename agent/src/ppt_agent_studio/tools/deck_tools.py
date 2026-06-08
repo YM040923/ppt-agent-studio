@@ -22,6 +22,7 @@ def build_default_registry() -> ToolRegistry:
     registry = ToolRegistry()
     definitions = {definition.name: definition for definition in core_tool_definitions()}
     registry.register(definitions["deck.create_from_outline"], create_deck_from_outline)
+    registry.register(definitions["deck.update_deck"], update_deck)
     registry.register(definitions["deck.update_slide"], update_slide)
     registry.register(definitions["deck.add_slide"], add_slide)
     registry.register(definitions["deck.move_slide"], move_slide)
@@ -43,6 +44,23 @@ def create_deck_from_outline(arguments: dict[str, Any]) -> ToolResult:
     revision = int(arguments.get("revision") or 0)
     deck = deck_from_outline(outline, deck_id=deck_id, revision=revision)
     return ToolResult(payload={"deck": deck.to_dict()})
+
+
+def update_deck(arguments: dict[str, Any]) -> ToolResult:
+    deck = _deck_from_arguments(arguments)
+    patch = arguments.get("patch")
+    if not isinstance(patch, dict):
+        raise ValueError("patch must be an object")
+    title = str(patch.get("title") or deck.title)
+    updated = DeckSpec(
+        deck_id=deck.deck_id,
+        title=title,
+        revision=deck.revision + 1,
+        slides=deck.slides,
+        theme=deck.theme,
+        metadata=deck.metadata,
+    )
+    return ToolResult(payload={"deck": updated.to_dict()})
 
 
 def update_slide(arguments: dict[str, Any]) -> ToolResult:

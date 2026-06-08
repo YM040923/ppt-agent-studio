@@ -16,6 +16,7 @@ def test_core_tool_catalog_lists_mvp_interfaces():
     assert len(names) == len(set(names))
     assert {
         "deck.create_from_outline",
+        "deck.update_deck",
         "deck.update_slide",
         "deck.add_slide",
         "deck.move_slide",
@@ -129,6 +130,34 @@ def test_default_registry_creates_deck_and_preview_html():
     assert deck_result.payload["deck"]["revision"] == 2
     assert preview_result.payload["html"].startswith("<!doctype html>")
     assert "AI Strategy" in preview_result.payload["html"]
+
+
+def test_default_registry_updates_deck_title():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_title",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {"title": "AI Operating Model"},
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert result.payload["deck"]["title"] == "AI Operating Model"
+    assert result.payload["deck"]["slides"][0]["title"] == "Cover"
 
 
 def test_default_registry_updates_adds_and_removes_slides():
