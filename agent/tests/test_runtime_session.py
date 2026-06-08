@@ -281,6 +281,32 @@ def test_agent_session_creates_slide_before_numbered_slide_follow_up(tmp_path):
     assert events[7].payload["slide_count"] == 6
 
 
+def test_agent_session_duplicates_numbered_slide_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_duplicate", deck_id="deck_duplicate", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Duplicate slide 2")]
+
+    first_events = asyncio.run(first_turn())
+    original_second = first_events[5].payload["deck"]["slides"][1]
+    events = asyncio.run(second_turn())
+
+    assert events[2].payload == {
+        "tool_name": "deck.add_slide",
+        "status": "completed",
+        "summary": "Duplicated slide 2.",
+    }
+    slides = events[3].payload["deck"]["slides"]
+    assert slides[1]["title"] == original_second["title"]
+    assert slides[2]["title"] == original_second["title"]
+    assert slides[2]["blocks"] == original_second["blocks"]
+    assert events[5].payload["slide_count"] == 6
+    assert events[7].payload["slide_count"] == 6
+
+
 def test_agent_session_does_not_treat_address_as_add_slide_request(tmp_path):
     session = AgentSession(session_id="session_followup_words", deck_id="deck_followup_words", artifact_dir=tmp_path)
 

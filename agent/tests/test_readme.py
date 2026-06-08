@@ -23,6 +23,7 @@ def test_readme_documents_theme_follow_up():
 
     assert "Follow-up add/create/update/rename/remove slide and dark/light-theme requests" in readme
     assert "Add/create follow-ups can insert before or after first/last, ordinal, or numbered slide targets" in readme
+    assert "Duplicate follow-ups copy first/last, ordinal, or numbered slide targets" in readme
     assert "Update/rename and remove follow-ups honor first/last, ordinal, and numbered slide targets" in readme
     assert "light/clean theme requests" in readme
     assert "`Make it darker`" in readme

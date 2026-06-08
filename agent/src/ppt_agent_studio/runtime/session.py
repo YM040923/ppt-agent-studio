@@ -43,6 +43,10 @@ class AgentSession:
             async for event in self._submit_update_slide_title_follow_up(*title_update):
                 yield event
             return
+        if self.deck is not None and self._is_duplicate_slide_request(text):
+            async for event in self._submit_duplicate_slide_follow_up(self._slide_remove_target(text)):
+                yield event
+            return
         if self.deck is not None and self._is_add_slide_request(text):
             async for event in self._submit_add_slide_follow_up(text):
                 yield event
@@ -176,6 +180,56 @@ class AgentSession:
         self._deck_revision = self.deck.revision
         plan.update_step_status("draft_slides", "completed")
         yield self._tool_completed_event("deck.add_slide", f"Added slide: {title}.")
+        yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
+
+        async for event in self._render_preview_export_and_complete(plan, outline):
+            yield event
+
+    async def _submit_duplicate_slide_follow_up(self, target: int | str) -> AsyncIterator[AgentEvent]:
+        if self.deck is None or not self.deck.slides:
+            return
+
+        next_revision = self._deck_revision + 1
+        if isinstance(target, int):
+            if target > len(self.deck.slides):
+                yield self._event(
+                    "error",
+                    {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+                )
+                return
+            target_index = target - 1
+            target_label = f"slide {target}"
+        else:
+            target_index = 0 if target == "first" else len(self.deck.slides) - 1
+            target_label = f"{target} slide"
+        target_slide = self.deck.slides[target_index]
+        outline_slides = [{"title": slide.title} for slide in self.deck.slides]
+        outline_slides.insert(target_index + 1, {"title": target_slide.title})
+        outline = {
+            "deck_title": self.deck.title,
+            "slides": outline_slides,
+        }
+        plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
+        plan.status = "running"
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "running")
+        yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+        slide = target_slide.to_dict()
+        slide["slide_id"] = f"s{len(self.deck.slides) + 1}"
+        deck_result = await self._tool_registry.run(
+            "deck.add_slide",
+            {
+                "deck": self.deck.to_dict(),
+                "slide": slide,
+                "after_slide_id": target_slide.slide_id,
+            },
+        )
+        self.deck = self._deck_from_payload(deck_result.payload["deck"])
+        self._deck_revision = self.deck.revision
+        plan.update_step_status("draft_slides", "completed")
+        yield self._tool_completed_event("deck.add_slide", f"Duplicated {target_label}.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         async for event in self._render_preview_export_and_complete(plan, outline):
@@ -417,6 +471,10 @@ class AgentSession:
         if re.search(r"\bcreate\b.*\b(slide|page)\b", prompt, flags=re.IGNORECASE):
             return True
         return any(token in prompt for token in ["新增", "增加", "加一页", "加一张", "加一个"])
+
+    @staticmethod
+    def _is_duplicate_slide_request(prompt: str) -> bool:
+        return re.search(r"\b(duplicate|copy)\b.*\b(slide|page)\b", prompt, flags=re.IGNORECASE) is not None
 
     @staticmethod
     def _slide_remove_target(prompt: str) -> int | str:
