@@ -341,6 +341,34 @@ def test_default_registry_moves_slide_after_target():
     assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s4", "s2"]
 
 
+@pytest.mark.parametrize("position_key", ["after_slide_id", "before_slide_id"])
+def test_default_registry_rejects_moving_slide_relative_to_itself(position_key):
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_move_self",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.move_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                position_key: "s2",
+            },
+        )
+
+    with pytest.raises(ValueError, match="cannot move slide relative to itself"):
+        asyncio.run(run())
+
+
 def test_default_registry_runs_research_and_theme_tools():
     registry = build_default_registry()
     deck = {

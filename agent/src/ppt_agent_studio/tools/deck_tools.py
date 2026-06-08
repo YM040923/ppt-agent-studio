@@ -138,6 +138,8 @@ def move_slide(arguments: dict[str, Any]) -> ToolResult:
         raise ValueError("slide_id is required")
     if not before_slide_id and not after_slide_id:
         raise ValueError("before_slide_id or after_slide_id is required")
+    if before_slide_id == slide_id or after_slide_id == slide_id:
+        raise ValueError("cannot move slide relative to itself")
 
     moving_slide = None
     remaining: list[SlideSpec] = []
