@@ -163,6 +163,7 @@ def test_agent_session_preserves_planner_theme_for_preview_and_export(tmp_path):
 
     assert events[5].payload["deck"]["theme"]["name"] == "executive-consulting"
     assert "--slide-accent: #2563EB;" in events[7].payload["html"]
+    assert events[9].payload["theme_name"] == "executive-consulting"
     assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "2563EB"
 
 
@@ -363,6 +364,7 @@ def test_agent_session_applies_dark_theme_on_follow_up_request(tmp_path):
     assert events[5].payload["theme_name"] == "executive-dark"
     assert "--slide-background: #111827;" in events[5].payload["html"]
     assert "--slide-text: #F9FAFB;" in events[5].payload["html"]
+    assert events[7].payload["theme_name"] == "executive-dark"
     assert str(presentation.slides[0].shapes[0].fill.fore_color.rgb) == "38BDF8"
     assert events[8].payload["plan"]["status"] == "completed"
 

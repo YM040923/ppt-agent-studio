@@ -2,11 +2,12 @@ using System.Text.Json;
 
 namespace PptAgentStudio_App.Services;
 
-public sealed record RuntimePptxExportSummary(string Path, int SlideCount)
+public sealed record RuntimePptxExportSummary(string Path, int SlideCount, string ThemeName = "")
 {
     public static RuntimePptxExportSummary FromPayload(JsonElement payload)
     {
         var path = ReadString(payload, "path");
+        var themeName = ReadString(payload, "theme_name");
         var slideCount = 0;
         if (payload.TryGetProperty("slide_count", out var slideCountValue)
             && slideCountValue.ValueKind == JsonValueKind.Number
@@ -16,23 +17,22 @@ public sealed record RuntimePptxExportSummary(string Path, int SlideCount)
             slideCount = parsedSlideCount;
         }
 
-        return new RuntimePptxExportSummary(path, slideCount);
+        return new RuntimePptxExportSummary(path, slideCount, themeName);
     }
 
     public string ToChatMessage()
     {
-        var slideText = SlideCount <= 0
-            ? ""
-            : SlideCount == 1 ? "1 slide" : $"{SlideCount} slides";
+        var details = DetailParts();
+        var detailText = string.Join(", ", details);
 
-        if (!string.IsNullOrWhiteSpace(slideText) && !string.IsNullOrWhiteSpace(Path))
+        if (!string.IsNullOrWhiteSpace(detailText) && !string.IsNullOrWhiteSpace(Path))
         {
-            return $"**Editable PPTX export is ready:** {slideText} at `{Path}`";
+            return $"**Editable PPTX export is ready:** {detailText} at `{Path}`";
         }
 
-        if (!string.IsNullOrWhiteSpace(slideText))
+        if (!string.IsNullOrWhiteSpace(detailText))
         {
-            return $"**Editable PPTX export is ready:** {slideText}.";
+            return $"**Editable PPTX export is ready:** {detailText}.";
         }
 
         return string.IsNullOrWhiteSpace(Path)
@@ -43,10 +43,25 @@ public sealed record RuntimePptxExportSummary(string Path, int SlideCount)
     public string ToStatusText(int? deckRevision)
     {
         var revisionText = deckRevision is null ? "" : $" at revision {deckRevision}";
-        var slideText = SlideCount <= 0
-            ? ""
-            : SlideCount == 1 ? ": 1 slide" : $": {SlideCount} slides";
-        return $"PPTX exported{revisionText}{slideText}.";
+        var details = DetailParts();
+        var detailText = details.Count == 0 ? "" : $": {string.Join(", ", details)}";
+        return $"PPTX exported{revisionText}{detailText}.";
+    }
+
+    private List<string> DetailParts()
+    {
+        var details = new List<string>();
+        if (SlideCount > 0)
+        {
+            details.Add(SlideCount == 1 ? "1 slide" : $"{SlideCount} slides");
+        }
+
+        if (!string.IsNullOrWhiteSpace(ThemeName))
+        {
+            details.Add($"theme {ThemeName}");
+        }
+
+        return details;
     }
 
     private static string ReadString(JsonElement payload, string propertyName)

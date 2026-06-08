@@ -61,6 +61,8 @@ The server streams one JSON event per WebSocket message. The desktop client clos
 
 `preview.ready` is the live-preview synchronization event. Its payload includes rendered `html`, `deck_id`, `revision`, `deck_title`, `slide_count`, and `theme_name`; the desktop preview pane uses the HTML, while chat/status summaries can show the title, slide count, and active theme without parsing the preview document.
 
+The `pptx.ready` payload includes the exported PowerPoint `path`, `slide_count`, and `theme_name` so the desktop export-ready message can match the active preview theme without inspecting the PPTX file.
+
 Runtime Agent sessions are cached by `(session_id, deck_id)` inside the Python process. This lets the desktop client reconnect for each user turn while preserving DeckSpec revision numbers, event ordering, and the latest deck state for that workspace.
 
 When a follow-up message clearly asks to add, append, update, rename, remove, or delete a slide, the runtime mutates the cached DeckSpec with `deck.add_slide`, `deck.update_slide`, or `deck.remove_slide`. Clear dark theme and light/clean theme follow-ups use `design.apply_theme` against the cached DeckSpec. Both paths emit a new `deck.updated` revision, refresh `preview.ready`, and export a new `pptx.ready` artifact. Other follow-up prompts still run through the planner path until richer edit-intent routing is added.
