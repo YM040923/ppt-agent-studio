@@ -27,6 +27,7 @@ def test_readme_documents_theme_follow_up():
     assert "Move follow-ups reposition slides before or after first/last, ordinal, or numbered targets" in readme
     assert "Move follow-ups can also send slides to the beginning or end" in readme
     assert "Deck rename follow-ups update the deck title" in readme
+    assert "Audience/style follow-ups update deck metadata" in readme
     assert "Update/rename and remove follow-ups honor first/last, ordinal, and numbered slide targets" in readme
     assert "light/clean theme requests" in readme
     assert "`Make it darker`" in readme

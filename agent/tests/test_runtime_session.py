@@ -215,6 +215,30 @@ def test_agent_session_renames_deck_on_follow_up_request(tmp_path):
     assert events[7].payload["slide_count"] == 5
 
 
+def test_agent_session_updates_deck_audience_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_deck_audience", deck_id="deck_audience", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Set the audience to CFO leadership")]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+    presentation = Presentation(events[7].payload["path"])
+
+    assert events[2].payload == {
+        "tool_name": "deck.update_deck",
+        "status": "completed",
+        "summary": "Updated deck audience: CFO leadership.",
+    }
+    assert events[3].payload["deck"]["metadata"]["audience"] == "CFO leadership"
+    assert '<meta name="ppt-agent-audience" content="CFO leadership" />' in events[5].payload["html"]
+    assert presentation.core_properties.subject == "CFO leadership"
+    assert events[7].payload["slide_count"] == 5
+
+
 def test_agent_session_creates_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_followup", deck_id="deck_followup", artifact_dir=tmp_path)
 

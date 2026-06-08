@@ -52,13 +52,20 @@ def update_deck(arguments: dict[str, Any]) -> ToolResult:
     if not isinstance(patch, dict):
         raise ValueError("patch must be an object")
     title = str(patch.get("title") or deck.title)
+    metadata = dict(deck.metadata)
+    patch_metadata = patch.get("metadata")
+    if isinstance(patch_metadata, dict):
+        for key, value in patch_metadata.items():
+            text = str(value).strip()
+            if text:
+                metadata[str(key)] = text
     updated = DeckSpec(
         deck_id=deck.deck_id,
         title=title,
         revision=deck.revision + 1,
         slides=deck.slides,
         theme=deck.theme,
-        metadata=deck.metadata,
+        metadata=metadata,
     )
     return ToolResult(payload={"deck": updated.to_dict()})
 

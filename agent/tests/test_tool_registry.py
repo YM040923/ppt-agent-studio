@@ -160,6 +160,36 @@ def test_default_registry_updates_deck_title():
     assert result.payload["deck"]["slides"][0]["title"] == "Cover"
 
 
+def test_default_registry_updates_deck_metadata():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_metadata",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "metadata": {"audience": "board", "style": "consulting"},
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {"metadata": {"audience": "CFO leadership"}},
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert result.payload["deck"]["metadata"] == {
+        "audience": "CFO leadership",
+        "style": "consulting",
+    }
+
+
 def test_default_registry_updates_adds_and_removes_slides():
     registry = build_default_registry()
     deck = {
