@@ -40,6 +40,7 @@ def test_architecture_documents_expanded_deck_tool_registry():
     assert "deck title updates" in architecture
     assert "slide update/add/move/remove tools" in architecture
     assert "Duplicate follow-ups can insert copied slides before or after first/last, ordinal, or numbered slide targets" in architecture
+    assert "Duplicate follow-ups can also send copied slides to the beginning or end" in architecture
 
 
 def _repo_root() -> Path:

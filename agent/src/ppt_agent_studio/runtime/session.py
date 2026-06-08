@@ -59,10 +59,20 @@ class AgentSession:
                 yield event
             return
         if self.deck is not None and self._is_duplicate_slide_request(text):
+            before_target = self._slide_insert_before_target(text)
+            after_target = self._slide_insert_after_target(text)
+            if before_target is None and after_target is None:
+                edge_target = self._slide_edge_insert_target(text)
+                if edge_target is not None:
+                    position, target = edge_target
+                    if position == "before":
+                        before_target = target
+                    else:
+                        after_target = target
             async for event in self._submit_duplicate_slide_follow_up(
                 self._slide_remove_target(text),
-                self._slide_insert_before_target(text),
-                self._slide_insert_after_target(text),
+                before_target,
+                after_target,
             ):
                 yield event
             return
@@ -696,6 +706,20 @@ class AgentSession:
         if ordinal is not None:
             return AgentSession._ordinal_value(ordinal)
         return match.group("target").casefold()
+
+    @staticmethod
+    def _slide_edge_insert_target(prompt: str) -> tuple[str, str] | None:
+        match = re.search(
+            r"\b(?:to|at)\s+(?:the\s+)?(?P<edge>beginning|start|front|end|back)\b",
+            prompt,
+            flags=re.IGNORECASE,
+        )
+        if match is None:
+            return None
+        edge = match.group("edge").casefold()
+        if edge in {"beginning", "start", "front"}:
+            return "before", "first"
+        return "after", "last"
 
     @staticmethod
     def _ordinal_slide_target(prompt: str) -> int | None:
