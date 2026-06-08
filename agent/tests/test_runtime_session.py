@@ -239,6 +239,30 @@ def test_agent_session_updates_deck_audience_on_follow_up_request(tmp_path):
     assert events[7].payload["slide_count"] == 5
 
 
+def test_agent_session_updates_prefixed_deck_style_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_deck_style", deck_id="deck_style", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Set the deck style to investor narrative")]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+    presentation = Presentation(events[7].payload["path"])
+
+    assert events[2].payload == {
+        "tool_name": "deck.update_deck",
+        "status": "completed",
+        "summary": "Updated deck style: investor narrative.",
+    }
+    assert events[3].payload["deck"]["metadata"]["style"] == "investor narrative"
+    assert '<meta name="ppt-agent-style" content="investor narrative" />' in events[5].payload["html"]
+    assert presentation.core_properties.keywords == "investor narrative"
+    assert events[7].payload["slide_count"] == 5
+
+
 def test_agent_session_creates_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_followup", deck_id="deck_followup", artifact_dir=tmp_path)
 

@@ -813,7 +813,7 @@ class AgentSession:
     @staticmethod
     def _deck_metadata_update_request(prompt: str) -> tuple[str, str] | None:
         match = re.search(
-            r"\b(?:set|update|change)\s+(?:the\s+)?(?P<key>audience|style)\s+(?:to|as)\s+(?P<value>.+)$",
+            r"\b(?:set|update|change)\s+(?:the\s+)?(?:(?:deck|presentation|powerpoint|ppt)\s+)?(?P<key>audience|style)\s+(?:to|as)\s+(?P<value>.+)$",
             prompt,
             flags=re.IGNORECASE,
         )
