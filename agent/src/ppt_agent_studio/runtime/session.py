@@ -59,7 +59,11 @@ class AgentSession:
                 yield event
             return
         if self.deck is not None and self._is_duplicate_slide_request(text):
-            async for event in self._submit_duplicate_slide_follow_up(self._slide_remove_target(text)):
+            async for event in self._submit_duplicate_slide_follow_up(
+                self._slide_remove_target(text),
+                self._slide_insert_before_target(text),
+                self._slide_insert_after_target(text),
+            ):
                 yield event
             return
         if self.deck is not None and self._is_add_slide_request(text):
@@ -200,26 +204,50 @@ class AgentSession:
         async for event in self._render_preview_export_and_complete(plan, outline):
             yield event
 
-    async def _submit_duplicate_slide_follow_up(self, target: int | str) -> AsyncIterator[AgentEvent]:
+    async def _submit_duplicate_slide_follow_up(
+        self,
+        source: int | str,
+        before_target: int | str | None = None,
+        after_target: int | str | None = None,
+    ) -> AsyncIterator[AgentEvent]:
         if self.deck is None or not self.deck.slides:
             return
 
         next_revision = self._deck_revision + 1
-        if isinstance(target, int):
-            if target > len(self.deck.slides):
+        source_slide, source_index, source_label = self._resolve_slide_target(source)
+        if source_slide is None:
+            yield self._event(
+                "error",
+                {"message": f"Slide {source} is not available. Deck has {len(self.deck.slides)} slides."},
+            )
+            return
+        if before_target is not None and after_target is not None:
+            yield self._event(
+                "error",
+                {"message": "Duplicate slide placement cannot include both before and after targets."},
+            )
+            return
+
+        before_slide_id = ""
+        after_slide_id = source_slide.slide_id
+        summary = f"Duplicated {source_label}."
+        insert_index = source_index + 1
+        placement_target = before_target if before_target is not None else after_target
+        if placement_target is not None:
+            placement_slide, placement_index, placement_label = self._resolve_slide_target(placement_target)
+            if placement_slide is None:
                 yield self._event(
                     "error",
-                    {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+                    {"message": f"Slide {placement_target} is not available. Deck has {len(self.deck.slides)} slides."},
                 )
                 return
-            target_index = target - 1
-            target_label = f"slide {target}"
-        else:
-            target_index = 0 if target == "first" else len(self.deck.slides) - 1
-            target_label = f"{target} slide"
-        target_slide = self.deck.slides[target_index]
+            position = "before" if before_target is not None else "after"
+            insert_index = placement_index if before_target is not None else placement_index + 1
+            before_slide_id = placement_slide.slide_id if before_target is not None else ""
+            after_slide_id = placement_slide.slide_id if after_target is not None else ""
+            summary = f"Duplicated {source_label} {position} {placement_label}."
         outline_slides = [{"title": slide.title} for slide in self.deck.slides]
-        outline_slides.insert(target_index + 1, {"title": target_slide.title})
+        outline_slides.insert(insert_index, {"title": source_slide.title})
         outline = {
             "deck_title": self.deck.title,
             "slides": outline_slides,
@@ -231,20 +259,18 @@ class AgentSession:
         plan.update_step_status("draft_slides", "running")
         yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
 
-        slide = target_slide.to_dict()
+        slide = source_slide.to_dict()
         slide["slide_id"] = f"s{len(self.deck.slides) + 1}"
-        deck_result = await self._tool_registry.run(
-            "deck.add_slide",
-            {
-                "deck": self.deck.to_dict(),
-                "slide": slide,
-                "after_slide_id": target_slide.slide_id,
-            },
-        )
+        tool_args = {"deck": self.deck.to_dict(), "slide": slide}
+        if before_slide_id:
+            tool_args["before_slide_id"] = before_slide_id
+        if after_slide_id:
+            tool_args["after_slide_id"] = after_slide_id
+        deck_result = await self._tool_registry.run("deck.add_slide", tool_args)
         self.deck = self._deck_from_payload(deck_result.payload["deck"])
         self._deck_revision = self.deck.revision
         plan.update_step_status("draft_slides", "completed")
-        yield self._tool_completed_event("deck.add_slide", f"Duplicated {target_label}.")
+        yield self._tool_completed_event("deck.add_slide", summary)
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         async for event in self._render_preview_export_and_complete(plan, outline):
