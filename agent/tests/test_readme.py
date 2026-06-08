@@ -21,7 +21,7 @@ def test_readme_documents_demo_summary_json():
 def test_readme_documents_theme_follow_up():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
-    assert "Follow-up add/create/update/remove slide and dark/light-theme requests" in readme
+    assert "Follow-up add/create/update/rename/remove slide and dark/light-theme requests" in readme
     assert "light/clean theme requests" in readme
     assert "`Make it darker`" in readme
     assert "`Make it brighter`" in readme

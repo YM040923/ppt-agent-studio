@@ -416,7 +416,7 @@ class AgentSession:
     @staticmethod
     def _slide_title_update_request(prompt: str) -> tuple[str, str] | None:
         match = re.search(
-            r"\b(?:update|rename)\s+(?:the\s+)?(?P<target>first|last)\s+slide\s+title\s+(?:to|as)\s+(?P<title>.+)$",
+            r"\b(?:update|rename)\s+(?:the\s+)?(?P<target>first|last)\s+slide\s+(?:title\s+)?(?:to|as)\s+(?P<title>.+)$",
             prompt,
             flags=re.IGNORECASE,
         )

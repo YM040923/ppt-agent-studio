@@ -283,7 +283,7 @@ def test_agent_session_removes_last_slide_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
-def test_agent_session_updates_slide_title_on_follow_up_request(tmp_path):
+def test_agent_session_renames_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_update", deck_id="deck_update", artifact_dir=tmp_path)
 
     async def first_turn():
@@ -293,7 +293,7 @@ def test_agent_session_updates_slide_title_on_follow_up_request(tmp_path):
         return [
             event
             async for event in session.submit_user_message(
-                "Update the first slide title to Executive AI Roadmap"
+                "Rename the first slide to Executive AI Roadmap"
             )
         ]
 
