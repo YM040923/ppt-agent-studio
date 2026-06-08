@@ -104,9 +104,27 @@ class AgentSession:
 
         next_revision = self._deck_revision + 1
         title = self._follow_up_slide_title(text)
+        after_target = self._slide_insert_after_target(text)
+        after_slide_id = ""
+        outline_slides = [{"title": slide.title} for slide in self.deck.slides]
+        if after_target is not None:
+            if isinstance(after_target, int):
+                if after_target > len(self.deck.slides):
+                    yield self._event(
+                        "error",
+                        {"message": f"Slide {after_target} is not available. Deck has {len(self.deck.slides)} slides."},
+                    )
+                    return
+                after_index = after_target - 1
+            else:
+                after_index = 0 if after_target == "first" else len(self.deck.slides) - 1
+            after_slide_id = self.deck.slides[after_index].slide_id
+            outline_slides.insert(after_index + 1, {"title": title})
+        else:
+            outline_slides.append({"title": title})
         outline = {
             "deck_title": self.deck.title,
-            "slides": [{"title": slide.title} for slide in self.deck.slides] + [{"title": title}],
+            "slides": outline_slides,
         }
         plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
         plan.status = "running"
@@ -138,9 +156,12 @@ class AgentSession:
             ],
             "speaker_notes": f"Use this slide to pressure-test the recommendation around {title}.",
         }
+        tool_args = {"deck": self.deck.to_dict(), "slide": slide}
+        if after_slide_id:
+            tool_args["after_slide_id"] = after_slide_id
         deck_result = await self._tool_registry.run(
             "deck.add_slide",
-            {"deck": self.deck.to_dict(), "slide": slide},
+            tool_args,
         )
         self.deck = self._deck_from_payload(deck_result.payload["deck"])
         self._deck_revision = self.deck.revision
@@ -399,6 +420,23 @@ class AgentSession:
         return "first" if re.search(r"\bfirst\b", prompt, flags=re.IGNORECASE) else "last"
 
     @staticmethod
+    def _slide_insert_after_target(prompt: str) -> int | str | None:
+        match = re.search(
+            r"\bafter\s+(?:the\s+)?(?:(?P<target>first|last)\s+(?:slide|page)|(?P<ordinal>second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page)|(?:slide|page)\s+(?P<number>\d+))\b",
+            prompt,
+            flags=re.IGNORECASE,
+        )
+        if match is None:
+            return None
+        number = match.group("number")
+        if number is not None:
+            return max(1, int(number))
+        ordinal = match.group("ordinal")
+        if ordinal is not None:
+            return AgentSession._ordinal_value(ordinal)
+        return match.group("target").casefold()
+
+    @staticmethod
     def _ordinal_slide_target(prompt: str) -> int | None:
         match = re.search(
             r"\b(?P<ordinal>second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page)\b",
@@ -494,6 +532,12 @@ class AgentSession:
 
     @staticmethod
     def _follow_up_slide_title(prompt: str) -> str:
+        prompt = re.sub(
+            r"\bafter\s+(?:the\s+)?(?:(?:first|last)\s+(?:slide|page)|(?:second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page)|(?:slide|page)\s+\d+)\b",
+            " ",
+            prompt,
+            flags=re.IGNORECASE,
+        )
         cleaned = re.sub(
             r"\b(please|add|append|create|a|an|slide|page|about)\b",
             " ",
