@@ -310,6 +310,39 @@ def test_default_registry_adds_slide_before_target():
     assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s2"]
 
 
+def test_default_registry_rejects_ambiguous_add_slide_position():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_add_ambiguous",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s3",
+                    "title": "Roadmap",
+                    "layout": "content",
+                    "blocks": [],
+                },
+                "before_slide_id": "s1",
+                "after_slide_id": "s2",
+            },
+        )
+
+    with pytest.raises(ValueError, match="before_slide_id and after_slide_id cannot both be provided"):
+        asyncio.run(run())
+
+
 def test_default_registry_moves_slide_after_target():
     registry = build_default_registry()
     deck = {
@@ -339,6 +372,35 @@ def test_default_registry_moves_slide_after_target():
 
     assert result.payload["deck"]["revision"] == 2
     assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s4", "s2"]
+
+
+def test_default_registry_rejects_ambiguous_move_slide_position():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_move_ambiguous",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+            {"slide_id": "s3", "title": "Roadmap", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.move_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "before_slide_id": "s1",
+                "after_slide_id": "s3",
+            },
+        )
+
+    with pytest.raises(ValueError, match="before_slide_id and after_slide_id cannot both be provided"):
+        asyncio.run(run())
 
 
 @pytest.mark.parametrize("position_key", ["after_slide_id", "before_slide_id"])

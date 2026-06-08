@@ -108,6 +108,8 @@ def add_slide(arguments: dict[str, Any]) -> ToolResult:
     new_slide = _slide_from_dict(raw_slide, len(deck.slides) + 1)
     after_slide_id = str(arguments.get("after_slide_id") or "").strip()
     before_slide_id = str(arguments.get("before_slide_id") or "").strip()
+    if before_slide_id and after_slide_id:
+        raise ValueError("before_slide_id and after_slide_id cannot both be provided")
 
     slides = list(deck.slides)
     if before_slide_id:
@@ -136,6 +138,8 @@ def move_slide(arguments: dict[str, Any]) -> ToolResult:
     before_slide_id = str(arguments.get("before_slide_id") or "").strip()
     if not slide_id:
         raise ValueError("slide_id is required")
+    if before_slide_id and after_slide_id:
+        raise ValueError("before_slide_id and after_slide_id cannot both be provided")
     if not before_slide_id and not after_slide_id:
         raise ValueError("before_slide_id or after_slide_id is required")
     if before_slide_id == slide_id or after_slide_id == slide_id:
