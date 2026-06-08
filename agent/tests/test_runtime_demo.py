@@ -18,6 +18,7 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
     assert summary.session_id == "demo-session"
     assert summary.deck_id == "demo-deck"
     assert summary.deck_revision == 1
+    assert summary.deck_title == "Board AI Strategy"
     assert summary.theme_name == "executive-consulting"
     assert summary.slide_count == 5
     assert summary.event_count == 11
@@ -30,6 +31,7 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
         "session_id": "demo-session",
         "deck_id": "demo-deck",
         "deck_revision": 1,
+        "deck_title": "Board AI Strategy",
         "prompt": "Make a 5 slide board AI strategy deck in McKinsey style",
         "follow_up": "",
         "theme_name": "executive-consulting",
@@ -38,6 +40,7 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
         "preview_html_path": str(summary.preview_html_path),
         "pptx_path": str(summary.pptx_path),
     }
+    assert "Title: Board AI Strategy" in format_summary(summary)
     assert "Theme: executive-consulting" in format_summary(summary)
     assert "Slides: 5" in format_summary(summary)
 

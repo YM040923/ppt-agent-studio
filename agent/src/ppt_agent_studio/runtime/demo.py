@@ -19,6 +19,7 @@ class DemoRunSummary:
     session_id: str
     deck_id: str
     deck_revision: int
+    deck_title: str
     prompt: str
     follow_up: str
     theme_name: str
@@ -43,21 +44,24 @@ async def run_demo(
     preview_html = ""
     pptx_path: Path | None = None
     deck_revision = 0
+    deck_title = ""
     theme_name = ""
     slide_count = 0
     event_count = 0
 
     async def consume_turn(text: str) -> None:
-        nonlocal deck_revision, event_count, preview_html, pptx_path, theme_name, slide_count
+        nonlocal deck_revision, deck_title, event_count, preview_html, pptx_path, theme_name, slide_count
         async for event in session.submit_user_message(text):
             event_count += 1
             if event.deck_revision is not None:
                 deck_revision = event.deck_revision
             if event.type == "preview.ready":
                 preview_html = str(event.payload.get("html") or "")
+                deck_title = str(event.payload.get("deck_title") or deck_title)
                 theme_name = str(event.payload.get("theme_name") or "")
             if event.type == "pptx.ready":
                 pptx_path = Path(str(event.payload.get("path") or ""))
+                deck_title = str(event.payload.get("deck_title") or deck_title)
                 slide_count = int(event.payload.get("slide_count") or 0)
 
     normalized_prompt = prompt.strip()
@@ -79,6 +83,7 @@ async def run_demo(
         session_id=session_id,
         deck_id=deck_id,
         deck_revision=deck_revision,
+        deck_title=deck_title,
         prompt=normalized_prompt,
         follow_up=normalized_follow_up,
         theme_name=theme_name,
@@ -94,6 +99,7 @@ async def run_demo(
                 "session_id": summary.session_id,
                 "deck_id": summary.deck_id,
                 "deck_revision": summary.deck_revision,
+                "deck_title": summary.deck_title,
                 "prompt": summary.prompt,
                 "follow_up": summary.follow_up,
                 "theme_name": summary.theme_name,
@@ -119,6 +125,8 @@ def format_summary(summary: DemoRunSummary) -> str:
     ]
     if summary.follow_up:
         lines.append(f"Follow-up: {summary.follow_up}")
+    if summary.deck_title:
+        lines.append(f"Title: {summary.deck_title}")
     if summary.theme_name:
         lines.append(f"Theme: {summary.theme_name}")
     lines.extend(

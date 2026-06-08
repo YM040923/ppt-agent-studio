@@ -77,7 +77,7 @@ python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\demo
 ```
 
 Add `--follow-up "Add a risk mitigation slide"` to generate a second revision that demonstrates cached follow-up editing.
-The demo writes preview HTML, editable PPTX, and a summary JSON file into the artifact directory; with the follow-up example, the summary file is `demo-deck-r2-summary.json`. The summary JSON includes the prompt, optional follow-up prompt, final `theme_name`, slide count, event count, and artifact paths.
+The demo writes preview HTML, editable PPTX, and a summary JSON file into the artifact directory; with the follow-up example, the summary file is `demo-deck-r2-summary.json`. The summary JSON includes the prompt, optional follow-up prompt, final `deck_title`, final `theme_name`, slide count, event count, and artifact paths.
 
 ## Packaging
 
