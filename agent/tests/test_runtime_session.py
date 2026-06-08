@@ -246,17 +246,17 @@ def test_agent_session_does_not_treat_address_as_add_slide_request(tmp_path):
     assert events[2].payload["tool_name"] == "research.collect_brief"
 
 
-def test_agent_session_removes_first_slide_on_follow_up_request(tmp_path):
+def test_agent_session_removes_numbered_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_remove", deck_id="deck_remove", artifact_dir=tmp_path)
 
     async def first_turn():
         return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
 
     async def second_turn():
-        return [event async for event in session.submit_user_message("Remove the first slide")]
+        return [event async for event in session.submit_user_message("Remove slide 2")]
 
     first_events = asyncio.run(first_turn())
-    original_first_title = first_events[5].payload["deck"]["slides"][0]["title"]
+    original_second_title = first_events[5].payload["deck"]["slides"][1]["title"]
     events = asyncio.run(second_turn())
 
     assert [event.type for event in events] == [
@@ -274,11 +274,11 @@ def test_agent_session_removes_first_slide_on_follow_up_request(tmp_path):
     assert events[2].payload == {
         "tool_name": "deck.remove_slide",
         "status": "completed",
-        "summary": "Removed first slide.",
+        "summary": "Removed slide 2.",
     }
     assert events[3].payload["deck"]["revision"] == 2
     assert len(events[3].payload["deck"]["slides"]) == 4
-    assert all(slide["title"] != original_first_title for slide in events[3].payload["deck"]["slides"])
+    assert all(slide["title"] != original_second_title for slide in events[3].payload["deck"]["slides"])
     assert events[5].payload["slide_count"] == 4
     assert events[7].payload["slide_count"] == 4
     assert len(presentation.slides) == 4

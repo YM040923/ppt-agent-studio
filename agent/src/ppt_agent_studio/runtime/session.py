@@ -189,12 +189,17 @@ class AgentSession:
         async for event in self._render_preview_export_and_complete(plan, outline):
             yield event
 
-    async def _submit_remove_slide_follow_up(self, target: str) -> AsyncIterator[AgentEvent]:
+    async def _submit_remove_slide_follow_up(self, target: int | str) -> AsyncIterator[AgentEvent]:
         if self.deck is None or not self.deck.slides:
             return
 
         next_revision = self._deck_revision + 1
-        target_slide = self.deck.slides[0] if target == "first" else self.deck.slides[-1]
+        if isinstance(target, int):
+            target_slide = self.deck.slides[target - 1]
+            target_label = f"slide {target}"
+        else:
+            target_slide = self.deck.slides[0] if target == "first" else self.deck.slides[-1]
+            target_label = f"{target} slide"
         outline = {
             "deck_title": self.deck.title,
             "slides": [{"title": slide.title} for slide in self.deck.slides if slide.slide_id != target_slide.slide_id],
@@ -213,7 +218,7 @@ class AgentSession:
         self.deck = self._deck_from_payload(deck_result.payload["deck"])
         self._deck_revision = self.deck.revision
         plan.update_step_status("draft_slides", "completed")
-        yield self._tool_completed_event("deck.remove_slide", f"Removed {target} slide.")
+        yield self._tool_completed_event("deck.remove_slide", f"Removed {target_label}.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         async for event in self._render_preview_export_and_complete(plan, outline):
@@ -367,7 +372,10 @@ class AgentSession:
         return any(token in prompt for token in ["新增", "增加", "加一页", "加一张", "加一个"])
 
     @staticmethod
-    def _slide_remove_target(prompt: str) -> str:
+    def _slide_remove_target(prompt: str) -> int | str:
+        match = re.search(r"\b(?:slide|page)\s+(?P<number>\d+)\b", prompt, flags=re.IGNORECASE)
+        if match is not None:
+            return max(1, int(match.group("number")))
         return "first" if re.search(r"\bfirst\b", prompt, flags=re.IGNORECASE) else "last"
 
     @staticmethod
