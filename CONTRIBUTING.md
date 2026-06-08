@@ -17,6 +17,14 @@ For model-backed planning, copy `.env.example` to `.env.local` and fill in an Op
 
 ## Checks
 
+Run the main Windows verification script:
+
+```powershell
+.\scripts\verify.ps1
+```
+
+It runs the Python tests, desktop tests, desktop app build, and an 8-second WinUI startup smoke. You can also run checks individually.
+
 Run Python tests:
 
 ```powershell

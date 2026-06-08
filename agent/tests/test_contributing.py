@@ -6,6 +6,7 @@ def test_contributing_documents_core_local_checks():
 
     assert "python -m pytest agent\\tests -q" in contributing
     assert "dotnet test desktop\\PptAgentStudio.App.Tests\\PptAgentStudio.App.Tests.csproj" in contributing
+    assert ".\\scripts\\verify.ps1" in contributing
     assert "python -m ppt_agent_studio.runtime.demo" in contributing
     assert ".env.local" in contributing
 

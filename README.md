@@ -55,6 +55,14 @@ See `docs/openmanus-reference.md` for how this project maps OpenManus architectu
 
 ## Local Checks
 
+Run the main Windows verification script:
+
+```powershell
+.\scripts\verify.ps1
+```
+
+It runs the Python tests, desktop tests, desktop app build, and an 8-second WinUI startup smoke. To run checks individually:
+
 ```powershell
 python -m pytest agent\tests -q
 dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj

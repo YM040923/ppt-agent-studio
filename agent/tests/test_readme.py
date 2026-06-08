@@ -22,6 +22,12 @@ def test_readme_documents_theme_follow_up():
     assert "design.apply_theme" in readme
 
 
+def test_readme_documents_verify_script():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert ".\\scripts\\verify.ps1" in readme
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
