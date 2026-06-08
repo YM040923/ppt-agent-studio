@@ -21,7 +21,7 @@ class OpenAICompatibleChatClient:
         self._http_client = http_client
 
     async def complete(self, messages: Sequence[ChatMessage], temperature: float = 0.2) -> str:
-        if not self.config.has_api_key:
+        if self.config.requires_api_key and not self.config.has_api_key:
             raise ValueError("OPENAI_API_KEY is required")
 
         payload = {
@@ -31,10 +31,9 @@ class OpenAICompatibleChatClient:
         }
         client = self._http_client or httpx.AsyncClient()
         close_client = self._http_client is None
-        headers = {
-            **self.config.extra_headers,
-            "Authorization": f"Bearer {self.config.api_key}",
-        }
+        headers = dict(self.config.extra_headers)
+        if self.config.has_api_key:
+            headers["Authorization"] = f"Bearer {self.config.api_key}"
         try:
             response = await client.post(
                 f"{self.config.base_url}/chat/completions",

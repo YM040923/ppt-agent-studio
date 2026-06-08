@@ -479,6 +479,33 @@ def test_handle_runtime_config_reports_fallback_when_llm_key_is_missing(monkeypa
     }
 
 
+def test_handle_runtime_config_uses_llm_for_local_endpoint_without_key(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://127.0.0.1:11434/v1")
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["payload"]["llm"]["endpoint_kind"] == "local"
+    assert payload["payload"]["llm"]["has_api_key"] is False
+    assert payload["payload"]["planner"] == {
+        "requested": "llm",
+        "active": "llm",
+    }
+
+
 def test_handle_runtime_config_treats_placeholder_key_as_missing(monkeypatch, tmp_path):
     monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
     monkeypatch.setenv("OPENAI_API_KEY", "replace-with-your-api-key")
@@ -541,6 +568,17 @@ def test_build_outline_planner_defaults_to_fallback(monkeypatch, tmp_path):
 def test_build_outline_planner_uses_llm_when_enabled_and_key_present(monkeypatch):
     monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
     monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
+
+    planner = _build_outline_planner()
+
+    assert isinstance(planner, LLMOutlinePlanner)
+
+
+def test_build_outline_planner_uses_llm_for_local_endpoint_without_key(monkeypatch, tmp_path):
+    monkeypatch.setenv("PPT_AGENT_PLANNER", "llm")
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://127.0.0.1:11434/v1")
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     planner = _build_outline_planner()
 

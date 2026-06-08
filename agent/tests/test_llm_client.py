@@ -116,7 +116,32 @@ def test_chat_client_parses_legacy_text_choice_from_compatible_provider():
     assert asyncio.run(run()) == "Legacy compatible completion."
 
 
-def test_chat_client_requires_api_key():
+def test_chat_client_allows_local_endpoint_without_api_key():
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["headers"] = dict(request.headers)
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": "Local model response."}}]},
+        )
+
+    config = OpenAICompatibleConfig(
+        base_url="http://127.0.0.1:11434/v1",
+        api_key="",
+        model="local-compatible-model",
+    )
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = OpenAICompatibleChatClient(config=config, http_client=http_client)
+            return await client.complete(messages=[{"role": "user", "content": "Draft"}])
+
+    assert asyncio.run(run()) == "Local model response."
+    assert "authorization" not in captured["headers"]
+
+
+def test_chat_client_requires_api_key_for_cloud_endpoint():
     config = OpenAICompatibleConfig(
         base_url="https://provider.example/v1",
         api_key="",

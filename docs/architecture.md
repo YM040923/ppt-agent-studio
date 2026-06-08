@@ -93,7 +93,7 @@ The response is a single `runtime.config` event. It includes `base_url`, `model`
 
 The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner. The Settings dialog also shows whether the endpoint is local or cloud-hosted, whether each core config value came from process environment, `.env.local`, or defaults, the project-local PPTX artifact directory, and env file status so users can find exported decks and confirm whether `.env.local` is being picked up.
 
-Runtime outline planning is selected through `PPT_AGENT_PLANNER`. The default is `fallback`, which keeps local development deterministic and offline. Set `PPT_AGENT_PLANNER=llm` and provide `OPENAI_API_KEY` to use the model-backed `LLMOutlinePlanner`; if the key is missing, the runtime keeps using the fallback planner instead of failing the desktop turn.
+Runtime outline planning is selected through `PPT_AGENT_PLANNER`. The default is `fallback`, which keeps local development deterministic and offline. Set `PPT_AGENT_PLANNER=llm` to use the model-backed `LLMOutlinePlanner`; cloud endpoints require `OPENAI_API_KEY`, while local endpoints can run without one when the local server accepts anonymous requests. If a cloud endpoint key is missing, the runtime keeps using the fallback planner instead of failing the desktop turn.
 
 ## Preview Pane
 

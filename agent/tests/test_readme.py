@@ -35,6 +35,12 @@ def test_readme_documents_local_endpoint_classification():
     assert "`.local`" in readme
 
 
+def test_readme_documents_local_llm_without_api_key():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "Local endpoints can run the LLM planner without an API key" in readme
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

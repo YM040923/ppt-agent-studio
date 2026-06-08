@@ -108,6 +108,24 @@ public sealed class RuntimeConfigSummaryTests
     }
 
     [TestMethod]
+    public void ToStatusTextShowsLocalEndpointDoesNotNeedApiKey()
+    {
+        var summary = new RuntimeConfigSummary(
+            BaseUrl: "http://127.0.0.1:11434/v1",
+            Model: "local-compatible-model",
+            HasApiKey: false,
+            PlannerRequested: "llm",
+            PlannerActive: "llm",
+            EndpointKind: "local");
+
+        var status = summary.ToStatusText();
+
+        Assert.AreEqual(
+            "Local Agent runtime ready. Model: local-compatible-model at http://127.0.0.1:11434/v1. API key optional for local endpoint. Planner: llm.",
+            status);
+    }
+
+    [TestMethod]
     public void ToSettingsTextShowsUnavailableConfigSourceForOlderRuntimePayloads()
     {
         using var document = JsonDocument.Parse(
@@ -167,5 +185,22 @@ public sealed class RuntimeConfigSummaryTests
             """.ReplaceLineEndings(),
             settingsText);
         Assert.IsFalse(settingsText.Contains("secret", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void ToSettingsTextShowsLocalEndpointDoesNotNeedApiKey()
+    {
+        var summary = new RuntimeConfigSummary(
+            BaseUrl: "http://127.0.0.1:11434/v1",
+            Model: "local-compatible-model",
+            HasApiKey: false,
+            PlannerRequested: "llm",
+            PlannerActive: "llm",
+            EndpointKind: "local");
+
+        var settingsText = summary.ToSettingsText();
+
+        StringAssert.Contains(settingsText, "Endpoint type: local");
+        StringAssert.Contains(settingsText, "API key: optional for local endpoint");
     }
 }

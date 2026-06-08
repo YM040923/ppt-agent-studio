@@ -32,6 +32,10 @@ class OpenAICompatibleConfig:
         return bool(self.api_key.strip())
 
     @property
+    def requires_api_key(self) -> bool:
+        return self.endpoint_kind != "local"
+
+    @property
     def endpoint_kind(self) -> str:
         parsed = urlparse(self.base_url)
         host = (parsed.hostname or "").strip().lower()

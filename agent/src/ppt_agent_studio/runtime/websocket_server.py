@@ -75,7 +75,8 @@ def _requested_planner_mode() -> str:
 
 
 def _active_planner_mode(config: OpenAICompatibleConfig) -> str:
-    return "llm" if _requested_planner_mode() == "llm" and config.has_api_key else "fallback"
+    can_use_llm = config.has_api_key or not config.requires_api_key
+    return "llm" if _requested_planner_mode() == "llm" and can_use_llm else "fallback"
 
 
 def _agent_error_message(error: Exception) -> str:

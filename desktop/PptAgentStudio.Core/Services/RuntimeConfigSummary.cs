@@ -71,7 +71,9 @@ public sealed record RuntimeConfigSummary(
 
     public string ToStatusText()
     {
-        var keyState = HasApiKey ? "API key configured." : "API key missing.";
+        var keyState = HasApiKey
+            ? "API key configured."
+            : IsLocalEndpoint ? "API key optional for local endpoint." : "API key missing.";
         var extraHeadersState = HasExtraHeaders ? " Extra headers configured." : "";
         var plannerRequested = string.IsNullOrWhiteSpace(PlannerRequested) ? "fallback" : PlannerRequested;
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
@@ -83,7 +85,9 @@ public sealed record RuntimeConfigSummary(
 
     public string ToSettingsText()
     {
-        var keyState = HasApiKey ? "configured" : "missing";
+        var keyState = HasApiKey
+            ? "configured"
+            : IsLocalEndpoint ? "optional for local endpoint" : "missing";
         var extraHeadersState = HasExtraHeaders ? "configured" : "not configured";
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
         var envFileState = EnvFileExists ? "found" : "missing";
@@ -108,6 +112,8 @@ public sealed record RuntimeConfigSummary(
             ]);
         return string.Join(Environment.NewLine, lines);
     }
+
+    private bool IsLocalEndpoint => string.Equals(EndpointKind, "local", StringComparison.OrdinalIgnoreCase);
 
     private static string ReadPlannerValue(bool hasPlanner, JsonElement planner, string propertyName)
     {
