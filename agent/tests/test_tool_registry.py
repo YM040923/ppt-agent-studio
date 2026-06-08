@@ -44,6 +44,13 @@ def test_tool_catalog_documents_deck_metadata_patch():
     assert '"style": "consulting"' in docs
 
 
+def test_tool_catalog_documents_slide_position_constraints():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`before_slide_id` and `after_slide_id` are mutually exclusive" in docs
+    assert "`deck.move_slide` requires exactly one of them" in docs
+
+
 def test_tool_registry_rejects_duplicate_tools():
     definition = ToolDefinition(
         name="demo.echo",

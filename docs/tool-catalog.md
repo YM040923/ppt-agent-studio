@@ -106,6 +106,8 @@ Optional input:
 }
 ```
 
+When positioning a new slide, `before_slide_id` and `after_slide_id` are mutually exclusive; omit both to append.
+
 Output:
 
 ```json
@@ -135,6 +137,8 @@ Optional input:
   "before_slide_id": "s1"
 }
 ```
+
+`before_slide_id` and `after_slide_id` are mutually exclusive; `deck.move_slide` requires exactly one of them.
 
 Output:
 
