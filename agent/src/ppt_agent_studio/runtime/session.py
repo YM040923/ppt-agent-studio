@@ -47,8 +47,9 @@ class AgentSession:
             async for event in self._submit_add_slide_follow_up(text):
                 yield event
             return
+        remove_target = self._slide_remove_target(text)
         if self.deck is not None and self._is_remove_slide_request(text):
-            async for event in self._submit_remove_slide_follow_up():
+            async for event in self._submit_remove_slide_follow_up(remove_target):
                 yield event
             return
         if self.deck is not None:
@@ -188,15 +189,15 @@ class AgentSession:
         async for event in self._render_preview_export_and_complete(plan, outline):
             yield event
 
-    async def _submit_remove_slide_follow_up(self) -> AsyncIterator[AgentEvent]:
+    async def _submit_remove_slide_follow_up(self, target: str) -> AsyncIterator[AgentEvent]:
         if self.deck is None or not self.deck.slides:
             return
 
         next_revision = self._deck_revision + 1
-        target_slide = self.deck.slides[-1]
+        target_slide = self.deck.slides[0] if target == "first" else self.deck.slides[-1]
         outline = {
             "deck_title": self.deck.title,
-            "slides": [{"title": slide.title} for slide in self.deck.slides[:-1]],
+            "slides": [{"title": slide.title} for slide in self.deck.slides if slide.slide_id != target_slide.slide_id],
         }
         plan = DeckPlan.from_outline(outline, plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{next_revision}-plan")
         plan.status = "running"
@@ -364,6 +365,10 @@ class AgentSession:
         if re.search(r"\bcreate\b.*\b(slide|page)\b", prompt, flags=re.IGNORECASE):
             return True
         return any(token in prompt for token in ["新增", "增加", "加一页", "加一张", "加一个"])
+
+    @staticmethod
+    def _slide_remove_target(prompt: str) -> str:
+        return "first" if re.search(r"\bfirst\b", prompt, flags=re.IGNORECASE) else "last"
 
     @staticmethod
     def _is_remove_slide_request(prompt: str) -> bool:
