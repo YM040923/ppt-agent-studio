@@ -29,6 +29,8 @@ def test_readme_documents_verify_script():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
     assert ".\\scripts\\verify.ps1" in readme
+    assert "offline demo smoke" in readme
+    assert "artifacts\\verify-demo" in readme
 
 
 def test_readme_documents_local_endpoint_classification():

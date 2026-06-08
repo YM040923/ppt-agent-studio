@@ -61,7 +61,7 @@ Run the main Windows verification script:
 .\scripts\verify.ps1
 ```
 
-It runs the Python tests, desktop tests, desktop app build, and an 8-second WinUI startup smoke. To run checks individually:
+It runs the Python tests, offline demo smoke under `artifacts\verify-demo`, desktop tests, desktop app build, and an 8-second WinUI startup smoke. To run checks individually:
 
 ```powershell
 python -m pytest agent\tests -q
