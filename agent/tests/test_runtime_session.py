@@ -317,7 +317,7 @@ def test_agent_session_renames_slide_on_follow_up_request(tmp_path):
     assert events[2].payload == {
         "tool_name": "deck.update_slide",
         "status": "completed",
-        "summary": "Updated follow-up slide.",
+        "summary": "Renamed first slide: Executive AI Roadmap.",
     }
     assert events[3].payload["deck"]["revision"] == 2
     assert events[3].payload["deck"]["slides"][0]["title"] == "Executive AI Roadmap"

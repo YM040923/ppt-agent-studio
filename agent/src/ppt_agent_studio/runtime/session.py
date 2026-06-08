@@ -183,7 +183,7 @@ class AgentSession:
         self.deck = self._deck_from_payload(deck_result.payload["deck"])
         self._deck_revision = self.deck.revision
         plan.update_step_status("draft_slides", "completed")
-        yield self._tool_completed_event("deck.update_slide", "Updated follow-up slide.")
+        yield self._tool_completed_event("deck.update_slide", f"Renamed {target} slide: {title}.")
         yield self._deck_event("deck.updated", {"deck": self.deck.to_dict()})
 
         async for event in self._render_preview_export_and_complete(plan, outline):

@@ -210,6 +210,7 @@ def test_handle_user_message_follow_up_updates_and_removes_cached_deck(monkeypat
 
     assert len(first_turn[5]["payload"]["deck"]["slides"]) == 3
     assert second_turn[2]["payload"]["tool_name"] == "deck.update_slide"
+    assert second_turn[2]["payload"]["summary"] == "Renamed first slide: Executive AI Roadmap."
     assert second_turn[3]["deck_revision"] == 2
     assert second_turn[3]["payload"]["deck"]["slides"][0]["title"] == "Executive AI Roadmap"
     assert second_turn[7]["payload"]["path"].endswith("deck_followup_edit-r2.pptx")
