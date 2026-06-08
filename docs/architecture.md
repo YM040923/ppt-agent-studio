@@ -101,7 +101,7 @@ The WinUI app hosts the live preview with the WebView2 control bundled through W
 
 ## DeckSpec
 
-`DeckSpec` is the source of truth for preview and export. The Agent modifies DeckSpec through tools; the preview renderer and PPTX exporter both consume the same state to avoid drift between what the user sees and what gets exported. Slide-level `speaker_notes` stay on DeckSpec slides, are exposed as hidden preview metadata, and are written into PowerPoint speaker notes during export. Deck-level `metadata.audience` and `metadata.style` are extracted from prompts when possible, included in hidden preview meta tags, and written into PowerPoint document properties during export.
+`DeckSpec` is the source of truth for preview and export. The Agent modifies DeckSpec through tools; the preview renderer and PPTX exporter both consume the same state to avoid drift between what the user sees and what gets exported. Slide-level `speaker_notes` stay on DeckSpec slides, are exposed as hidden preview metadata, and are written into PowerPoint speaker notes during export. Deck-level `metadata.audience` and `metadata.style` are extracted from prompts when possible, included in hidden preview meta tags, and written into PowerPoint document properties during export. The active theme name is also exposed in hidden preview metadata so standalone preview HTML keeps the same style context as `preview.ready`.
 
 ## Tool System
 

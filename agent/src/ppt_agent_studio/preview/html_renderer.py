@@ -96,6 +96,9 @@ def _theme_color(deck: DeckSpec, key: str, fallback: str) -> str:
 
 def _metadata_meta_tags(deck: DeckSpec) -> str:
     tags = []
+    theme_name = deck.theme.get("name")
+    if isinstance(theme_name, str) and theme_name.strip():
+        tags.append(f'<meta name="ppt-agent-theme" content="{escape(theme_name.strip())}" />\n')
     for key in ("audience", "style"):
         value = deck.metadata.get(key)
         if isinstance(value, str) and value.strip():
