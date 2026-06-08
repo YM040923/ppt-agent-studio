@@ -21,6 +21,13 @@ def test_architecture_documents_settings_env_folder_action():
     assert "Open Env Folder" in architecture
 
 
+def test_architecture_documents_settings_env_file_template_action():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "Create Env File" in architecture
+    assert "does not overwrite" in architecture
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

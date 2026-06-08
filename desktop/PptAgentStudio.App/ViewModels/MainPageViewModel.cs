@@ -119,6 +119,7 @@ public partial class MainPageViewModel : ObservableObject
             SessionStatus = $"{runtimeConfig.ToStatusText()} Tools: {runtimeTools.ToolCount}.";
             OnPropertyChanged(nameof(SettingsText));
             OpenEnvFileLocationCommand.NotifyCanExecuteChanged();
+            CreateEnvFileCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
@@ -154,6 +155,11 @@ public partial class MainPageViewModel : ObservableObject
     private bool CanOpenEnvFileLocation()
     {
         return !string.IsNullOrWhiteSpace(RuntimeConfig?.EnvFilePath);
+    }
+
+    private bool CanCreateEnvFile()
+    {
+        return !string.IsNullOrWhiteSpace(RuntimeConfig?.EnvFilePath) && !RuntimeConfig.EnvFileExists;
     }
 
     private bool CanGenerateDemo()
@@ -229,6 +235,25 @@ public partial class MainPageViewModel : ObservableObject
         SessionStatus = RuntimeConfig.EnvFileExists
             ? $"Opened runtime env file location: {RuntimeConfig.EnvFilePath}"
             : $"Opened runtime env folder for missing env file: {RuntimeConfig.EnvFilePath}";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCreateEnvFile))]
+    private void CreateEnvFile()
+    {
+        if (RuntimeConfig is null || string.IsNullOrWhiteSpace(RuntimeConfig.EnvFilePath))
+        {
+            SessionStatus = "Runtime env file path is unavailable.";
+            return;
+        }
+
+        var result = EnvFileTemplateWriter.CreateFromExample(RuntimeConfig.EnvFilePath);
+        RuntimeConfig = RuntimeConfig with { EnvFileExists = true };
+        OnPropertyChanged(nameof(SettingsText));
+        OpenEnvFileLocationCommand.NotifyCanExecuteChanged();
+        CreateEnvFileCommand.NotifyCanExecuteChanged();
+        SessionStatus = result.Created
+            ? $"Created runtime env file template: {result.EnvFilePath}"
+            : $"Runtime env file already exists: {result.EnvFilePath}";
     }
 
     private bool CanSend()

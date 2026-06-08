@@ -107,6 +107,8 @@ public sealed partial class MainPage : Page
             Content = ViewModel.SettingsText,
             PrimaryButtonText = "Open Env Folder",
             IsPrimaryButtonEnabled = ViewModel.OpenEnvFileLocationCommand.CanExecute(null),
+            SecondaryButtonText = "Create Env File",
+            IsSecondaryButtonEnabled = ViewModel.CreateEnvFileCommand.CanExecute(null),
             CloseButtonText = "Close"
         };
         dialog.PrimaryButtonClick += (_, _) =>
@@ -114,6 +116,13 @@ public sealed partial class MainPage : Page
             if (ViewModel.OpenEnvFileLocationCommand.CanExecute(null))
             {
                 ViewModel.OpenEnvFileLocationCommand.Execute(null);
+            }
+        };
+        dialog.SecondaryButtonClick += (_, _) =>
+        {
+            if (ViewModel.CreateEnvFileCommand.CanExecute(null))
+            {
+                ViewModel.CreateEnvFileCommand.Execute(null);
             }
         };
         await dialog.ShowAsync();

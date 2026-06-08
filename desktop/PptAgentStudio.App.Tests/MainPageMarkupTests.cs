@@ -56,6 +56,18 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void SettingsDialogOffersEnvFileTemplateAction()
+    {
+        var viewModelSource = File.ReadAllText(FindMainPageViewModel());
+        var pageSource = File.ReadAllText(FindMainPageCodeBehind());
+
+        StringAssert.Contains(pageSource, "SecondaryButtonText = \"Create Env File\"");
+        StringAssert.Contains(pageSource, "ViewModel.CreateEnvFileCommand");
+        StringAssert.Contains(viewModelSource, "CreateEnvFileCommand");
+        StringAssert.Contains(viewModelSource, "EnvFileTemplateWriter.CreateFromExample");
+    }
+
+    [TestMethod]
     public void ViewModelNotifiesSettingsTextAfterRuntimeProbe()
     {
         var source = File.ReadAllText(FindMainPageViewModel());

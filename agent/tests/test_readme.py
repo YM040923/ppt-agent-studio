@@ -49,6 +49,13 @@ def test_readme_documents_settings_env_folder_action():
     assert "Open Env Folder" in readme
 
 
+def test_readme_documents_settings_env_file_template_action():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "Create Env File" in readme
+    assert "does not overwrite" in readme
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
