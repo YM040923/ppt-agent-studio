@@ -393,7 +393,31 @@ class AgentSession:
         match = re.search(r"\b(?:slide|page)\s+(?P<number>\d+)\b", prompt, flags=re.IGNORECASE)
         if match is not None:
             return max(1, int(match.group("number")))
+        ordinal = AgentSession._ordinal_slide_target(prompt)
+        if ordinal is not None:
+            return ordinal
         return "first" if re.search(r"\bfirst\b", prompt, flags=re.IGNORECASE) else "last"
+
+    @staticmethod
+    def _ordinal_slide_target(prompt: str) -> int | None:
+        match = re.search(
+            r"\b(?P<ordinal>second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page)\b",
+            prompt,
+            flags=re.IGNORECASE,
+        )
+        if match is None:
+            return None
+        return {
+            "second": 2,
+            "third": 3,
+            "fourth": 4,
+            "fifth": 5,
+            "sixth": 6,
+            "seventh": 7,
+            "eighth": 8,
+            "ninth": 9,
+            "tenth": 10,
+        }[match.group("ordinal").casefold()]
 
     @staticmethod
     def _is_remove_slide_request(prompt: str) -> bool:

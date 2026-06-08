@@ -285,6 +285,28 @@ def test_agent_session_removes_numbered_slide_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
+def test_agent_session_removes_ordinal_slide_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_remove_ordinal", deck_id="deck_remove_ordinal", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Remove the second slide")]
+
+    first_events = asyncio.run(first_turn())
+    original_second_title = first_events[5].payload["deck"]["slides"][1]["title"]
+    events = asyncio.run(second_turn())
+
+    assert events[2].payload == {
+        "tool_name": "deck.remove_slide",
+        "status": "completed",
+        "summary": "Removed slide 2.",
+    }
+    assert len(events[3].payload["deck"]["slides"]) == 4
+    assert all(slide["title"] != original_second_title for slide in events[3].payload["deck"]["slides"])
+
+
 def test_agent_session_rejects_out_of_range_slide_remove_follow_up(tmp_path):
     session = AgentSession(session_id="session_remove_range", deck_id="deck_remove_range", artifact_dir=tmp_path)
 
