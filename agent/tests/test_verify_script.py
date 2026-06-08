@@ -8,7 +8,12 @@ def test_verify_script_runs_core_local_checks():
 
     script = script_path.read_text(encoding="utf-8")
 
+    assert "$env:PYTHONPATH" in script
+    assert "agent\\src" in script
     assert "python -m pytest agent\\tests -q" in script
+    assert "python -m ppt_agent_studio.runtime.demo" in script
+    assert "--artifact-dir artifacts\\verify-demo" in script
+    assert '--follow-up "Add a risk mitigation slide"' in script
     assert "dotnet test desktop\\PptAgentStudio.App.Tests\\PptAgentStudio.App.Tests.csproj" in script
     assert "dotnet build desktop\\PptAgentStudio.App\\PptAgentStudio.App.csproj" in script
     assert "dotnet run --project" in script

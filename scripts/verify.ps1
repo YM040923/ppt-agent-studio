@@ -5,6 +5,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$agentSource = Join-Path $repoRoot "agent\src"
+$previousPythonPath = $env:PYTHONPATH
 
 function Invoke-NativeStep {
     param(
@@ -24,7 +26,17 @@ function Invoke-NativeStep {
 
 Push-Location $repoRoot
 try {
+    if ([string]::IsNullOrWhiteSpace($previousPythonPath)) {
+        $env:PYTHONPATH = $agentSource
+    }
+    else {
+        $env:PYTHONPATH = "$agentSource;$previousPythonPath"
+    }
+
     Invoke-NativeStep "Python tests" { python -m pytest agent\tests -q }
+    Invoke-NativeStep "Offline demo smoke" {
+        python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\verify-demo --follow-up "Add a risk mitigation slide"
+    }
     Invoke-NativeStep "Desktop tests" { dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj }
     Invoke-NativeStep "Desktop build" { dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj }
 
@@ -57,5 +69,6 @@ try {
     }
 }
 finally {
+    $env:PYTHONPATH = $previousPythonPath
     Pop-Location
 }
