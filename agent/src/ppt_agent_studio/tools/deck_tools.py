@@ -81,9 +81,17 @@ def add_slide(arguments: dict[str, Any]) -> ToolResult:
         raise ValueError("slide must be an object")
     new_slide = _slide_from_dict(raw_slide, len(deck.slides) + 1)
     after_slide_id = str(arguments.get("after_slide_id") or "").strip()
+    before_slide_id = str(arguments.get("before_slide_id") or "").strip()
 
     slides = list(deck.slides)
-    if after_slide_id:
+    if before_slide_id:
+        for index, slide in enumerate(slides):
+            if slide.slide_id == before_slide_id:
+                slides.insert(index, new_slide)
+                break
+        else:
+            raise ValueError(f"slide not found: {before_slide_id}")
+    elif after_slide_id:
         for index, slide in enumerate(slides):
             if slide.slide_id == after_slide_id:
                 slides.insert(index + 1, new_slide)

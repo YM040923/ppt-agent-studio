@@ -41,6 +41,7 @@ def core_tool_definitions() -> list[ToolDefinition]:
                     "deck": {"type": "object"},
                     "slide": {"type": "object"},
                     "after_slide_id": {"type": "string"},
+                    "before_slide_id": {"type": "string"},
                 },
             },
         ),

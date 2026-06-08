@@ -198,6 +198,50 @@ def test_default_registry_updates_adds_and_removes_slides():
     assert removed["metadata"] == {"audience": "board", "style": "consulting"}
 
 
+def test_default_registry_adds_slide_before_target():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_before",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Executive Context",
+                "layout": "title",
+                "blocks": [{"type": "subtitle", "text": "Board briefing"}],
+            },
+            {
+                "slide_id": "s2",
+                "title": "Priorities",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Focus"}],
+            },
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s3",
+                    "title": "Risks",
+                    "layout": "content",
+                    "blocks": [{"type": "bullet", "text": "Budget exposure"}],
+                },
+                "before_slide_id": "s2",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s2"]
+
+
 def test_default_registry_runs_research_and_theme_tools():
     registry = build_default_registry()
     deck = {

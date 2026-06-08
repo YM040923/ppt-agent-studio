@@ -74,7 +74,8 @@ Optional input:
 
 ```json
 {
-  "after_slide_id": "s1"
+  "after_slide_id": "s1",
+  "before_slide_id": "s2"
 }
 ```
 
