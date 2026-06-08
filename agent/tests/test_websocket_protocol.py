@@ -214,6 +214,7 @@ def test_handle_user_message_follow_up_updates_and_removes_cached_deck(monkeypat
     assert second_turn[7]["payload"]["path"].endswith("deck_followup_edit-r2.pptx")
 
     assert third_turn[2]["payload"]["tool_name"] == "deck.remove_slide"
+    assert third_turn[2]["payload"]["summary"] == "Removed last slide."
     assert third_turn[3]["deck_revision"] == 3
     assert len(third_turn[3]["payload"]["deck"]["slides"]) == 2
     assert third_turn[5]["payload"]["slide_count"] == 2

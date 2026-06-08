@@ -274,7 +274,7 @@ def test_agent_session_removes_first_slide_on_follow_up_request(tmp_path):
     assert events[2].payload == {
         "tool_name": "deck.remove_slide",
         "status": "completed",
-        "summary": "Removed follow-up slide.",
+        "summary": "Removed first slide.",
     }
     assert events[3].payload["deck"]["revision"] == 2
     assert len(events[3].payload["deck"]["slides"]) == 4
