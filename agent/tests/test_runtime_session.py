@@ -220,7 +220,7 @@ def test_agent_session_creates_slide_on_follow_up_request(tmp_path):
     assert events[2].payload == {
         "tool_name": "deck.add_slide",
         "status": "completed",
-        "summary": "Added follow-up slide.",
+        "summary": "Added slide: Risk Mitigation.",
     }
     assert events[3].deck_revision == 2
     assert events[3].payload["deck"]["revision"] == 2

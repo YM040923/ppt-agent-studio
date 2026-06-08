@@ -180,6 +180,7 @@ def test_handle_user_message_follow_up_adds_slide_to_cached_deck(monkeypatch, tm
         "plan.updated",
     ]
     assert second_turn[2]["payload"]["tool_name"] == "deck.add_slide"
+    assert second_turn[2]["payload"]["summary"] == "Added slide: Risk Mitigation."
     assert second_turn[3]["deck_revision"] == 2
     assert second_turn[3]["payload"]["deck"]["revision"] == 2
     assert len(second_turn[3]["payload"]["deck"]["slides"]) == 3
