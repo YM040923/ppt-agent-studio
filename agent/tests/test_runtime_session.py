@@ -368,6 +368,31 @@ def test_agent_session_renames_numbered_slide_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
+def test_agent_session_renames_ordinal_slide_on_follow_up_request(tmp_path):
+    session = AgentSession(session_id="session_update_ordinal", deck_id="deck_update_ordinal", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [
+            event
+            async for event in session.submit_user_message(
+                "Rename the second slide to Executive AI Roadmap"
+            )
+        ]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert events[2].payload == {
+        "tool_name": "deck.update_slide",
+        "status": "completed",
+        "summary": "Renamed slide 2: Executive AI Roadmap.",
+    }
+    assert events[3].payload["deck"]["slides"][1]["title"] == "Executive AI Roadmap"
+
+
 def test_agent_session_rejects_out_of_range_slide_rename_follow_up(tmp_path):
     session = AgentSession(session_id="session_update_range", deck_id="deck_update_range", artifact_dir=tmp_path)
 

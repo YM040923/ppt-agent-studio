@@ -407,6 +407,10 @@ class AgentSession:
         )
         if match is None:
             return None
+        return AgentSession._ordinal_value(match.group("ordinal"))
+
+    @staticmethod
+    def _ordinal_value(ordinal: str) -> int:
         return {
             "second": 2,
             "third": 3,
@@ -417,7 +421,7 @@ class AgentSession:
             "eighth": 8,
             "ninth": 9,
             "tenth": 10,
-        }[match.group("ordinal").casefold()]
+        }[ordinal.casefold()]
 
     @staticmethod
     def _is_remove_slide_request(prompt: str) -> bool:
@@ -470,7 +474,7 @@ class AgentSession:
     @staticmethod
     def _slide_title_update_request(prompt: str) -> tuple[int | str, str] | None:
         match = re.search(
-            r"\b(?:update|rename)\s+(?:the\s+)?(?:(?P<target>first|last)\s+slide|(?:slide|page)\s+(?P<number>\d+))\s+(?:title\s+)?(?:to|as)\s+(?P<title>.+)$",
+            r"\b(?:update|rename)\s+(?:the\s+)?(?:(?P<target>first|last)\s+slide|(?P<ordinal>second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page)|(?:slide|page)\s+(?P<number>\d+))\s+(?:title\s+)?(?:to|as)\s+(?P<title>.+)$",
             prompt,
             flags=re.IGNORECASE,
         )
@@ -483,6 +487,9 @@ class AgentSession:
         number = match.group("number")
         if number is not None:
             return max(1, int(number)), title[:80]
+        ordinal = match.group("ordinal")
+        if ordinal is not None:
+            return AgentSession._ordinal_value(ordinal), title[:80]
         return match.group("target").casefold(), title[:80]
 
     @staticmethod
