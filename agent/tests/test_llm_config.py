@@ -16,6 +16,7 @@ def test_openai_compatible_config_reads_third_party_endpoint(monkeypatch):
     assert config.has_api_key is True
     assert config.extra_headers == {"X-Provider": "tenant-001", "X-Trace": "deck"}
     assert config.safe_summary()["endpoint_kind"] == "cloud"
+    assert config.safe_summary()["requires_api_key"] is True
 
 
 @pytest.mark.parametrize(
@@ -32,6 +33,7 @@ def test_openai_compatible_config_marks_loopback_endpoints_as_local(monkeypatch,
     config = OpenAICompatibleConfig.from_env()
 
     assert config.safe_summary()["endpoint_kind"] == "local"
+    assert config.safe_summary()["requires_api_key"] is False
 
 
 @pytest.mark.parametrize(

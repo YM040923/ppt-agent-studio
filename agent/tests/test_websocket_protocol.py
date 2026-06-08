@@ -381,6 +381,7 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch, tmp_p
             "has_api_key": True,
             "has_extra_headers": False,
             "endpoint_kind": "cloud",
+            "requires_api_key": True,
             "source": {
                 "base_url": "environment",
                 "api_key": "environment",
@@ -500,6 +501,7 @@ def test_handle_runtime_config_uses_llm_for_local_endpoint_without_key(monkeypat
 
     assert payload["payload"]["llm"]["endpoint_kind"] == "local"
     assert payload["payload"]["llm"]["has_api_key"] is False
+    assert payload["payload"]["llm"]["requires_api_key"] is False
     assert payload["payload"]["planner"] == {
         "requested": "llm",
         "active": "llm",

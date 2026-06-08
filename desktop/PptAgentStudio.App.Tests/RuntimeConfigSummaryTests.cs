@@ -18,6 +18,7 @@ public sealed class RuntimeConfigSummaryTests
                 "has_api_key": true,
                 "has_extra_headers": true,
                 "endpoint_kind": "cloud",
+                "requires_api_key": true,
                 "source": {
                   "base_url": "environment",
                   "api_key": "env_file",
@@ -48,6 +49,7 @@ public sealed class RuntimeConfigSummaryTests
         Assert.AreEqual("https://provider.example/v1", summary.BaseUrl);
         Assert.AreEqual("gpt-compatible-model", summary.Model);
         Assert.IsTrue(summary.HasApiKey);
+        Assert.IsTrue(summary.RequiresApiKey);
         Assert.IsTrue(summary.HasExtraHeaders);
         Assert.AreEqual("cloud", summary.EndpointKind);
         Assert.AreEqual("base_url: environment, api_key: env_file, model: environment, extra_headers: environment", summary.ConfigSource);
@@ -116,6 +118,7 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: false,
             PlannerRequested: "llm",
             PlannerActive: "llm",
+            RequiresApiKey: false,
             EndpointKind: "local");
 
         var status = summary.ToStatusText();
@@ -123,6 +126,35 @@ public sealed class RuntimeConfigSummaryTests
         Assert.AreEqual(
             "Local Agent runtime ready. Model: local-compatible-model at http://127.0.0.1:11434/v1. API key optional for local endpoint. Planner: llm.",
             status);
+    }
+
+    [TestMethod]
+    public void FromPayloadReadsLocalEndpointWithoutRequiredApiKey()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "llm": {
+                "base_url": "http://127.0.0.1:11434/v1",
+                "model": "local-compatible-model",
+                "has_api_key": false,
+                "has_extra_headers": false,
+                "endpoint_kind": "local",
+                "requires_api_key": false
+              },
+              "planner": {
+                "requested": "llm",
+                "active": "llm"
+              }
+            }
+            """);
+
+        var summary = RuntimeConfigSummary.FromPayload(document.RootElement);
+
+        Assert.IsFalse(summary.RequiresApiKey);
+        Assert.AreEqual(
+            "Local Agent runtime ready. Model: local-compatible-model at http://127.0.0.1:11434/v1. API key optional for local endpoint. Planner: llm.",
+            summary.ToStatusText());
     }
 
     [TestMethod]
@@ -196,6 +228,7 @@ public sealed class RuntimeConfigSummaryTests
             HasApiKey: false,
             PlannerRequested: "llm",
             PlannerActive: "llm",
+            RequiresApiKey: false,
             EndpointKind: "local");
 
         var settingsText = summary.ToSettingsText();

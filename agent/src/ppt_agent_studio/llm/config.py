@@ -80,6 +80,7 @@ class OpenAICompatibleConfig:
             "has_api_key": self.has_api_key,
             "has_extra_headers": bool(self.extra_headers),
             "endpoint_kind": self.endpoint_kind,
+            "requires_api_key": self.requires_api_key,
             "source": {
                 "base_url": self.source.get("base_url", "default"),
                 "api_key": self.source.get("api_key", "default"),

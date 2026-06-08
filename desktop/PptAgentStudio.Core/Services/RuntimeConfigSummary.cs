@@ -14,6 +14,7 @@ public sealed record RuntimeConfigSummary(
     bool EnvFileExists = false,
     string RuntimeName = "ppt-agent-studio",
     string RuntimeVersion = "",
+    bool RequiresApiKey = true,
     string EndpointKind = "cloud",
     string ConfigSource = "")
 {
@@ -53,6 +54,8 @@ public sealed record RuntimeConfigSummary(
             }
         }
 
+        var endpointKind = ReadEndpointKind(llm);
+
         return new RuntimeConfigSummary(
             BaseUrl: llm.GetProperty("base_url").GetString() ?? "",
             Model: llm.GetProperty("model").GetString() ?? "",
@@ -65,7 +68,8 @@ public sealed record RuntimeConfigSummary(
             EnvFileExists: envFileExists,
             RuntimeName: runtimeName,
             RuntimeVersion: runtimeVersion,
-            EndpointKind: ReadEndpointKind(llm),
+            RequiresApiKey: ReadRequiresApiKey(llm, endpointKind),
+            EndpointKind: endpointKind,
             ConfigSource: ReadConfigSource(llm));
     }
 
@@ -73,7 +77,7 @@ public sealed record RuntimeConfigSummary(
     {
         var keyState = HasApiKey
             ? "API key configured."
-            : IsLocalEndpoint ? "API key optional for local endpoint." : "API key missing.";
+            : RequiresApiKey ? "API key missing." : "API key optional for local endpoint.";
         var extraHeadersState = HasExtraHeaders ? " Extra headers configured." : "";
         var plannerRequested = string.IsNullOrWhiteSpace(PlannerRequested) ? "fallback" : PlannerRequested;
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
@@ -87,7 +91,7 @@ public sealed record RuntimeConfigSummary(
     {
         var keyState = HasApiKey
             ? "configured"
-            : IsLocalEndpoint ? "optional for local endpoint" : "missing";
+            : RequiresApiKey ? "missing" : "optional for local endpoint";
         var extraHeadersState = HasExtraHeaders ? "configured" : "not configured";
         var plannerActive = string.IsNullOrWhiteSpace(PlannerActive) ? "fallback" : PlannerActive;
         var envFileState = EnvFileExists ? "found" : "missing";
@@ -113,8 +117,6 @@ public sealed record RuntimeConfigSummary(
         return string.Join(Environment.NewLine, lines);
     }
 
-    private bool IsLocalEndpoint => string.Equals(EndpointKind, "local", StringComparison.OrdinalIgnoreCase);
-
     private static string ReadPlannerValue(bool hasPlanner, JsonElement planner, string propertyName)
     {
         if (!hasPlanner || !planner.TryGetProperty(propertyName, out var value))
@@ -133,6 +135,16 @@ public sealed record RuntimeConfigSummary(
         }
 
         return string.IsNullOrWhiteSpace(value.GetString()) ? "cloud" : value.GetString()!;
+    }
+
+    private static bool ReadRequiresApiKey(JsonElement llm, string endpointKind)
+    {
+        if (llm.TryGetProperty("requires_api_key", out var value) && value.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            return value.GetBoolean();
+        }
+
+        return !string.Equals(endpointKind, "local", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ReadConfigSource(JsonElement llm)
