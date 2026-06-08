@@ -23,6 +23,15 @@ def test_system_prompt_includes_preview_pptx_and_iteration_rules():
     assert "revision" in prompt.lower()
 
 
+def test_system_prompt_names_deck_title_and_slide_move_edits():
+    prompt = PPT_AGENT_SYSTEM_PROMPT
+
+    assert "deck title edits" in prompt
+    assert "slide moves" in prompt
+    assert "deck.update_deck" in prompt
+    assert "deck.move_slide" in prompt
+
+
 def test_system_prompt_requires_theme_tokens_for_deckspec():
     prompt = PPT_AGENT_SYSTEM_PROMPT
 

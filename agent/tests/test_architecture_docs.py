@@ -34,6 +34,13 @@ def test_architecture_documents_settings_env_file_template_action():
     assert "does not overwrite" in architecture
 
 
+def test_architecture_documents_expanded_deck_tool_registry():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "deck title updates" in architecture
+    assert "slide update/add/move/remove tools" in architecture
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
