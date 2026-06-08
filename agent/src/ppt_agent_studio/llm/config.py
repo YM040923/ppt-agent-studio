@@ -3,9 +3,20 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
-from ipaddress import ip_address
+from ipaddress import ip_address, ip_network
 from pathlib import Path
 from urllib.parse import urlparse
+
+
+LOCAL_MODEL_NETWORKS = tuple(
+    ip_network(cidr)
+    for cidr in (
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "fc00::/7",
+    )
+)
 
 
 @dataclass(frozen=True, repr=False)
@@ -24,13 +35,14 @@ class OpenAICompatibleConfig:
     def endpoint_kind(self) -> str:
         parsed = urlparse(self.base_url)
         host = (parsed.hostname or "").strip().lower()
-        if host == "localhost":
+        if host == "localhost" or host.endswith(".local"):
             return "local"
         try:
             address = ip_address(host)
         except ValueError:
             return "cloud"
-        return "local" if address.is_loopback else "cloud"
+        is_local_network = any(address in network for network in LOCAL_MODEL_NETWORKS)
+        return "local" if address.is_loopback or address.is_link_local or is_local_network else "cloud"
 
     @classmethod
     def from_env(cls, env_file: str | os.PathLike[str] | None = None) -> "OpenAICompatibleConfig":

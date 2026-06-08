@@ -28,6 +28,13 @@ def test_readme_documents_verify_script():
     assert ".\\scripts\\verify.ps1" in readme
 
 
+def test_readme_documents_local_endpoint_classification():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "private-network IPs" in readme
+    assert "`.local`" in readme
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

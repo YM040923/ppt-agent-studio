@@ -34,6 +34,24 @@ def test_openai_compatible_config_marks_loopback_endpoints_as_local(monkeypatch,
     assert config.safe_summary()["endpoint_kind"] == "local"
 
 
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://192.168.1.25:11434/v1",
+        "http://10.0.0.12:1234/v1",
+        "http://169.254.10.20:8000/v1",
+        "http://[fd00::1]:8000/v1",
+        "http://modelbox.local:8000/v1",
+    ],
+)
+def test_openai_compatible_config_marks_local_network_endpoints_as_local(monkeypatch, base_url):
+    monkeypatch.setenv("OPENAI_BASE_URL", base_url)
+
+    config = OpenAICompatibleConfig.from_env()
+
+    assert config.safe_summary()["endpoint_kind"] == "local"
+
+
 def test_openai_compatible_config_reads_env_file_when_env_is_missing(monkeypatch, tmp_path):
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)

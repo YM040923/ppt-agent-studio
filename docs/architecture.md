@@ -89,7 +89,7 @@ The desktop app or a test client can ask for a redacted runtime configuration su
 { "type": "runtime.config", "session_id": "desktop-session" }
 ```
 
-The response is a single `runtime.config` event. It includes `base_url`, `model`, `endpoint_kind`, a per-field `source` summary, `has_api_key`, `has_extra_headers`, planner `requested`/`active` modes, the PPTX artifact directory, and the env file `path`/`exists` status, but never returns API key or header values.
+The response is a single `runtime.config` event. It includes `base_url`, `model`, `endpoint_kind`, a per-field `source` summary, `has_api_key`, `has_extra_headers`, planner `requested`/`active` modes, the PPTX artifact directory, and the env file `path`/`exists` status, but never returns API key or header values. Loopback URLs, private-network IPs, link-local IPs, and `.local` hostnames are classified as local endpoints; public hostnames remain cloud-hosted.
 
 The WinUI startup flow calls this probe after the Python sidecar is ready and shows a concise status line with the configured model endpoint, key presence, and active planner. The Settings dialog also shows whether the endpoint is local or cloud-hosted, whether each core config value came from process environment, `.env.local`, or defaults, the project-local PPTX artifact directory, and env file status so users can find exported decks and confirm whether `.env.local` is being picked up.
 

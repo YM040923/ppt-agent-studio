@@ -112,6 +112,7 @@ The runtime exposes a safe configuration probe over WebSocket:
 ```
 
 It reports the configured endpoint, whether that endpoint looks local or cloud-hosted, where core settings came from, model, active planner mode, PPTX artifact directory, env file path/existence, whether an API key is present, and whether extra provider headers are configured without returning secret values.
+Loopback URLs, private-network IPs, link-local IPs, and `.local` hostnames are shown as local endpoints; public hostnames remain cloud-hosted.
 
 The Python runtime includes an injectable OpenAI-compatible chat client and an LLM outline planner. The planner accepts fenced JSON or prose-wrapped JSON from compatible providers, fills in a safe DeckSpec theme when the model omits one, backfills deterministic slides when the model returns fewer slides than the user explicitly requested, falls back to deterministic slides if the model returns no usable slides, and caps oversized model outlines at 30 slides for MVP responsiveness. The default Agent turn still uses the deterministic fallback planner unless `PPT_AGENT_PLANNER=llm` and `OPENAI_API_KEY` are both configured, so the MVP remains testable without a network call or API key.
 
