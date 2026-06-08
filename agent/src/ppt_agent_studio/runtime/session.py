@@ -139,6 +139,14 @@ class AgentSession:
         title = self._follow_up_slide_title(text)
         before_target = self._slide_insert_before_target(text)
         after_target = self._slide_insert_after_target(text)
+        if before_target is None and after_target is None:
+            edge_target = self._slide_edge_insert_target(text)
+            if edge_target is not None:
+                position, target = edge_target
+                if position == "before":
+                    before_target = target
+                else:
+                    after_target = target
         before_slide_id = ""
         after_slide_id = ""
         outline_slides = [{"title": slide.title} for slide in self.deck.slides]
@@ -899,6 +907,12 @@ class AgentSession:
     def _follow_up_slide_title(prompt: str) -> str:
         prompt = re.sub(
             r"\b(?:after|before)\s+(?:the\s+)?(?:(?:first|last)\s+(?:slide|page)|(?:second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+(?:slide|page)|(?:slide|page)\s+\d+)\b",
+            " ",
+            prompt,
+            flags=re.IGNORECASE,
+        )
+        prompt = re.sub(
+            r"\b(?:to|at)\s+(?:the\s+)?(?:beginning|start|front|end|back)\b",
             " ",
             prompt,
             flags=re.IGNORECASE,

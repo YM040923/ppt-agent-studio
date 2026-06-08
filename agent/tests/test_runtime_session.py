@@ -352,6 +352,53 @@ def test_agent_session_creates_slide_before_numbered_slide_follow_up(tmp_path):
     assert events[7].payload["slide_count"] == 6
 
 
+def test_agent_session_creates_slide_at_beginning_follow_up(tmp_path):
+    session = AgentSession(session_id="session_followup_beginning", deck_id="deck_followup_beginning", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Create an executive summary slide at the beginning")]
+
+    first_events = asyncio.run(first_turn())
+    original_first_title = first_events[5].payload["deck"]["slides"][0]["title"]
+    events = asyncio.run(second_turn())
+
+    assert events[2].payload == {
+        "tool_name": "deck.add_slide",
+        "status": "completed",
+        "summary": "Added slide: Executive Summary.",
+    }
+    slides = events[3].payload["deck"]["slides"]
+    assert slides[0]["title"] == "Executive Summary"
+    assert slides[1]["title"] == original_first_title
+    assert events[5].payload["slide_count"] == 6
+    assert events[7].payload["slide_count"] == 6
+
+
+def test_agent_session_creates_slide_to_end_follow_up(tmp_path):
+    session = AgentSession(session_id="session_followup_end", deck_id="deck_followup_end", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [event async for event in session.submit_user_message("Create a closing appendix slide to the end")]
+
+    asyncio.run(first_turn())
+    events = asyncio.run(second_turn())
+
+    assert events[2].payload == {
+        "tool_name": "deck.add_slide",
+        "status": "completed",
+        "summary": "Added slide: Closing Appendix.",
+    }
+    assert events[3].payload["deck"]["slides"][-1]["title"] == "Closing Appendix"
+    assert events[5].payload["slide_count"] == 6
+    assert events[7].payload["slide_count"] == 6
+
+
 def test_agent_session_duplicates_numbered_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_duplicate", deck_id="deck_duplicate", artifact_dir=tmp_path)
 
