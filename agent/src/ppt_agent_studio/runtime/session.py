@@ -139,6 +139,11 @@ class AgentSession:
         title = self._follow_up_slide_title(text)
         before_target = self._slide_insert_before_target(text)
         after_target = self._slide_insert_after_target(text)
+        if before_target is not None and after_target is not None:
+            yield self._failed_follow_up_event(
+                "Add slide placement cannot include both before and after targets."
+            )
+            return
         if before_target is None and after_target is None:
             edge_target = self._slide_edge_insert_target(text)
             if edge_target is not None:

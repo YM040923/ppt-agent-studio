@@ -32,6 +32,7 @@ def test_architecture_documents_failed_follow_up_plan_events():
     architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
 
     assert "invalid numbered follow-up targets emit a failed `plan.updated`" in architecture
+    assert "ambiguous add/create slide placement emits a failed `plan.updated`" in architecture
     assert "agent turn failures emit a failed `plan.updated`" in architecture
     assert "`failure_message`" in architecture
 

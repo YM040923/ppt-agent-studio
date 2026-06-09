@@ -376,6 +376,32 @@ def test_agent_session_creates_slide_before_numbered_slide_follow_up(tmp_path):
     assert events[7].payload["slide_count"] == 6
 
 
+def test_agent_session_rejects_ambiguous_add_slide_follow_up(tmp_path):
+    session = AgentSession(session_id="session_followup_add_ambiguous", deck_id="deck_followup_add_ambiguous", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def second_turn():
+        return [
+            event
+            async for event in session.submit_user_message(
+                "Create a budget risks slide before slide 2 after slide 4"
+            )
+        ]
+
+    first_events = asyncio.run(first_turn())
+    original_slides = first_events[5].payload["deck"]["slides"]
+    events = asyncio.run(second_turn())
+
+    assert [event.type for event in events] == ["user.message", "plan.updated"]
+    assert events[1].payload["failure_message"] == "Add slide placement cannot include both before and after targets."
+    assert events[1].payload["plan"]["status"] == "failed"
+    assert session.deck is not None
+    assert [slide.title for slide in session.deck.slides] == [slide["title"] for slide in original_slides]
+    assert session.deck.revision == 1
+
+
 def test_agent_session_creates_slide_at_beginning_follow_up(tmp_path):
     session = AgentSession(session_id="session_followup_beginning", deck_id="deck_followup_beginning", artifact_dir=tmp_path)
 
