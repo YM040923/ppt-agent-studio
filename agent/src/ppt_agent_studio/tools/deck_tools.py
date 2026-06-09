@@ -89,7 +89,7 @@ def update_slide(arguments: dict[str, Any]) -> ToolResult:
         slides.append(
             SlideSpec(
                 slide_id=slide.slide_id,
-                title=str(patch.get("title") or slide.title),
+                title=_title_patch_text(patch.get("title")) or slide.title,
                 layout=str(patch.get("layout") or slide.layout),
                 blocks=_slide_patch_blocks(patch, slide),
                 speaker_notes=_slide_patch_speaker_notes(patch, slide),

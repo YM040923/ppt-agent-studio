@@ -81,6 +81,12 @@ def test_tool_catalog_documents_update_slide_identity_is_stable():
     assert "`patch.slide_id` is ignored so stable slide identity is preserved" in docs
 
 
+def test_tool_catalog_documents_blank_slide_title_patches_are_ignored():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `patch.title` values are ignored for `deck.update_slide`" in docs
+
+
 def test_tool_catalog_documents_apply_theme_keeps_slide_identity_unique():
     docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
 
@@ -475,6 +481,39 @@ def test_default_registry_update_slide_preserves_slide_identity_from_patch():
 
     assert [slide["slide_id"] for slide in slides] == ["s1", "s2"]
     assert slides[1]["title"] == "Risk Controls"
+
+
+def test_default_registry_update_slide_ignores_blank_title_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_update_blank_slide_title",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Risks",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Old risk"}],
+            },
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s1",
+                "patch": {"title": "   ", "blocks": [{"type": "bullet", "text": "New risk"}]},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][0]
+
+    assert slide["title"] == "Risks"
+    assert slide["blocks"] == [{"type": "bullet", "text": "New risk"}]
 
 
 def test_default_registry_add_slide_replaces_duplicate_slide_id():
