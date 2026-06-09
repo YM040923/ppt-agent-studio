@@ -9,7 +9,7 @@ from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Inches, Pt
 
-from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec, deck_from_outline
+from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec, deck_from_outline, unique_slide_id
 from ppt_agent_studio.preview.html_renderer import render_preview_document
 from ppt_agent_studio.tools.base import ToolRegistry, ToolResult
 from ppt_agent_studio.tools.catalog import core_tool_definitions
@@ -325,17 +325,22 @@ def apply_theme(arguments: dict[str, Any]) -> ToolResult:
 
 def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
     raw_slides = raw_deck.get("slides") if isinstance(raw_deck.get("slides"), list) else []
-    slides = [
+    slides: list[SlideSpec] = []
+    used_slide_ids: set[str] = set()
+    for index, raw_slide in enumerate(raw_slides, start=1):
+        if not isinstance(raw_slide, dict):
+            continue
+        slide_id = unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids)
+        used_slide_ids.add(slide_id)
+        slides.append(
             SlideSpec(
-                slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
+                slide_id=slide_id,
                 title=str(raw_slide.get("title") or f"Slide {index}"),
                 layout=str(raw_slide.get("layout") or "content"),
                 blocks=_slide_blocks_from_dict(raw_slide),
                 speaker_notes=_slide_speaker_notes(raw_slide),
             )
-        for index, raw_slide in enumerate(raw_slides, start=1)
-        if isinstance(raw_slide, dict)
-    ]
+        )
     return DeckSpec(
         deck_id=str(raw_deck.get("deck_id") or "deck"),
         title=str(raw_deck.get("title") or "Untitled Deck"),

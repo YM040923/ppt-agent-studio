@@ -63,7 +63,7 @@ The server streams one JSON event per WebSocket message. The desktop client clos
 
 Add and duplicate follow-ups allocate non-reused slide ids so stable `data-slide-id` values remain unique after slides have been removed.
 
-Model-provided blank or duplicate slide ids are replaced during DeckSpec conversion before preview HTML is rendered.
+Model-provided blank or duplicate slide ids are replaced during DeckSpec conversion and tool-boundary deck hydration before preview HTML is rendered.
 
 The `pptx.ready` payload includes the exported PowerPoint `path`, `deck_title`, `slide_count`, and `theme_name` so the desktop export-ready message can match the active preview title and theme without inspecting the PPTX file.
 

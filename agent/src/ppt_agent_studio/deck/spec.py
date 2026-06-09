@@ -85,7 +85,7 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
         slide_title = str(raw_slide.get("title") or raw_slide.get("section_title") or f"Slide {index}")
         layout = str(raw_slide.get("prototype_hint") or raw_slide.get("layout") or "content")
         blocks = _blocks_from_outline_slide(raw_slide)
-        slide_id = _unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids)
+        slide_id = unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids)
         used_slide_ids.add(slide_id)
         slides.append(
             SlideSpec(
@@ -107,7 +107,7 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
     )
 
 
-def _unique_slide_id(raw_slide_id: Any, index: int, used_slide_ids: set[str]) -> str:
+def unique_slide_id(raw_slide_id: Any, index: int, used_slide_ids: set[str]) -> str:
     candidate = str(raw_slide_id or "").strip()
     if not candidate or candidate in used_slide_ids:
         candidate = f"s{index}"
