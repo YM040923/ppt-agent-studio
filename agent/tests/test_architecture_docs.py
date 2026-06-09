@@ -28,6 +28,13 @@ def test_architecture_documents_deck_scoped_plan_events():
     assert "treats `plan.updated`, `deck.updated`, `tool.completed`, `preview.ready`, and `pptx.ready` as deck-scoped" in architecture
 
 
+def test_architecture_documents_failed_follow_up_plan_events():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "invalid numbered follow-up targets emit a failed `plan.updated`" in architecture
+    assert "`failure_message`" in architecture
+
+
 def test_architecture_documents_settings_env_folder_action():
     architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
 

@@ -7,7 +7,8 @@ public sealed record RuntimePlanSummary(
     int SlideCount,
     IReadOnlyList<string> FirstSteps,
     string ActiveStepTitle = "",
-    string Status = "pending")
+    string Status = "pending",
+    string FailureMessage = "")
 {
     public static RuntimePlanSummary FromPayload(JsonElement payload)
     {
@@ -25,6 +26,9 @@ public sealed record RuntimePlanSummary(
         var planStatus = plan.TryGetProperty("status", out var statusValue)
             ? statusValue.GetString() ?? "pending"
             : "pending";
+        var failureMessage = payload.TryGetProperty("failure_message", out var failureMessageValue)
+            ? failureMessageValue.GetString() ?? ""
+            : "";
         var steps = new List<string>();
         var activeStepTitle = "";
         if (plan.TryGetProperty("steps", out var stepsValue) && stepsValue.ValueKind == JsonValueKind.Array)
@@ -53,7 +57,7 @@ public sealed record RuntimePlanSummary(
             }
         }
 
-        return new RuntimePlanSummary(title, slideCount, steps, activeStepTitle, planStatus);
+        return new RuntimePlanSummary(title, slideCount, steps, activeStepTitle, planStatus, failureMessage);
     }
 
     public string ToChatMessage()
@@ -65,7 +69,8 @@ public sealed record RuntimePlanSummary(
         }
         if (string.Equals(Status, "failed", StringComparison.OrdinalIgnoreCase))
         {
-            return $"**Plan failed:** {Title} ({slideText}).";
+            var failure = string.IsNullOrWhiteSpace(FailureMessage) ? "" : $" {FailureMessage}";
+            return $"**Plan failed:** {Title} ({slideText}).{failure}";
         }
 
         var activeStep = string.IsNullOrWhiteSpace(ActiveStepTitle) ? "" : $" **Active:** {ActiveStepTitle}.";

@@ -154,9 +154,8 @@ class AgentSession:
         if insert_target is not None:
             if isinstance(insert_target, int):
                 if insert_target > len(self.deck.slides):
-                    yield self._event(
-                        "error",
-                        {"message": f"Slide {insert_target} is not available. Deck has {len(self.deck.slides)} slides."},
+                    yield self._failed_follow_up_event(
+                        f"Slide {insert_target} is not available. Deck has {len(self.deck.slides)} slides."
                     )
                     return
                 insert_index = insert_target - 1
@@ -234,15 +233,13 @@ class AgentSession:
         next_revision = self._deck_revision + 1
         source_slide, source_index, source_label = self._resolve_slide_target(source)
         if source_slide is None:
-            yield self._event(
-                "error",
-                {"message": f"Slide {source} is not available. Deck has {len(self.deck.slides)} slides."},
+            yield self._failed_follow_up_event(
+                f"Slide {source} is not available. Deck has {len(self.deck.slides)} slides."
             )
             return
         if before_target is not None and after_target is not None:
-            yield self._event(
-                "error",
-                {"message": "Duplicate slide placement cannot include both before and after targets."},
+            yield self._failed_follow_up_event(
+                "Duplicate slide placement cannot include both before and after targets."
             )
             return
 
@@ -254,9 +251,8 @@ class AgentSession:
         if placement_target is not None:
             placement_slide, placement_index, placement_label = self._resolve_slide_target(placement_target)
             if placement_slide is None:
-                yield self._event(
-                    "error",
-                    {"message": f"Slide {placement_target} is not available. Deck has {len(self.deck.slides)} slides."},
+                yield self._failed_follow_up_event(
+                    f"Slide {placement_target} is not available. Deck has {len(self.deck.slides)} slides."
                 )
                 return
             position = "before" if before_target is not None else "after"
@@ -373,19 +369,17 @@ class AgentSession:
         source_slide, source_index, source_label = self._resolve_slide_target(source)
         target_slide, _, target_label = self._resolve_slide_target(target)
         if source_slide is None:
-            yield self._event(
-                "error",
-                {"message": f"Slide {source} is not available. Deck has {len(self.deck.slides)} slides."},
+            yield self._failed_follow_up_event(
+                f"Slide {source} is not available. Deck has {len(self.deck.slides)} slides."
             )
             return
         if target_slide is None:
-            yield self._event(
-                "error",
-                {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+            yield self._failed_follow_up_event(
+                f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."
             )
             return
         if source_slide.slide_id == target_slide.slide_id:
-            yield self._event("error", {"message": "Cannot move a slide relative to itself."})
+            yield self._failed_follow_up_event("Cannot move a slide relative to itself.")
             return
 
         next_revision = self._deck_revision + 1
@@ -426,9 +420,8 @@ class AgentSession:
         next_revision = self._deck_revision + 1
         if isinstance(target, int):
             if target > len(self.deck.slides):
-                yield self._event(
-                    "error",
-                    {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+                yield self._failed_follow_up_event(
+                    f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."
                 )
                 return
             target_slide = self.deck.slides[target - 1]
@@ -475,9 +468,8 @@ class AgentSession:
         next_revision = self._deck_revision + 1
         if isinstance(target, int):
             if target > len(self.deck.slides):
-                yield self._event(
-                    "error",
-                    {"message": f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."},
+                yield self._failed_follow_up_event(
+                    f"Slide {target} is not available. Deck has {len(self.deck.slides)} slides."
                 )
                 return
             target_slide = self.deck.slides[target - 1]
@@ -576,6 +568,38 @@ class AgentSession:
 
         plan.status = "completed"
         yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
+
+    def _failed_follow_up_event(self, message: str) -> AgentEvent:
+        outline = self._current_deck_outline()
+        plan = DeckPlan.from_outline(
+            outline,
+            plan_id=f"{self._safe_artifact_name(self.deck_id)}-r{self._deck_revision + 1}-plan",
+        )
+        plan.status = "failed"
+        plan.update_step_status("research_context", "completed")
+        plan.update_step_status("structure_story", "completed")
+        plan.update_step_status("draft_slides", "failed")
+        return self._event(
+            "plan.updated",
+            {
+                "outline": outline,
+                "plan": plan.to_dict(),
+                "failure_message": message,
+            },
+        )
+
+    def _current_deck_outline(self) -> dict[str, object]:
+        if self.deck is None:
+            return {"deck_title": "Untitled Deck", "slides": []}
+        outline: dict[str, object] = {
+            "deck_title": self.deck.title,
+            "slides": [{"title": slide.title} for slide in self.deck.slides],
+        }
+        if self.deck.theme:
+            outline["theme"] = dict(self.deck.theme)
+        if self.deck.metadata:
+            outline["metadata"] = dict(self.deck.metadata)
+        return outline
 
     def _event(self, event_type: str, payload: dict[str, object]) -> AgentEvent:
         self._seq += 1

@@ -634,8 +634,10 @@ def test_agent_session_rejects_out_of_range_slide_remove_follow_up(tmp_path):
     first_events = asyncio.run(first_turn())
     events = asyncio.run(second_turn())
 
-    assert [event.type for event in events] == ["user.message", "error"]
-    assert events[1].payload == {"message": "Slide 99 is not available. Deck has 5 slides."}
+    assert [event.type for event in events] == ["user.message", "plan.updated"]
+    assert events[1].payload["failure_message"] == "Slide 99 is not available. Deck has 5 slides."
+    assert events[1].payload["plan"]["status"] == "failed"
+    assert events[1].payload["plan"]["slide_count"] == 5
     assert session.deck is not None
     assert session.deck.revision == first_events[5].payload["deck"]["revision"]
     assert len(session.deck.slides) == 5
@@ -720,8 +722,10 @@ def test_agent_session_rejects_out_of_range_slide_rename_follow_up(tmp_path):
     first_events = asyncio.run(first_turn())
     events = asyncio.run(second_turn())
 
-    assert [event.type for event in events] == ["user.message", "error"]
-    assert events[1].payload == {"message": "Slide 99 is not available. Deck has 5 slides."}
+    assert [event.type for event in events] == ["user.message", "plan.updated"]
+    assert events[1].payload["failure_message"] == "Slide 99 is not available. Deck has 5 slides."
+    assert events[1].payload["plan"]["status"] == "failed"
+    assert events[1].payload["plan"]["slide_count"] == 5
     assert session.deck is not None
     assert session.deck.revision == first_events[5].payload["deck"]["revision"]
     assert len(session.deck.slides) == 5

@@ -102,13 +102,16 @@ public sealed class RuntimePlanSummaryTests
                   { "title": "Structure story", "status": "failed" },
                   { "title": "Draft 3 slides", "status": "pending" }
                 ]
-              }
+              },
+              "failure_message": "Slide 99 is not available. Deck has 5 slides."
             }
             """);
 
         var summary = RuntimePlanSummary.FromPayload(document.RootElement);
 
         Assert.AreEqual("failed", summary.Status);
-        Assert.AreEqual("**Plan failed:** AI Strategy (3 slides).", summary.ToChatMessage());
+        Assert.AreEqual(
+            "**Plan failed:** AI Strategy (3 slides). Slide 99 is not available. Deck has 5 slides.",
+            summary.ToChatMessage());
     }
 }
