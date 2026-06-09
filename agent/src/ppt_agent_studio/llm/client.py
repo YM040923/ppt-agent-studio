@@ -71,6 +71,11 @@ def _extract_choice_text(data: Any) -> str:
 def _content_to_text(content: Any) -> str:
     if isinstance(content, str):
         return content
+    if isinstance(content, dict):
+        text = _content_block_text(content)
+        if text:
+            return text
+        raise ValueError("OpenAI-compatible response did not include text content")
     if not isinstance(content, list):
         raise ValueError("OpenAI-compatible response did not include text content")
 
