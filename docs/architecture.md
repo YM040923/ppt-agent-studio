@@ -57,7 +57,7 @@ The runtime WebSocket server listens on `127.0.0.1:8765` by default. The desktop
 }
 ```
 
-The server streams one JSON event per WebSocket message. The desktop client closes the turn after receiving `error` or a final `plan.updated` event whose plan status is `completed`.
+The server streams one JSON event per WebSocket message. The desktop client closes the turn after receiving `error` or a final `plan.updated` event whose plan status is `completed`. Runtime session events carry the active `deck_id`; `plan.updated` events include `deck_id` so the desktop can ignore delayed plan status messages after a new deck starts.
 
 `preview.ready` is the live-preview synchronization event. Its payload includes rendered `html`, `deck_id`, `revision`, `deck_title`, `slide_count`, and `theme_name`; the desktop preview pane uses the HTML, while chat/status summaries can show the title, slide count, and active theme without parsing the preview document.
 
@@ -67,7 +67,7 @@ Runtime Agent sessions are cached by `(session_id, deck_id)` inside the Python p
 
 When a follow-up message clearly asks to rename the deck or presentation, the runtime mutates the cached DeckSpec title with `deck.update_deck`. Audience/style follow-ups update DeckSpec metadata with the same tool so preview metadata and PowerPoint document properties stay in sync. When a follow-up message clearly asks to add, append, create, duplicate, move, update, rename, remove, or delete a slide, the runtime mutates the cached DeckSpec with `deck.add_slide`, `deck.move_slide`, `deck.update_slide`, or `deck.remove_slide`. Add/create follow-ups can insert before or after first/last, ordinal, or numbered slide targets. Add/create follow-ups can also send new slides to the beginning or end. Duplicate follow-ups can insert copied slides before or after first/last, ordinal, or numbered slide targets. Duplicate follow-ups can also send copied slides to the beginning or end. Move follow-ups reposition slides before or after first/last, ordinal, or numbered targets and can also send slides to the beginning or end. Update/rename and remove/delete follow-ups honor first/last, ordinal, and numbered slide targets, with removal defaulting to the last slide when no target is specified; invalid numbered targets emit an `error` event without mutating the cached deck. Clear dark theme and light/clean theme follow-ups, including plain `Make it darker` and `Make it brighter` requests, use `design.apply_theme` against the cached DeckSpec. Both paths emit a new `deck.updated` revision, refresh `preview.ready`, and export a new `pptx.ready` artifact. Other follow-up prompts still run through the planner path until richer edit-intent routing is added.
 
-The desktop app filters deck-scoped runtime events by the active deck id before mutating preview or export state. This protects the UI when a user starts a new deck or cancels a turn while delayed messages from an older deck are still in flight.
+The desktop app treats `plan.updated`, `deck.updated`, `tool.completed`, `preview.ready`, and `pptx.ready` as deck-scoped runtime events and filters them by the active deck id before mutating chat, preview, or export state. This protects the UI when a user starts a new deck or cancels a turn while delayed messages from an older deck are still in flight.
 
 When the desktop app starts a new deck workspace, it first asks the runtime to discard the current cached deck session:
 

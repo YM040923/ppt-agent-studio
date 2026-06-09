@@ -21,6 +21,13 @@ def test_architecture_documents_runtime_config_requires_api_key():
     assert "`requires_api_key`" in architecture
 
 
+def test_architecture_documents_deck_scoped_plan_events():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "`plan.updated` events include `deck_id`" in architecture
+    assert "treats `plan.updated`, `deck.updated`, `tool.completed`, `preview.ready`, and `pptx.ready` as deck-scoped" in architecture
+
+
 def test_architecture_documents_settings_env_folder_action():
     architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
 
