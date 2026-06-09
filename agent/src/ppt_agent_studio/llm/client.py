@@ -73,15 +73,18 @@ def _choice_text(choice: dict[str, Any]) -> str:
         return _content_to_text(message["content"])
 
     text = choice.get("text")
-    if isinstance(text, str):
-        return text
+    if isinstance(text, str) and text.strip():
+        return text.strip()
 
     raise ValueError("OpenAI-compatible response did not include text content")
 
 
 def _content_to_text(content: Any) -> str:
     if isinstance(content, str):
-        return content
+        text = content.strip()
+        if text:
+            return text
+        raise ValueError("OpenAI-compatible response did not include text content")
     if isinstance(content, dict):
         text = _content_block_text(content)
         if text:

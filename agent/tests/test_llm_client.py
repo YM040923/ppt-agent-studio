@@ -185,6 +185,33 @@ def test_chat_client_uses_first_choice_with_text_content_from_compatible_provide
     assert asyncio.run(run()) == "Usable second choice."
 
 
+def test_chat_client_skips_blank_choices_before_usable_text():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {"message": {"content": "   "}},
+                    {"text": ""},
+                    {"text": "Legacy fallback text."},
+                ]
+            },
+        )
+
+    config = OpenAICompatibleConfig(
+        base_url="https://provider.example/v1",
+        api_key="secret-value",
+        model="gpt-compatible-model",
+    )
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = OpenAICompatibleChatClient(config=config, http_client=http_client)
+            return await client.complete(messages=[{"role": "user", "content": "Draft"}])
+
+    assert asyncio.run(run()) == "Legacy fallback text."
+
+
 def test_chat_client_parses_legacy_text_choice_from_compatible_provider():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
