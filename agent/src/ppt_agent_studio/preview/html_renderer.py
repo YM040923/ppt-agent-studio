@@ -59,6 +59,7 @@ def render_preview_html(deck: DeckSpec) -> str:
 
 
 def _render_slide(slide: dict[str, object], index: int) -> str:
+    slide_id = escape(str(slide.get("slide_id") or f"s{index}"))
     title = escape(str(slide.get("title") or f"Slide {index}"))
     layout = escape(str(slide.get("layout") or "content"))
     blocks = slide.get("blocks") if isinstance(slide.get("blocks"), list) else []
@@ -66,7 +67,7 @@ def _render_slide(slide: dict[str, object], index: int) -> str:
     speaker_notes = escape(str(slide.get("speaker_notes") or ""))
     notes = f'<aside class="speaker-notes" hidden>{speaker_notes}</aside>\n' if speaker_notes else ""
     return (
-        f'<section class="slide slide-{layout}" data-slide-index="{index}">\n'
+        f'<section class="slide slide-{layout}" data-slide-id="{slide_id}" data-slide-index="{index}">\n'
         f'<div class="page-number">{index:02d}</div>\n'
         f"<h1>{title}</h1>\n"
         f'<div class="content">{body}</div>\n'
@@ -123,6 +124,13 @@ def _preview_interaction_script() -> str:
         slide.style.display = slideIndex === this.currentIndex ? 'block' : 'none';
       });
       window.scrollTo(0, 0);
+    },
+    showSlideById(slideId) {
+      const targetIndex = slides.findIndex((slide) => slide.dataset.slideId === String(slideId));
+      if (targetIndex >= 0) {
+        this.showSlide(targetIndex);
+      }
+      return this.currentIndex;
     },
     setZoom(zoom) {
       this.zoom = clamp(Number(zoom) || 1, 0.5, 2);

@@ -66,6 +66,24 @@ def test_preview_html_includes_revision_for_webview_diffing():
     assert 'data-revision="9"' in html
 
 
+def test_preview_html_includes_stable_slide_ids_for_sync():
+    deck = DeckSpec(
+        deck_id="deck_sync",
+        title="Sync",
+        revision=3,
+        slides=[
+            SlideSpec(slide_id="s<intro>", title="Intro", layout="cover", blocks=[]),
+            SlideSpec(slide_id="s2", title="Next", layout="content", blocks=[]),
+        ],
+    )
+
+    html = render_preview_html(deck)
+
+    assert 'data-slide-id="s&lt;intro&gt;"' in html
+    assert 'data-slide-id="s2"' in html
+    assert 'data-slide-index="1"' in html
+
+
 def test_preview_document_wraps_deck_html_for_webview2():
     deck = DeckSpec(
         deck_id="deck_005",
@@ -103,6 +121,8 @@ def test_preview_document_exposes_webview_interaction_api():
     assert "window.pptAgentPreview" in document
     assert "slideCount" in document
     assert "showSlide(index)" in document
+    assert "showSlideById(slideId)" in document
+    assert "slide.dataset.slideId" in document
     assert "setZoom(zoom)" in document
     assert "document.querySelectorAll('.slide')" in document
 

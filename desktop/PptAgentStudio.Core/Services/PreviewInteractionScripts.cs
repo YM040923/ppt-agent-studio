@@ -19,6 +19,13 @@ public static class PreviewInteractionScripts
                 });
                 window.scrollTo(0, 0);
               },
+              showSlideById(slideId) {
+                const targetIndex = slides.findIndex((slide) => slide.dataset.slideId === String(slideId));
+                if (targetIndex >= 0) {
+                  this.showSlide(targetIndex);
+                }
+                return this.currentIndex;
+              },
               setZoom(zoom) {
                 this.zoom = clamp(Number(zoom) || 1, 0.5, 2);
                 document.body.style.zoom = String(this.zoom);

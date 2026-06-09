@@ -101,6 +101,8 @@ Runtime outline planning is selected through `PPT_AGENT_PLANNER`. The default is
 
 The WinUI app hosts the live preview with the WebView2 control bundled through Windows App SDK. Do not add a separate `Microsoft.Web.WebView2` package reference unless a future Windows App SDK release explicitly requires it; the first scaffold verified that the extra package can conflict with WinUI runtime startup. The desktop app initializes WebView2 with `EnsureCoreWebView2Async` before calling `NavigateToString`.
 
+Rendered preview slides expose stable `data-slide-id` attributes from `DeckSpec` in addition to their current slide index. The embedded preview API and the desktop fallback script both support `showSlideById`, so future preview synchronization can target deck slide identity after insert, move, or remove operations.
+
 ## DeckSpec
 
 `DeckSpec` is the source of truth for preview and export. The Agent modifies DeckSpec through tools; the preview renderer and PPTX exporter both consume the same state to avoid drift between what the user sees and what gets exported. Slide-level `speaker_notes` stay on DeckSpec slides, are exposed as hidden preview metadata, and are written into PowerPoint speaker notes during export. Deck-level `metadata.audience` and `metadata.style` are extracted from prompts when possible, included in hidden preview meta tags, and written into PowerPoint document properties during export. The active theme name is also exposed in hidden preview metadata so standalone preview HTML keeps the same style context as `preview.ready`.

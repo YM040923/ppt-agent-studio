@@ -49,6 +49,13 @@ def test_architecture_documents_settings_env_file_template_action():
     assert "does not overwrite" in architecture
 
 
+def test_architecture_documents_stable_preview_slide_ids():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "stable `data-slide-id`" in architecture
+    assert "`showSlideById`" in architecture
+
+
 def test_architecture_documents_expanded_deck_tool_registry():
     architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
 
