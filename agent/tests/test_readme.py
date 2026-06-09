@@ -101,6 +101,12 @@ def test_readme_documents_export_prefixed_env_file_values():
     assert "Lines may optionally start with `export `" in readme
 
 
+def test_readme_documents_unquoted_inline_env_file_comments():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "Inline comments after unquoted values are ignored" in readme
+
+
 def test_readme_documents_settings_env_folder_action():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 

@@ -117,6 +117,29 @@ def test_openai_compatible_config_reads_export_prefixed_env_file_values(monkeypa
     assert "export-secret-value" not in str(config.safe_summary())
 
 
+def test_openai_compatible_config_ignores_unquoted_inline_env_file_comments(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    env_file = tmp_path / ".env.local"
+    env_file.write_text(
+        "\n".join(
+            [
+                "OPENAI_BASE_URL=https://comment-provider.example/v1 # provider endpoint",
+                "OPENAI_API_KEY=\"secret # kept\"",
+                "OPENAI_MODEL=comment-compatible-model # selected model",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    config = OpenAICompatibleConfig.from_env(env_file=env_file)
+
+    assert config.base_url == "https://comment-provider.example/v1"
+    assert config.api_key == "secret # kept"
+    assert config.model == "comment-compatible-model"
+
+
 def test_openai_compatible_config_expands_user_env_file_path(monkeypatch, tmp_path):
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))
