@@ -391,10 +391,18 @@ public partial class MainPageViewModel : ObservableObject
                 });
                 break;
             case "preview.ready":
-                if (runtimeEvent.Payload.TryGetProperty("html", out var html))
+                if (!runtimeEvent.Payload.TryGetProperty("html", out var html))
                 {
-                    PreviewHtml = html.GetString() ?? PreviewHtml;
+                    SessionStatus = "Preview event did not include HTML.";
+                    break;
                 }
+                var previewHtml = html.GetString();
+                if (string.IsNullOrWhiteSpace(previewHtml))
+                {
+                    SessionStatus = "Preview event did not include HTML.";
+                    break;
+                }
+                PreviewHtml = previewHtml;
                 var previewSummary = RuntimePreviewSummary.FromPayload(runtimeEvent.Payload);
                 SessionStatus = previewSummary.ToStatusText(runtimeEvent.DeckRevision);
                 Messages.Add(new ChatMessageItem { Role = "Assistant", Content = previewSummary.ToChatMessage() });

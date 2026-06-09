@@ -152,6 +152,25 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelRequiresHtmlBeforePreviewReadyMessage()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+        var previewReadyCase = source.IndexOf("case \"preview.ready\":", StringComparison.Ordinal);
+        var nextCase = source.IndexOf("case \"error\":", previewReadyCase, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, previewReadyCase);
+        Assert.IsGreaterThan(previewReadyCase, nextCase);
+
+        var previewReadyBody = source[previewReadyCase..nextCase];
+        var missingHtmlGuard = previewReadyBody.IndexOf("string.IsNullOrWhiteSpace(previewHtml)", StringComparison.Ordinal);
+        var previewSummary = previewReadyBody.IndexOf("RuntimePreviewSummary.FromPayload", StringComparison.Ordinal);
+
+        StringAssert.Contains(previewReadyBody, "var previewHtml = html.GetString();");
+        Assert.IsGreaterThan(-1, missingHtmlGuard);
+        Assert.IsGreaterThan(missingHtmlGuard, previewSummary);
+    }
+
+    [TestMethod]
     public void ChatMessagesCanRenderActionButtons()
     {
         var page = XDocument.Load(FindMainPageXaml());
