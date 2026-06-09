@@ -121,6 +121,26 @@ def test_tool_registry_validates_required_arguments_before_running_handler():
     assert calls == []
 
 
+def test_tool_registry_rejects_non_object_arguments_before_running_handler():
+    calls = []
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.required",
+            description="Require an object argument.",
+            input_schema={"type": "object", "required": ["value"]},
+        ),
+        lambda args: calls.append(args) or ToolResult(),
+    )
+
+    async def run():
+        return await registry.run("demo.required", ["value"])
+
+    with pytest.raises(ValueError, match="tool arguments must be an object: demo.required"):
+        asyncio.run(run())
+    assert calls == []
+
+
 def test_default_registry_creates_deck_and_preview_html():
     registry = build_default_registry()
     outline = {

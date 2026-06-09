@@ -68,6 +68,8 @@ class ToolRegistry:
 
     @staticmethod
     def _validate_arguments(definition: ToolDefinition, arguments: ToolArguments) -> None:
+        if not isinstance(arguments, Mapping):
+            raise ValueError(f"tool arguments must be an object: {definition.name}")
         required = definition.input_schema.get("required", [])
         if not isinstance(required, list):
             return
