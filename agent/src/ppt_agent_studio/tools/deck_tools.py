@@ -318,10 +318,16 @@ def apply_theme(arguments: dict[str, Any]) -> ToolResult:
         raise ValueError("deck must be an object")
     if not isinstance(theme, dict):
         raise ValueError("theme must be an object")
-    deck = dict(raw_deck)
-    deck["revision"] = int(deck.get("revision") or 0) + 1
-    deck["theme"] = dict(theme)
-    return ToolResult(payload={"deck": deck})
+    deck = _deck_from_dict(raw_deck)
+    themed = DeckSpec(
+        deck_id=deck.deck_id,
+        title=deck.title,
+        revision=deck.revision + 1,
+        slides=deck.slides,
+        theme=dict(theme),
+        metadata=deck.metadata,
+    )
+    return ToolResult(payload={"deck": themed.to_dict()})
 
 
 def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:

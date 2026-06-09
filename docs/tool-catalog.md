@@ -266,6 +266,7 @@ Output:
 ## `design.apply_theme`
 
 Applies a presentation theme token set to the `DeckSpec`.
+`design.apply_theme` hydrates DeckSpec before applying theme tokens so slide identity remains unique.
 
 Required input:
 

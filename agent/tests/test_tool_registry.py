@@ -75,6 +75,12 @@ def test_tool_catalog_documents_update_slide_identity_is_stable():
     assert "`patch.slide_id` is ignored so stable slide identity is preserved" in docs
 
 
+def test_tool_catalog_documents_apply_theme_keeps_slide_identity_unique():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`design.apply_theme` hydrates DeckSpec before applying theme tokens" in docs
+
+
 def test_tool_registry_rejects_duplicate_tools():
     definition = ToolDefinition(
         name="demo.echo",
@@ -844,6 +850,36 @@ def test_default_registry_runs_research_and_theme_tools():
     }
     assert "--preview-background: #111827;" in preview_html
     assert "--slide-background: #F8FAFC;" in preview_html
+
+
+def test_default_registry_apply_theme_normalizes_slide_ids():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_theme_ids",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "intro", "title": "Intro", "layout": "cover", "blocks": []},
+            {"slide_id": "   ", "title": "Decision", "layout": "content", "blocks": []},
+            {"slide_id": "intro", "title": "Roadmap", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "design.apply_theme",
+            {
+                "deck": deck,
+                "theme": {"name": "executive-dark", "background": "#111827"},
+            },
+        )
+
+    result = asyncio.run(run())
+    themed_deck = result.payload["deck"]
+
+    assert [slide["slide_id"] for slide in themed_deck["slides"]] == ["intro", "s2", "s3"]
+    assert themed_deck["revision"] == 2
+    assert themed_deck["theme"]["name"] == "executive-dark"
 
 
 def test_research_brief_includes_sources_and_evidence_needs():
