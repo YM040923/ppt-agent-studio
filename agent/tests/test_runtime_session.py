@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from pptx import Presentation
 
@@ -43,6 +44,20 @@ class ThemedOutlinePlanner:
                 }
             ],
         }
+
+
+def test_agent_session_expands_user_artifact_directory(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+
+    session = AgentSession(
+        session_id="session_artifacts",
+        deck_id="deck_artifacts",
+        artifact_dir="~/ppt-agent-decks",
+    )
+
+    assert session._artifact_dir == Path("~/ppt-agent-decks").expanduser()
 
 
 def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):

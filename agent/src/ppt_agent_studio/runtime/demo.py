@@ -39,7 +39,7 @@ async def run_demo(
     session_id: str = "demo-session",
     deck_id: str = "demo-deck",
 ) -> DemoRunSummary:
-    output_dir = Path(artifact_dir)
+    output_dir = Path(artifact_dir).expanduser()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     session = AgentSession(session_id=session_id, deck_id=deck_id, artifact_dir=output_dir)

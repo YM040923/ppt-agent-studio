@@ -1,7 +1,29 @@
 import asyncio
 import json
+from pathlib import Path
 
 from ppt_agent_studio.runtime.demo import format_summary, run_demo
+
+
+def test_run_demo_expands_user_artifact_directory(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+
+    summary = asyncio.run(
+        run_demo(
+            prompt="Make a demo",
+            artifact_dir="~/ppt-agent-demo",
+            session_id="demo-session",
+            deck_id="demo-deck",
+        )
+    )
+
+    expected_dir = Path("~/ppt-agent-demo").expanduser()
+    assert summary.preview_html_path.parent == expected_dir
+    assert summary.pptx_path.parent == expected_dir
+    assert summary.summary_json_path.parent == expected_dir
+    assert summary.summary_markdown_path.parent == expected_dir
 
 
 def test_run_demo_writes_preview_and_pptx(tmp_path):

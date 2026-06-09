@@ -69,7 +69,7 @@ def _planner_summary(config: OpenAICompatibleConfig) -> dict[str, str]:
 
 def _artifact_summary() -> dict[str, str]:
     return {
-        "directory": str(Path(os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks"))),
+        "directory": str(Path(os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks")).expanduser()),
     }
 
 

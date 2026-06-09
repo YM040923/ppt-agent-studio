@@ -26,7 +26,7 @@ class AgentSession:
         self.deck_id = deck_id
         self._tool_registry = tool_registry or build_default_registry()
         self._outline_planner = outline_planner or FallbackOutlinePlanner()
-        self._artifact_dir = Path(artifact_dir or os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks"))
+        self._artifact_dir = Path(artifact_dir or os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks")).expanduser()
         self._seq = 0
         self._deck_revision = 0
         self.deck: DeckSpec | None = None

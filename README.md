@@ -18,7 +18,7 @@ The first runtime increments include a deterministic local `AgentSession`. It ac
 
 The runtime now has a planner boundary. By default it uses the deterministic fallback planner. Set `PPT_AGENT_PLANNER=llm` to route outline planning through the model-backed planner. Cloud endpoints still require a valid OpenAI-compatible API key. Local endpoints can run the LLM planner without an API key when the local server accepts anonymous requests.
 
-Each successful Agent turn exports an editable PPTX artifact before refreshing the preview. Slide-level `speaker_notes` are kept in DeckSpec and exported into PowerPoint speaker notes. Deck-level `metadata.audience` and `metadata.style` are preserved through preview sync and written into PowerPoint document properties. By default artifacts are written under `artifacts/decks`; set `PPT_AGENT_ARTIFACTS_DIR` to use a different local output directory.
+Each successful Agent turn exports an editable PPTX artifact before refreshing the preview. Slide-level `speaker_notes` are kept in DeckSpec and exported into PowerPoint speaker notes. Deck-level `metadata.audience` and `metadata.style` are preserved through preview sync and written into PowerPoint document properties. By default artifacts are written under `artifacts/decks`; set `PPT_AGENT_ARTIFACTS_DIR` to use a different local output directory. `PPT_AGENT_ARTIFACTS_DIR` may use `~`, which is expanded to the user profile before artifacts or runtime settings are written.
 
 The WinUI app starts the local runtime automatically in development. To run the runtime manually for protocol testing:
 

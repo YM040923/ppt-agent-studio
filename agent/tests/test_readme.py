@@ -50,6 +50,13 @@ def test_readme_documents_verify_script():
     assert "artifacts\\verify-demo" in readme
 
 
+def test_readme_documents_artifact_directory_expands_user_home():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "`PPT_AGENT_ARTIFACTS_DIR` may use `~`" in readme
+    assert "expanded to the user profile" in readme
+
+
 def test_readme_documents_local_endpoint_classification():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 

@@ -1,5 +1,6 @@
 import asyncio
 import json
+from pathlib import Path
 
 import pytest
 
@@ -523,6 +524,30 @@ def test_handle_runtime_config_returns_redacted_model_summary(monkeypatch, tmp_p
         },
     }
     assert "secret-value" not in messages[0]
+
+
+def test_handle_runtime_config_expands_user_artifact_directory(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", "~/ppt-agent-decks")
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", str(tmp_path / "missing.env"))
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["payload"]["artifacts"]["directory"] == str(Path("~/ppt-agent-decks").expanduser())
+    assert "~" not in payload["payload"]["artifacts"]["directory"]
 
 
 def test_handle_runtime_config_reports_extra_headers_without_values(monkeypatch, tmp_path):
