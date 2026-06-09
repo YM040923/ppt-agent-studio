@@ -122,10 +122,7 @@ def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
 
     points = slide.get("points") if isinstance(slide.get("points"), list) else []
     for point in points:
-        if not isinstance(point, dict):
-            continue
-        label = str(point.get("label") or "").strip()
-        body = str(point.get("body") or "").strip()
+        label, body = _point_label_body(point)
         if label or body:
             blocks.append({"type": "point", "label": label, "body": body})
 
@@ -179,3 +176,11 @@ def _outline_item_text(item: Any) -> str:
     if isinstance(item, dict):
         return _first_text_value(item, ("text", "body", "content", "value", "title", "label"))
     return str(item).strip()
+
+
+def _point_label_body(point: Any) -> tuple[str, str]:
+    if isinstance(point, dict):
+        label = _first_text_value(point, ("label", "title", "name"))
+        body = _first_text_value(point, ("body", "text", "content", "value", "description"))
+        return label, body
+    return "", str(point).strip()

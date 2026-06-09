@@ -125,6 +125,30 @@ def test_deck_from_outline_preserves_model_list_item_text_aliases():
     ]
 
 
+def test_deck_from_outline_preserves_model_point_text_aliases():
+    outline = {
+        "deck_title": "AI Strategy",
+        "slides": [
+            {
+                "title": "Decision",
+                "points": [
+                    "Fund the initial rollout.",
+                    {"text": "Sequence adoption by function."},
+                    {"title": "Impact", "content": "Reduce recurring analysis work."},
+                ],
+            }
+        ],
+    }
+
+    deck = deck_from_outline(outline, deck_id="deck_point_aliases", revision=1)
+
+    assert deck.slides[0].blocks == [
+        {"type": "point", "label": "", "body": "Fund the initial rollout."},
+        {"type": "point", "label": "", "body": "Sequence adoption by function."},
+        {"type": "point", "label": "Impact", "body": "Reduce recurring analysis work."},
+    ]
+
+
 def test_slide_spec_rejects_empty_title():
     try:
         SlideSpec(slide_id="s1", title="   ", layout="content", blocks=[])
