@@ -124,3 +124,23 @@ def test_pptx_export_tool_rejects_blank_output_path(monkeypatch, tmp_path):
         assert "output_path is required" in str(exc)
     else:
         raise AssertionError("pptx.export accepted a blank output_path")
+
+
+def test_pptx_export_tool_rejects_directory_output_path(tmp_path):
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_directory_path",
+        "title": "Directory Path",
+        "revision": 1,
+        "slides": [],
+    }
+
+    async def run():
+        return await registry.run("pptx.export", {"deck": deck, "output_path": str(tmp_path)})
+
+    try:
+        asyncio.run(run())
+    except ValueError as exc:
+        assert "output_path must be a file path" in str(exc)
+    else:
+        raise AssertionError("pptx.export accepted a directory output_path")
