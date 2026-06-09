@@ -158,8 +158,11 @@ def _read_env_file(env_file: str | os.PathLike[str] | None) -> dict[str, str]:
 
 
 def _strip_env_value(value: str) -> str:
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-        return value[1:-1]
+    if value[:1] in {"'", '"'}:
+        quote = value[0]
+        closing_index = value.find(quote, 1)
+        if closing_index > 0:
+            return value[1:closing_index]
     for index, char in enumerate(value):
         if char == "#" and index > 0 and value[index - 1].isspace():
             return value[:index].rstrip()

@@ -107,6 +107,12 @@ def test_readme_documents_unquoted_inline_env_file_comments():
     assert "Inline comments after unquoted values are ignored" in readme
 
 
+def test_readme_documents_quoted_env_file_values_before_comments():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "Quoted values can appear before inline comments" in readme
+
+
 def test_readme_documents_settings_env_folder_action():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
