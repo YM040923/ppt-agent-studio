@@ -327,6 +327,11 @@ public partial class MainPageViewModel : ObservableObject
 
     private void ApplyRuntimeEvent(AgentRuntimeEvent runtimeEvent)
     {
+        if (IsDeckScopedEvent(runtimeEvent.Type) && string.IsNullOrWhiteSpace(runtimeEvent.DeckId))
+        {
+            return;
+        }
+
         if (!_agentClient.AcceptsDeckEvent(runtimeEvent.DeckId))
         {
             return;
@@ -417,6 +422,11 @@ public partial class MainPageViewModel : ObservableObject
                 Messages.Add(new ChatMessageItem { Role = "Assistant", Content = SessionStatus });
                 break;
         }
+    }
+
+    private static bool IsDeckScopedEvent(string eventType)
+    {
+        return eventType is "deck.updated" or "tool.completed" or "pptx.ready" or "preview.ready";
     }
 
     private static ChatMessageItem CreateInitialMessage()

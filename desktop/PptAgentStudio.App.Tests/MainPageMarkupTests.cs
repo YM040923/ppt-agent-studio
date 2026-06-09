@@ -354,6 +354,27 @@ public sealed class MainPageMarkupTests
         StringAssert.Contains(source, "_agentClient.AcceptsDeckEvent(runtimeEvent.DeckId)");
     }
 
+    [TestMethod]
+    public void ViewModelRequiresDeckIdForDeckScopedEvents()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+        var applyStart = source.IndexOf("private void ApplyRuntimeEvent", StringComparison.Ordinal);
+        var nextMemberStart = source.IndexOf("private static ChatMessageItem CreateInitialMessage()", applyStart, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, applyStart);
+        Assert.IsGreaterThan(applyStart, nextMemberStart);
+
+        var applyBody = source[applyStart..nextMemberStart];
+        var missingDeckGuard = applyBody.IndexOf(
+            "if (IsDeckScopedEvent(runtimeEvent.Type) && string.IsNullOrWhiteSpace(runtimeEvent.DeckId))",
+            StringComparison.Ordinal);
+        var staleDeckGuard = applyBody.IndexOf("_agentClient.AcceptsDeckEvent(runtimeEvent.DeckId)", StringComparison.Ordinal);
+
+        Assert.IsGreaterThan(-1, missingDeckGuard);
+        Assert.IsGreaterThan(missingDeckGuard, staleDeckGuard);
+        StringAssert.Contains(source, "return eventType is \"deck.updated\" or \"tool.completed\" or \"pptx.ready\" or \"preview.ready\";");
+    }
+
     private static string FindMainPageXaml()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
