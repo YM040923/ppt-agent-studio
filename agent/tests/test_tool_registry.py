@@ -57,6 +57,12 @@ def test_tool_catalog_documents_add_slide_outline_fields():
     assert "`deck.add_slide` accepts DeckSpec `blocks` or outline-style `content`/`bullets` fields" in docs
 
 
+def test_tool_catalog_documents_add_slide_identity_is_unique():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`deck.add_slide` replaces blank or duplicate new slide ids with an unused stable id" in docs
+
+
 def test_tool_catalog_documents_update_slide_outline_fields():
     docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
 
@@ -430,6 +436,35 @@ def test_default_registry_update_slide_preserves_slide_identity_from_patch():
 
     assert [slide["slide_id"] for slide in slides] == ["s1", "s2"]
     assert slides[1]["title"] == "Risk Controls"
+
+
+def test_default_registry_add_slide_replaces_duplicate_slide_id():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_add_identity",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s3", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {"slide_id": "s1", "title": "Roadmap", "layout": "content", "blocks": []},
+                "after_slide_id": "s1",
+            },
+        )
+
+    result = asyncio.run(run())
+    slides = result.payload["deck"]["slides"]
+
+    assert [slide["slide_id"] for slide in slides] == ["s1", "s4", "s3"]
+    assert slides[1]["title"] == "Roadmap"
 
 
 def test_default_registry_updates_slide_from_outline_content_fields():

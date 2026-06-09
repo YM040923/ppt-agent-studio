@@ -105,13 +105,14 @@ def add_slide(arguments: dict[str, Any]) -> ToolResult:
     raw_slide = arguments.get("slide")
     if not isinstance(raw_slide, dict):
         raise ValueError("slide must be an object")
-    new_slide = _slide_from_dict(raw_slide, len(deck.slides) + 1)
     after_slide_id = str(arguments.get("after_slide_id") or "").strip()
     before_slide_id = str(arguments.get("before_slide_id") or "").strip()
     if before_slide_id and after_slide_id:
         raise ValueError("before_slide_id and after_slide_id cannot both be provided")
 
     slides = list(deck.slides)
+    used_slide_ids = {slide.slide_id for slide in slides}
+    new_slide = _slide_from_dict(raw_slide, len(slides) + 1, used_slide_ids)
     if before_slide_id:
         for index, slide in enumerate(slides):
             if slide.slide_id == before_slide_id:
@@ -358,9 +359,10 @@ def _deck_from_arguments(arguments: dict[str, Any]) -> DeckSpec:
     return _deck_from_dict(raw_deck)
 
 
-def _slide_from_dict(raw_slide: dict[str, Any], index: int) -> SlideSpec:
+def _slide_from_dict(raw_slide: dict[str, Any], index: int, used_slide_ids: set[str] | None = None) -> SlideSpec:
+    slide_id = unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids or set())
     return SlideSpec(
-        slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
+        slide_id=slide_id,
         title=str(raw_slide.get("title") or f"Slide {index}"),
         layout=str(raw_slide.get("layout") or "content"),
         blocks=_slide_blocks_from_dict(raw_slide),

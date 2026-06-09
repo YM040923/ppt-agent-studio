@@ -101,6 +101,7 @@ Required input:
 ```
 
 `deck.add_slide` accepts DeckSpec `blocks` or outline-style `content`/`bullets` fields on `slide`.
+`deck.add_slide` replaces blank or duplicate new slide ids with an unused stable id.
 
 Optional input:
 
