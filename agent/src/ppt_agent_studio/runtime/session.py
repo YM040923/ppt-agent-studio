@@ -186,7 +186,7 @@ class AgentSession:
         yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
 
         slide = {
-            "slide_id": f"s{len(self.deck.slides) + 1}",
+            "slide_id": self._next_slide_id(),
             "title": title,
             "layout": "content",
             "blocks": [
@@ -279,7 +279,7 @@ class AgentSession:
         yield self._event("plan.updated", {"outline": outline, "plan": plan.to_dict()})
 
         slide = source_slide.to_dict()
-        slide["slide_id"] = f"s{len(self.deck.slides) + 1}"
+        slide["slide_id"] = self._next_slide_id()
         tool_args = {"deck": self.deck.to_dict(), "slide": slide}
         if before_slide_id:
             tool_args["before_slide_id"] = before_slide_id
@@ -960,6 +960,17 @@ class AgentSession:
     def _safe_artifact_name(value: str) -> str:
         cleaned = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value.strip())
         return cleaned or "deck"
+
+    def _next_slide_id(self) -> str:
+        if self.deck is None:
+            return "s1"
+
+        highest = 0
+        for slide in self.deck.slides:
+            match = re.fullmatch(r"s(?P<number>\d+)", slide.slide_id)
+            if match is not None:
+                highest = max(highest, int(match.group("number")))
+        return f"s{highest + 1}"
 
 
 def _artifact_directory_path(artifact_dir: str | os.PathLike[str] | None) -> Path:

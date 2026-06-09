@@ -649,6 +649,59 @@ def test_agent_session_removes_numbered_slide_on_follow_up_request(tmp_path):
     assert events[8].payload["plan"]["status"] == "completed"
 
 
+def test_agent_session_adds_slide_after_remove_with_unique_slide_id(tmp_path):
+    session = AgentSession(session_id="session_add_after_remove", deck_id="deck_add_after_remove", artifact_dir=tmp_path)
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def remove_turn():
+        return [event async for event in session.submit_user_message("Remove slide 3")]
+
+    async def add_turn():
+        return [event async for event in session.submit_user_message("Create a recovery plan slide")]
+
+    asyncio.run(first_turn())
+    asyncio.run(remove_turn())
+    events = asyncio.run(add_turn())
+
+    slides = events[3].payload["deck"]["slides"]
+    slide_ids = [slide["slide_id"] for slide in slides]
+
+    assert len(slide_ids) == len(set(slide_ids))
+    assert slides[-1]["slide_id"] == "s6"
+    assert slides[-1]["title"] == "Recovery Plan"
+    assert events[5].payload["slide_count"] == 5
+
+
+def test_agent_session_duplicates_slide_after_remove_with_unique_slide_id(tmp_path):
+    session = AgentSession(
+        session_id="session_duplicate_after_remove",
+        deck_id="deck_duplicate_after_remove",
+        artifact_dir=tmp_path,
+    )
+
+    async def first_turn():
+        return [event async for event in session.submit_user_message("Make a 5 slide board AI strategy deck")]
+
+    async def remove_turn():
+        return [event async for event in session.submit_user_message("Remove slide 3")]
+
+    async def duplicate_turn():
+        return [event async for event in session.submit_user_message("Duplicate slide 2")]
+
+    asyncio.run(first_turn())
+    asyncio.run(remove_turn())
+    events = asyncio.run(duplicate_turn())
+
+    slides = events[3].payload["deck"]["slides"]
+    slide_ids = [slide["slide_id"] for slide in slides]
+
+    assert len(slide_ids) == len(set(slide_ids))
+    assert slides[2]["slide_id"] == "s6"
+    assert events[5].payload["slide_count"] == 5
+
+
 def test_agent_session_removes_ordinal_slide_on_follow_up_request(tmp_path):
     session = AgentSession(session_id="session_remove_ordinal", deck_id="deck_remove_ordinal", artifact_dir=tmp_path)
 
