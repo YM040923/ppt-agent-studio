@@ -353,6 +353,8 @@ public partial class MainPageViewModel : ObservableObject
                 }
                 break;
             case "deck.updated":
+                _workspaceDeckState.Reset();
+                ExportLatestCommand.NotifyCanExecuteChanged();
                 SessionStatus = $"Deck updated at revision {runtimeEvent.DeckRevision}.";
                 break;
             case "tool.completed":

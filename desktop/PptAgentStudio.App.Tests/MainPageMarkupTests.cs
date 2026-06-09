@@ -213,6 +213,25 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelClearsStaleExportWhenDeckUpdates()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+        var deckUpdatedCase = source.IndexOf("case \"deck.updated\":", StringComparison.Ordinal);
+        var statusUpdate = source.IndexOf("SessionStatus = $\"Deck updated at revision", deckUpdatedCase, StringComparison.Ordinal);
+        var nextCase = source.IndexOf("case \"tool.completed\":", deckUpdatedCase, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, deckUpdatedCase);
+        Assert.IsGreaterThan(deckUpdatedCase, statusUpdate);
+        Assert.IsGreaterThan(statusUpdate, nextCase);
+        Assert.IsGreaterThan(
+            deckUpdatedCase,
+            source.IndexOf("_workspaceDeckState.Reset();", deckUpdatedCase, StringComparison.Ordinal));
+        Assert.IsGreaterThan(
+            deckUpdatedCase,
+            source.IndexOf("ExportLatestCommand.NotifyCanExecuteChanged();", deckUpdatedCase, StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public void InitialMessageOffersDemoDeckAction()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
