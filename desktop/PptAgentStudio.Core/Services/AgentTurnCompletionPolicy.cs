@@ -22,6 +22,8 @@ public static class AgentTurnCompletionPolicy
             return false;
         }
 
-        return string.Equals(status.GetString(), "completed", StringComparison.OrdinalIgnoreCase);
+        var statusText = status.GetString();
+        return string.Equals(statusText, "completed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(statusText, "failed", StringComparison.OrdinalIgnoreCase);
     }
 }

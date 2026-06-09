@@ -63,6 +63,10 @@ public sealed record RuntimePlanSummary(
         {
             return $"**Plan completed:** {Title} ({slideText}).";
         }
+        if (string.Equals(Status, "failed", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"**Plan failed:** {Title} ({slideText}).";
+        }
 
         var activeStep = string.IsNullOrWhiteSpace(ActiveStepTitle) ? "" : $" **Active:** {ActiveStepTitle}.";
         var nextSteps = FirstSteps.Count == 0 ? "" : $" **Next:** {string.Join(", ", FirstSteps)}.";

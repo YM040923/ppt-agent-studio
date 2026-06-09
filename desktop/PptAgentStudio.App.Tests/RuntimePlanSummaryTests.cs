@@ -86,4 +86,29 @@ public sealed class RuntimePlanSummaryTests
         Assert.AreEqual("completed", summary.Status);
         Assert.AreEqual("**Plan completed:** AI Strategy (3 slides).", summary.ToChatMessage());
     }
+
+    [TestMethod]
+    public void ToChatMessageShowsFailedPlanStatus()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "plan": {
+                "title": "AI Strategy",
+                "status": "failed",
+                "slide_count": 3,
+                "steps": [
+                  { "title": "Research context", "status": "completed" },
+                  { "title": "Structure story", "status": "failed" },
+                  { "title": "Draft 3 slides", "status": "pending" }
+                ]
+              }
+            }
+            """);
+
+        var summary = RuntimePlanSummary.FromPayload(document.RootElement);
+
+        Assert.AreEqual("failed", summary.Status);
+        Assert.AreEqual("**Plan failed:** AI Strategy (3 slides).", summary.ToChatMessage());
+    }
 }

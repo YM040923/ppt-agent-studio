@@ -59,4 +59,19 @@ public sealed class AgentTurnCompletionPolicyTests
 
         Assert.IsTrue(AgentTurnCompletionPolicy.ShouldEndTurn("plan.updated", document.RootElement));
     }
+
+    [TestMethod]
+    public void FailedPlanEndsTurn()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "plan": {
+                "status": "failed"
+              }
+            }
+            """);
+
+        Assert.IsTrue(AgentTurnCompletionPolicy.ShouldEndTurn("plan.updated", document.RootElement));
+    }
 }
