@@ -345,6 +345,53 @@ def test_default_registry_updates_slide_from_outline_content_fields():
     assert updated_slide["speaker_notes"] == "Ask for the decision."
 
 
+def test_default_registry_adds_and_updates_slide_speaker_note_aliases():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_note_aliases",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Decision",
+                "layout": "content",
+                "blocks": [],
+                "speaker_notes": "Old talk track.",
+            }
+        ],
+    }
+
+    async def run():
+        added = await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s2",
+                    "title": "Risks",
+                    "layout": "content",
+                    "blocks": [],
+                    "notes": "Frame the risk conversation.",
+                },
+            },
+        )
+        updated = await registry.run(
+            "deck.update_slide",
+            {
+                "deck": added.payload["deck"],
+                "slide_id": "s1",
+                "patch": {"talk_track": "Ask for the board decision."},
+            },
+        )
+        return added.payload["deck"], updated.payload["deck"]
+
+    added, updated = asyncio.run(run())
+
+    assert added["slides"][1]["speaker_notes"] == "Frame the risk conversation."
+    assert updated["slides"][0]["speaker_notes"] == "Ask for the board decision."
+
+
 def test_default_registry_adds_slide_before_target():
     registry = build_default_registry()
     deck = {

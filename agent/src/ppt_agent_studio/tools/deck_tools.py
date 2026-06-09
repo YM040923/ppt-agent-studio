@@ -92,7 +92,7 @@ def update_slide(arguments: dict[str, Any]) -> ToolResult:
                 title=str(patch.get("title") or slide.title),
                 layout=str(patch.get("layout") or slide.layout),
                 blocks=_slide_patch_blocks(patch, slide),
-                speaker_notes=str(patch.get("speaker_notes") or slide.speaker_notes),
+                speaker_notes=_slide_patch_speaker_notes(patch, slide),
             )
         )
     if not found:
@@ -326,7 +326,7 @@ def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
                 title=str(raw_slide.get("title") or f"Slide {index}"),
                 layout=str(raw_slide.get("layout") or "content"),
                 blocks=_slide_blocks_from_dict(raw_slide),
-                speaker_notes=str(raw_slide.get("speaker_notes") or ""),
+                speaker_notes=_slide_speaker_notes(raw_slide),
             )
         for index, raw_slide in enumerate(raw_slides, start=1)
         if isinstance(raw_slide, dict)
@@ -354,7 +354,7 @@ def _slide_from_dict(raw_slide: dict[str, Any], index: int) -> SlideSpec:
         title=str(raw_slide.get("title") or f"Slide {index}"),
         layout=str(raw_slide.get("layout") or "content"),
         blocks=_slide_blocks_from_dict(raw_slide),
-        speaker_notes=str(raw_slide.get("speaker_notes") or ""),
+        speaker_notes=_slide_speaker_notes(raw_slide),
     )
 
 
@@ -403,6 +403,20 @@ def _has_outline_content_fields(source: dict[str, Any]) -> bool:
         key in source
         for key in ("subtitle", "content", "body", "key_message", "toc_items", "points", "bullets", "summary_items")
     )
+
+
+def _slide_speaker_notes(raw_slide: dict[str, Any]) -> str:
+    for key in ("speaker_notes", "notes", "talk_track"):
+        value = raw_slide.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _slide_patch_speaker_notes(patch: dict[str, Any], slide: SlideSpec) -> str:
+    if any(key in patch for key in ("speaker_notes", "notes", "talk_track")):
+        return _slide_speaker_notes(patch)
+    return slide.speaker_notes
 
 
 def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
