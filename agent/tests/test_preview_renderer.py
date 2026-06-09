@@ -1,4 +1,4 @@
-from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec
+from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec, deck_from_outline
 from ppt_agent_studio.preview.html_renderer import render_preview_document, render_preview_html
 
 
@@ -82,6 +82,28 @@ def test_preview_html_includes_stable_slide_ids_for_sync():
     assert 'data-slide-id="s&lt;intro&gt;"' in html
     assert 'data-slide-id="s2"' in html
     assert 'data-slide-index="1"' in html
+
+
+def test_preview_html_uses_unique_slide_ids_from_model_outline():
+    deck = deck_from_outline(
+        {
+            "deck_title": "Sync",
+            "slides": [
+                {"slide_id": "intro", "title": "Intro"},
+                {"slide_id": "intro", "title": "Decision"},
+                {"slide_id": "   ", "title": "Roadmap"},
+            ],
+        },
+        deck_id="deck_outline_sync",
+        revision=1,
+    )
+
+    html = render_preview_html(deck)
+
+    assert 'data-slide-id="intro"' in html
+    assert 'data-slide-id="s2"' in html
+    assert 'data-slide-id="s3"' in html
+    assert html.count('data-slide-id="intro"') == 1
 
 
 def test_preview_document_wraps_deck_html_for_webview2():

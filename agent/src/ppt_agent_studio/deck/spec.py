@@ -78,15 +78,18 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
     title = str(outline.get("deck_title") or outline.get("title") or "Untitled Deck")
     raw_slides = outline.get("slides") if isinstance(outline.get("slides"), list) else []
     slides: list[SlideSpec] = []
+    used_slide_ids: set[str] = set()
     for index, raw_slide in enumerate(raw_slides, start=1):
         if not isinstance(raw_slide, dict):
             continue
         slide_title = str(raw_slide.get("title") or raw_slide.get("section_title") or f"Slide {index}")
         layout = str(raw_slide.get("prototype_hint") or raw_slide.get("layout") or "content")
         blocks = _blocks_from_outline_slide(raw_slide)
+        slide_id = _unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids)
+        used_slide_ids.add(slide_id)
         slides.append(
             SlideSpec(
-                slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
+                slide_id=slide_id,
                 title=slide_title,
                 layout=layout,
                 blocks=blocks,
@@ -102,6 +105,16 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
         theme=raw_theme,
         metadata=_metadata_from_outline(outline),
     )
+
+
+def _unique_slide_id(raw_slide_id: Any, index: int, used_slide_ids: set[str]) -> str:
+    candidate = str(raw_slide_id or "").strip()
+    if not candidate or candidate in used_slide_ids:
+        candidate = f"s{index}"
+    while candidate in used_slide_ids:
+        index += 1
+        candidate = f"s{index}"
+    return candidate
 
 
 def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:

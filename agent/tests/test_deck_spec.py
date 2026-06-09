@@ -164,6 +164,22 @@ def test_deck_from_outline_preserves_model_point_text_aliases():
     ]
 
 
+def test_deck_from_outline_replaces_blank_and_duplicate_slide_ids():
+    outline = {
+        "deck_title": "AI Strategy",
+        "slides": [
+            {"slide_id": "intro", "title": "Intro"},
+            {"slide_id": "   ", "title": "Decision"},
+            {"slide_id": "intro", "title": "Roadmap"},
+            {"title": "Risks"},
+        ],
+    }
+
+    deck = deck_from_outline(outline, deck_id="deck_slide_ids", revision=1)
+
+    assert [slide.slide_id for slide in deck.slides] == ["intro", "s2", "s3", "s4"]
+
+
 def test_slide_spec_rejects_empty_title():
     try:
         SlideSpec(slide_id="s1", title="   ", layout="content", blocks=[])

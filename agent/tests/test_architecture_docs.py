@@ -56,6 +56,7 @@ def test_architecture_documents_stable_preview_slide_ids():
     assert "stable `data-slide-id`" in architecture
     assert "`showSlideById`" in architecture
     assert "Add and duplicate follow-ups allocate non-reused slide ids" in architecture
+    assert "Model-provided blank or duplicate slide ids are replaced" in architecture
 
 
 def test_architecture_documents_expanded_deck_tool_registry():
