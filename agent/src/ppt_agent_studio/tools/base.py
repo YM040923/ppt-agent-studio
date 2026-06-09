@@ -71,8 +71,35 @@ class ToolRegistry:
         if not isinstance(arguments, Mapping):
             raise ValueError(f"tool arguments must be an object: {definition.name}")
         required = definition.input_schema.get("required", [])
-        if not isinstance(required, list):
+        if isinstance(required, list):
+            for name in required:
+                if isinstance(name, str) and name not in arguments:
+                    raise ValueError(f"missing required tool argument: {name}")
+
+        properties = definition.input_schema.get("properties", {})
+        if not isinstance(properties, Mapping):
             return
-        for name in required:
-            if isinstance(name, str) and name not in arguments:
-                raise ValueError(f"missing required tool argument: {name}")
+        for name, schema in properties.items():
+            if not isinstance(name, str) or name not in arguments or not isinstance(schema, Mapping):
+                continue
+            expected_type = schema.get("type")
+            if isinstance(expected_type, str) and not _matches_json_type(arguments[name], expected_type):
+                raise ValueError(f"invalid tool argument type: {name}")
+
+
+def _matches_json_type(value: Any, expected_type: str) -> bool:
+    if expected_type == "object":
+        return isinstance(value, Mapping)
+    if expected_type == "array":
+        return isinstance(value, list)
+    if expected_type == "string":
+        return isinstance(value, str)
+    if expected_type == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected_type == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if expected_type == "boolean":
+        return isinstance(value, bool)
+    if expected_type == "null":
+        return value is None
+    return True

@@ -153,6 +153,41 @@ def test_tool_registry_rejects_non_object_arguments_before_running_handler():
     assert calls == []
 
 
+def test_tool_registry_validates_declared_argument_types_before_running_handler():
+    calls = []
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.typed",
+            description="Validate declared top-level argument types.",
+            input_schema={
+                "type": "object",
+                "required": ["deck", "output_path"],
+                "properties": {
+                    "deck": {"type": "object"},
+                    "output_path": {"type": "string"},
+                    "revision": {"type": "integer"},
+                },
+            },
+        ),
+        lambda args: calls.append(args) or ToolResult(),
+    )
+
+    async def run():
+        return await registry.run(
+            "demo.typed",
+            {
+                "deck": "not-a-deck",
+                "output_path": "artifacts/deck.pptx",
+                "revision": 1,
+            },
+        )
+
+    with pytest.raises(ValueError, match="invalid tool argument type: deck"):
+        asyncio.run(run())
+    assert calls == []
+
+
 def test_default_registry_creates_deck_and_preview_html():
     registry = build_default_registry()
     outline = {
