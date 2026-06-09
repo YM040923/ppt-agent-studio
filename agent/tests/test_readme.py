@@ -20,6 +20,7 @@ def test_readme_documents_demo_summary_json():
     assert "theme_name" in readme
     assert "summary_json_path" in readme
     assert "summary_markdown_path" in readme
+    assert "event type flow" in readme
 
 
 def test_readme_documents_theme_follow_up():

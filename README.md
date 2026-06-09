@@ -77,7 +77,7 @@ python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\demo
 ```
 
 Add `--follow-up "Create an executive summary slide at the beginning"` to generate a second revision that demonstrates cached follow-up editing and slide placement.
-The demo writes preview HTML, editable PPTX, a summary JSON file, and a Markdown summary into the artifact directory; with the follow-up example, the summary files are `demo-deck-r2-summary.json` and `demo-deck-r2-summary.md`. The summary JSON includes the prompt, optional follow-up prompt, final `deck_title`, final `theme_name`, slide count, event count, and artifact paths including `summary_json_path` and `summary_markdown_path`.
+The demo writes preview HTML, editable PPTX, a summary JSON file, and a Markdown summary into the artifact directory; with the follow-up example, the summary files are `demo-deck-r2-summary.json` and `demo-deck-r2-summary.md`. The summary JSON includes the prompt, optional follow-up prompt, final `deck_title`, final `theme_name`, slide count, event count, event type flow, and artifact paths including `summary_json_path` and `summary_markdown_path`.
 
 ## Packaging
 

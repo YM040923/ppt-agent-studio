@@ -25,6 +25,7 @@ class DemoRunSummary:
     theme_name: str
     slide_count: int
     event_count: int
+    event_types: tuple[str, ...]
     preview_html_path: Path
     pptx_path: Path
     summary_json_path: Path
@@ -49,11 +50,13 @@ async def run_demo(
     theme_name = ""
     slide_count = 0
     event_count = 0
+    event_types: list[str] = []
 
     async def consume_turn(text: str) -> None:
         nonlocal deck_revision, deck_title, event_count, preview_html, pptx_path, theme_name, slide_count
         async for event in session.submit_user_message(text):
             event_count += 1
+            event_types.append(event.type)
             if event.deck_revision is not None:
                 deck_revision = event.deck_revision
             if event.type == "preview.ready":
@@ -91,6 +94,7 @@ async def run_demo(
         theme_name=theme_name,
         slide_count=slide_count,
         event_count=event_count,
+        event_types=tuple(event_types),
         preview_html_path=preview_html_path,
         pptx_path=pptx_path,
         summary_json_path=summary_json_path,
@@ -108,6 +112,7 @@ async def run_demo(
                 "theme_name": summary.theme_name,
                 "slide_count": summary.slide_count,
                 "event_count": summary.event_count,
+                "event_types": list(summary.event_types),
                 "preview_html_path": str(summary.preview_html_path),
                 "pptx_path": str(summary.pptx_path),
                 "summary_json_path": str(summary.summary_json_path),
@@ -139,6 +144,7 @@ def format_summary(summary: DemoRunSummary) -> str:
         [
             f"Slides: {summary.slide_count}",
             f"Events: {summary.event_count}",
+            f"Event flow: {' -> '.join(summary.event_types)}",
             f"Preview HTML: {summary.preview_html_path}",
             f"Editable PPTX: {summary.pptx_path}",
             f"Run summary: {summary.summary_json_path}",
@@ -166,6 +172,7 @@ def format_markdown_summary(summary: DemoRunSummary) -> str:
         [
             f"- Slides: {summary.slide_count}",
             f"- Events: {summary.event_count}",
+            f"- Event flow: {' -> '.join(summary.event_types)}",
             f"- Preview HTML: {summary.preview_html_path}",
             f"- Editable PPTX: {summary.pptx_path}",
             f"- Summary JSON: {summary.summary_json_path}",

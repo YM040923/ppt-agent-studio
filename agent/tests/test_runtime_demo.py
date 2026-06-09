@@ -40,6 +40,19 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
         "theme_name": "executive-consulting",
         "slide_count": 5,
         "event_count": 11,
+        "event_types": [
+            "user.message",
+            "plan.updated",
+            "tool.completed",
+            "plan.updated",
+            "tool.completed",
+            "deck.updated",
+            "tool.completed",
+            "preview.ready",
+            "tool.completed",
+            "pptx.ready",
+            "plan.updated",
+        ],
         "preview_html_path": str(summary.preview_html_path),
         "pptx_path": str(summary.pptx_path),
         "summary_json_path": str(summary.summary_json_path),
@@ -77,6 +90,8 @@ def test_run_demo_can_apply_follow_up_turn(tmp_path):
     assert summary.summary_markdown_path.name == "demo-deck-r2-summary.md"
     summary_markdown = summary.summary_markdown_path.read_text(encoding="utf-8")
     assert "Follow-up: Create an executive summary slide at the beginning" in summary_markdown
+    assert "Event flow: user.message -> plan.updated" in summary_markdown
+    assert "pptx.ready -> plan.updated" in summary_markdown
     assert "Preview HTML:" in summary_markdown
     assert "Editable PPTX:" in summary_markdown
     assert f"Follow-up: {follow_up}" in format_summary(summary)
