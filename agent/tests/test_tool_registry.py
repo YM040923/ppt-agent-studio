@@ -63,6 +63,12 @@ def test_tool_catalog_documents_update_slide_outline_fields():
     assert "`deck.update_slide` accepts explicit `blocks` or outline-style content fields in `patch`" in docs
 
 
+def test_tool_catalog_documents_update_slide_identity_is_stable():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`patch.slide_id` is ignored so stable slide identity is preserved" in docs
+
+
 def test_tool_registry_rejects_duplicate_tools():
     definition = ToolDefinition(
         name="demo.echo",
@@ -395,6 +401,35 @@ def test_default_registry_updates_adds_and_removes_slides():
     assert removed["revision"] == 6
     assert [slide["slide_id"] for slide in removed["slides"]] == ["s3", "s2"]
     assert removed["metadata"] == {"audience": "board", "style": "consulting"}
+
+
+def test_default_registry_update_slide_preserves_slide_identity_from_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_update_identity",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "patch": {"slide_id": "s1", "title": "Risk Controls"},
+            },
+        )
+
+    result = asyncio.run(run())
+    slides = result.payload["deck"]["slides"]
+
+    assert [slide["slide_id"] for slide in slides] == ["s1", "s2"]
+    assert slides[1]["title"] == "Risk Controls"
 
 
 def test_default_registry_updates_slide_from_outline_content_fields():

@@ -77,6 +77,7 @@ Required input:
 ```
 
 `deck.update_slide` accepts explicit `blocks` or outline-style content fields in `patch`.
+`patch.slide_id` is ignored so stable slide identity is preserved.
 
 Output:
 
