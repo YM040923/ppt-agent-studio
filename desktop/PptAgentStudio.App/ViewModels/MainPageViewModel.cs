@@ -369,11 +369,8 @@ public partial class MainPageViewModel : ObservableObject
                 _workspaceDeckState.RecordPptx(pptxSummary.Path);
                 ExportLatestCommand.NotifyCanExecuteChanged();
                 SessionStatus = pptxSummary.ToStatusText(runtimeEvent.DeckRevision);
-                Messages.Add(new ChatMessageItem
-                {
-                    Role = "Assistant",
-                    Content = pptxSummary.ToChatMessage(),
-                    Actions =
+                IReadOnlyList<ChatMessageAction> exportActions = !string.IsNullOrWhiteSpace(pptxSummary.Path)
+                    ?
                     [
                         new ChatMessageAction
                         {
@@ -381,6 +378,12 @@ public partial class MainPageViewModel : ObservableObject
                             Kind = "open_pptx"
                         }
                     ]
+                    : [];
+                Messages.Add(new ChatMessageItem
+                {
+                    Role = "Assistant",
+                    Content = pptxSummary.ToChatMessage(),
+                    Actions = exportActions
                 });
                 break;
             case "preview.ready":

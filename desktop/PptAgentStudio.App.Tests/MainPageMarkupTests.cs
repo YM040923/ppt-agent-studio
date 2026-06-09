@@ -204,6 +204,15 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelOnlyAddsOpenPptxActionWhenExportPathExists()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+
+        StringAssert.Contains(source, "!string.IsNullOrWhiteSpace(pptxSummary.Path)");
+        StringAssert.Contains(source, "Actions = exportActions");
+    }
+
+    [TestMethod]
     public void InitialMessageOffersDemoDeckAction()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
