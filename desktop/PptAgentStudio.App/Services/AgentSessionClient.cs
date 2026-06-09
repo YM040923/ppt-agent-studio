@@ -8,14 +8,6 @@ using System.Threading;
 
 namespace PptAgentStudio_App.Services;
 
-public sealed record AgentRuntimeEvent(
-    int Seq,
-    string Type,
-    string SessionId,
-    string? DeckId,
-    int? DeckRevision,
-    JsonElement Payload);
-
 public sealed class AgentSessionClient
 {
     private readonly Uri _endpoint;
@@ -166,15 +158,7 @@ public sealed class AgentSessionClient
 
     private static AgentRuntimeEvent ParseEvent(string json)
     {
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-        return new AgentRuntimeEvent(
-            Seq: root.GetProperty("seq").GetInt32(),
-            Type: root.GetProperty("type").GetString() ?? "",
-            SessionId: root.GetProperty("session_id").GetString() ?? "",
-            DeckId: root.TryGetProperty("deck_id", out var deckId) ? deckId.GetString() : null,
-            DeckRevision: root.TryGetProperty("deck_revision", out var revision) ? revision.GetInt32() : null,
-            Payload: root.GetProperty("payload").Clone());
+        return AgentRuntimeEventParser.Parse(json);
     }
 
     private static async Task<string> ReceiveTextAsync(ClientWebSocket socket, CancellationToken cancellationToken)
