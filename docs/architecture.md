@@ -57,7 +57,7 @@ The runtime WebSocket server listens on `127.0.0.1:8765` by default. The desktop
 }
 ```
 
-The server streams one JSON event per WebSocket message. The desktop client closes the turn after receiving `error` or a final `plan.updated` event whose plan status is `completed` or `failed`. Runtime session events carry the active `deck_id`; `plan.updated` events include `deck_id` so the desktop can ignore delayed plan status messages after a new deck starts. Failed plan events may include a `failure_message` that the desktop can display without waiting for a separate `error` event.
+The server streams one JSON event per WebSocket message. The desktop client closes the turn after receiving `error` or a final `plan.updated` event whose plan status is `completed` or `failed`. Runtime session events carry the active `deck_id`; `plan.updated` events include `deck_id` so the desktop can ignore delayed plan status messages after a new deck starts. Failed plan events may include a `failure_message` that the desktop can display without waiting for a separate `error` event; agent turn failures emit a failed `plan.updated` with a redacted failure message instead of exposing provider exception text.
 
 `preview.ready` is the live-preview synchronization event. Its payload includes rendered `html`, `deck_id`, `revision`, `deck_title`, `slide_count`, and `theme_name`; the desktop preview pane uses the HTML, while chat/status summaries can show the title, slide count, and active theme without parsing the preview document.
 

@@ -11,6 +11,7 @@ from typing import Any
 from ppt_agent_studio import __version__
 from ppt_agent_studio.llm.config import OpenAICompatibleConfig
 from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner, OutlinePlanner
+from ppt_agent_studio.planning.plan import DeckPlan
 from ppt_agent_studio.protocol.events import AgentEvent
 from ppt_agent_studio.runtime.session import AgentSession
 from ppt_agent_studio.tools.catalog import core_tool_definitions
@@ -26,6 +27,30 @@ def _event_json(event: AgentEvent) -> str:
 def _error_json(message: str, seq: int = 1, session_id: str = "session") -> str:
     event = AgentEvent(seq=seq, session_id=session_id, type="error", payload={"message": message})
     return _event_json(event)
+
+
+def _failed_plan_json(message: str, seq: int, session_id: str, deck_id: str) -> str:
+    outline = {"deck_title": "Agent turn", "slides": []}
+    plan = DeckPlan.from_outline(outline, plan_id=f"{_safe_plan_id(deck_id)}-failed-plan")
+    plan.status = "failed"
+    plan.update_step_status("research_context", "failed")
+    event = AgentEvent(
+        seq=seq,
+        session_id=session_id,
+        type="plan.updated",
+        deck_id=deck_id,
+        payload={
+            "outline": outline,
+            "plan": plan.to_dict(),
+            "failure_message": message,
+        },
+    )
+    return _event_json(event)
+
+
+def _safe_plan_id(value: str) -> str:
+    cleaned = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value.strip())
+    return cleaned or "deck"
 
 
 def _build_outline_planner() -> OutlinePlanner:
@@ -160,7 +185,12 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
             response_count += 1
             yield _event_json(event)
     except Exception as error:
-        yield _error_json(_agent_error_message(error), seq=response_count + 1, session_id=session_id)
+        yield _failed_plan_json(
+            _agent_error_message(error),
+            seq=response_count + 1,
+            session_id=session_id,
+            deck_id=deck_id,
+        )
 
 
 def _build_agent_session(session_id: str, deck_id: str) -> AgentSession:

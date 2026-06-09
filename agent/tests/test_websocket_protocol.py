@@ -455,10 +455,13 @@ def test_handle_user_message_returns_error_when_agent_turn_fails(monkeypatch):
     messages = asyncio.run(run())
     payloads = [json.loads(item) for item in messages]
 
-    assert [item["type"] for item in payloads] == ["user.message", "error"]
+    assert [item["type"] for item in payloads] == ["user.message", "plan.updated"]
     assert payloads[1]["seq"] == 2
     assert payloads[1]["session_id"] == "session_001"
-    assert payloads[1]["payload"]["message"] == "Agent turn failed: RuntimeError"
+    assert payloads[1]["deck_id"] == "deck_001"
+    assert payloads[1]["payload"]["failure_message"] == "Agent turn failed: RuntimeError"
+    assert payloads[1]["payload"]["plan"]["status"] == "failed"
+    assert payloads[1]["payload"]["plan"]["slide_count"] == 0
     assert "secret-value" not in messages[1]
 
 
