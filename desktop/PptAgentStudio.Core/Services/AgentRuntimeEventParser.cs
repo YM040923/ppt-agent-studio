@@ -8,7 +8,36 @@ public sealed record AgentRuntimeEvent(
     string SessionId,
     string? DeckId,
     int? DeckRevision,
-    JsonElement Payload);
+    JsonElement Payload)
+{
+    public JsonElement RequirePayload(string expectedType)
+    {
+        if (string.Equals(Type, expectedType, StringComparison.OrdinalIgnoreCase))
+        {
+            return Payload;
+        }
+
+        if (string.Equals(Type, "error", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(ReadErrorMessage());
+        }
+
+        throw new InvalidOperationException($"Expected runtime event '{expectedType}' but received '{Type}'.");
+    }
+
+    private string ReadErrorMessage()
+    {
+        if (Payload.ValueKind == JsonValueKind.Object
+            && Payload.TryGetProperty("message", out var message)
+            && message.ValueKind == JsonValueKind.String
+            && !string.IsNullOrWhiteSpace(message.GetString()))
+        {
+            return message.GetString()!;
+        }
+
+        return "Runtime returned an error event.";
+    }
+}
 
 public static class AgentRuntimeEventParser
 {

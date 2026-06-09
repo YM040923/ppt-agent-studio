@@ -105,7 +105,7 @@ public sealed class AgentSessionClient
         var message = await ReceiveTextAsync(socket, cancellationToken);
         var runtimeEvent = ParseEvent(message);
         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "config received", cancellationToken);
-        return RuntimeConfigSummary.FromPayload(runtimeEvent.Payload);
+        return RuntimeConfigSummary.FromPayload(runtimeEvent.RequirePayload("runtime.config"));
     }
 
     public async Task<RuntimeToolCatalogSummary> GetRuntimeToolsAsync(CancellationToken cancellationToken = default)
@@ -127,7 +127,7 @@ public sealed class AgentSessionClient
         var message = await ReceiveTextAsync(socket, cancellationToken);
         var runtimeEvent = ParseEvent(message);
         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "tools received", cancellationToken);
-        return RuntimeToolCatalogSummary.FromPayload(runtimeEvent.Payload);
+        return RuntimeToolCatalogSummary.FromPayload(runtimeEvent.RequirePayload("runtime.tools"));
     }
 
     private async Task ResetCurrentDeckAsync(CancellationToken cancellationToken)
@@ -150,7 +150,8 @@ public sealed class AgentSessionClient
         var message = await ReceiveTextAsync(socket, cancellationToken);
         if (!string.IsNullOrWhiteSpace(message))
         {
-            _ = ParseEvent(message);
+            var runtimeEvent = ParseEvent(message);
+            _ = runtimeEvent.RequirePayload("session.reset");
         }
 
         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "session reset", cancellationToken);

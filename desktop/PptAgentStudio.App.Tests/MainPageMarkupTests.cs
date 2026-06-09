@@ -37,6 +37,9 @@ public sealed class MainPageMarkupTests
         var clientSource = File.ReadAllText(FindAgentSessionClient());
 
         StringAssert.Contains(clientSource, "type = \"runtime.tools\"");
+        StringAssert.Contains(clientSource, "runtimeEvent.RequirePayload(\"runtime.config\")");
+        StringAssert.Contains(clientSource, "runtimeEvent.RequirePayload(\"runtime.tools\")");
+        StringAssert.Contains(clientSource, "runtimeEvent.RequirePayload(\"session.reset\")");
         StringAssert.Contains(viewModelSource, "GetRuntimeToolsAsync");
         StringAssert.Contains(viewModelSource, "RuntimeTools");
         StringAssert.Contains(viewModelSource, "SettingsText");
