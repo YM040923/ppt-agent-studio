@@ -87,6 +87,36 @@ def test_openai_compatible_config_reads_env_file_when_env_is_missing(monkeypatch
     }
 
 
+def test_openai_compatible_config_reads_export_prefixed_env_file_values(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    env_file = tmp_path / ".env.local"
+    env_file.write_text(
+        "\n".join(
+            [
+                "export OPENAI_BASE_URL=https://export-provider.example/v1",
+                "export OPENAI_API_KEY=export-secret-value",
+                "export OPENAI_MODEL=export-compatible-model",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    config = OpenAICompatibleConfig.from_env(env_file=env_file)
+
+    assert config.base_url == "https://export-provider.example/v1"
+    assert config.model == "export-compatible-model"
+    assert config.has_api_key is True
+    assert config.safe_summary()["source"] == {
+        "base_url": "env_file",
+        "api_key": "env_file",
+        "model": "env_file",
+        "extra_headers": "default",
+    }
+    assert "export-secret-value" not in str(config.safe_summary())
+
+
 def test_openai_compatible_config_expands_user_env_file_path(monkeypatch, tmp_path):
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))

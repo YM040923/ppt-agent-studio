@@ -103,6 +103,8 @@ PPT_AGENT_PLANNER=llm
 
 `OPENAI_EXTRA_HEADERS` is optional and must be a JSON object. It is sent to the model provider, but runtime status only reports whether extra headers are configured; names and values are not displayed. Blank `OPENAI_BASE_URL`, `OPENAI_MODEL`, and `OPENAI_EXTRA_HEADERS` values are treated as unset so the runtime can fall back to safe defaults. Placeholder API keys from `.env.example` are also treated as unset. Do not commit `.env.local`.
 
+Lines may optionally start with `export `, so shell-style `.env.local` entries such as `export OPENAI_API_KEY=...` are accepted.
+
 Desktop sidecar overrides such as `PPT_AGENT_RUNTIME_ROOT` and `PPT_AGENT_PYTHON` are read before Python starts, so set them in the shell that launches the WinUI app rather than inside `.env.local`.
 
 `PPT_AGENT_ENV_FILE` may also use `~`; it is expanded before the runtime reads configuration and before the Settings dialog reports the env file path. Blank `PPT_AGENT_ENV_FILE` and `PPT_AGENT_ARTIFACTS_DIR` values are treated as unset, so the runtime falls back to `.env.local` and `artifacts/decks`.

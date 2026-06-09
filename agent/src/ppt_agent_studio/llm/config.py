@@ -149,6 +149,8 @@ def _read_env_file(env_file: str | os.PathLike[str] | None) -> dict[str, str]:
             continue
         name, value = stripped.split("=", 1)
         name = name.strip()
+        if name.startswith("export "):
+            name = name.removeprefix("export ").strip()
         if not name:
             continue
         values[name] = _strip_env_value(value.strip())
