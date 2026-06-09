@@ -196,6 +196,8 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
         raise ValueError("output_path is required")
     if output_path.is_dir():
         raise ValueError("output_path must be a file path")
+    if output_path.parent.exists() and not output_path.parent.is_dir():
+        raise ValueError("output_path parent must be a directory")
 
     deck = _deck_from_dict(raw_deck)
     output_path.parent.mkdir(parents=True, exist_ok=True)

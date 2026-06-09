@@ -144,3 +144,28 @@ def test_pptx_export_tool_rejects_directory_output_path(tmp_path):
         assert "output_path must be a file path" in str(exc)
     else:
         raise AssertionError("pptx.export accepted a directory output_path")
+
+
+def test_pptx_export_tool_rejects_file_parent_output_path(tmp_path):
+    registry = build_default_registry()
+    parent_file = tmp_path / "not-a-directory"
+    parent_file.write_text("occupied", encoding="utf-8")
+    deck = {
+        "deck_id": "deck_file_parent",
+        "title": "File Parent",
+        "revision": 1,
+        "slides": [],
+    }
+
+    async def run():
+        return await registry.run(
+            "pptx.export",
+            {"deck": deck, "output_path": str(parent_file / "deck.pptx")},
+        )
+
+    try:
+        asyncio.run(run())
+    except ValueError as exc:
+        assert "output_path parent must be a directory" in str(exc)
+    else:
+        raise AssertionError("pptx.export accepted a file parent output_path")
