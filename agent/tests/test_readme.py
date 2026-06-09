@@ -57,6 +57,13 @@ def test_readme_documents_artifact_directory_expands_user_home():
     assert "expanded to the user profile" in readme
 
 
+def test_readme_documents_env_file_expands_user_home():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "`PPT_AGENT_ENV_FILE` may also use `~`" in readme
+    assert "expanded before the runtime reads configuration" in readme
+
+
 def test_readme_documents_local_endpoint_classification():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 

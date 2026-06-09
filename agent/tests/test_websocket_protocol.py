@@ -550,6 +550,47 @@ def test_handle_runtime_config_expands_user_artifact_directory(monkeypatch, tmp_
     assert "~" not in payload["payload"]["artifacts"]["directory"]
 
 
+def test_handle_runtime_config_reads_expanded_user_env_file(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    env_file = home / ".ppt-agent.env"
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.write_text(
+        "\n".join(
+            [
+                "OPENAI_BASE_URL=https://home-provider.example/v1",
+                "OPENAI_API_KEY=home-secret-value",
+                "OPENAI_MODEL=home-compatible-model",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", "~/.ppt-agent.env")
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["payload"]["llm"]["base_url"] == "https://home-provider.example/v1"
+    assert payload["payload"]["llm"]["model"] == "home-compatible-model"
+    assert payload["payload"]["llm"]["source"]["base_url"] == "env_file"
+    assert payload["payload"]["env_file"]["path"] == str(env_file)
+    assert "home-secret-value" not in messages[0]
+
+
 def test_handle_runtime_config_reports_extra_headers_without_values(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_BASE_URL", "https://provider.example/v1/")
     monkeypatch.setenv("OPENAI_API_KEY", "secret-value")

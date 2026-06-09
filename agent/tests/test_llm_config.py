@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 
 from ppt_agent_studio.llm.config import OpenAICompatibleConfig
 
@@ -84,6 +85,35 @@ def test_openai_compatible_config_reads_env_file_when_env_is_missing(monkeypatch
         "model": "env_file",
         "extra_headers": "env_file",
     }
+
+
+def test_openai_compatible_config_expands_user_env_file_path(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    env_file = home / ".ppt-agent.env"
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.write_text(
+        "\n".join(
+            [
+                "OPENAI_BASE_URL=https://home-provider.example/v1",
+                "OPENAI_API_KEY=home-secret-value",
+                "OPENAI_MODEL=home-compatible-model",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    config = OpenAICompatibleConfig.from_env(env_file=Path("~") / ".ppt-agent.env")
+
+    assert config.base_url == "https://home-provider.example/v1"
+    assert config.model == "home-compatible-model"
+    assert config.has_api_key is True
+    assert config.safe_summary()["source"]["base_url"] == "env_file"
+    assert "home-secret-value" not in str(config.safe_summary())
 
 
 def test_openai_compatible_config_prefers_env_over_env_file(monkeypatch, tmp_path):

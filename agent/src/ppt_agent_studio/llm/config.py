@@ -131,7 +131,7 @@ def _is_placeholder_api_key(value: str) -> bool:
 def _read_env_file(env_file: str | os.PathLike[str] | None) -> dict[str, str]:
     if env_file is None:
         return {}
-    path = Path(env_file)
+    path = Path(env_file).expanduser()
     if not path.exists():
         return {}
 
