@@ -97,6 +97,8 @@ Required input:
 }
 ```
 
+`deck.add_slide` accepts DeckSpec `blocks` or outline-style `content`/`bullets` fields on `slide`.
+
 Optional input:
 
 ```json

@@ -51,6 +51,12 @@ def test_tool_catalog_documents_slide_position_constraints():
     assert "`deck.move_slide` requires exactly one of them" in docs
 
 
+def test_tool_catalog_documents_add_slide_outline_fields():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`deck.add_slide` accepts DeckSpec `blocks` or outline-style `content`/`bullets` fields" in docs
+
+
 def test_tool_registry_rejects_duplicate_tools():
     definition = ToolDefinition(
         name="demo.echo",
@@ -335,6 +341,47 @@ def test_default_registry_adds_slide_before_target():
 
     assert result.payload["deck"]["revision"] == 2
     assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s2"]
+
+
+def test_default_registry_adds_slide_from_outline_content_fields():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_add_outline_fields",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [{"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []}],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s2",
+                    "title": "Decision",
+                    "layout": "content",
+                    "content": "Approve a phased rollout.",
+                    "bullets": [
+                        {"text": "Start with finance"},
+                        {"body": "Measure adoption weekly"},
+                    ],
+                    "summary_items": [{"text": "Decision needed"}],
+                    "speaker_notes": "Ask for the board decision.",
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+    added_slide = result.payload["deck"]["slides"][1]
+
+    assert added_slide["blocks"] == [
+        {"type": "text", "text": "Approve a phased rollout."},
+        {"type": "bullet", "text": "Start with finance"},
+        {"type": "bullet", "text": "Measure adoption weekly"},
+        {"type": "summary_item", "text": "Decision needed"},
+    ]
+    assert added_slide["speaker_notes"] == "Ask for the board decision."
 
 
 def test_default_registry_rejects_ambiguous_add_slide_position():

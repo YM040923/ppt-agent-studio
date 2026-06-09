@@ -325,7 +325,7 @@ def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
                 slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
                 title=str(raw_slide.get("title") or f"Slide {index}"),
                 layout=str(raw_slide.get("layout") or "content"),
-                blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
+                blocks=_slide_blocks_from_dict(raw_slide),
                 speaker_notes=str(raw_slide.get("speaker_notes") or ""),
             )
         for index, raw_slide in enumerate(raw_slides, start=1)
@@ -353,9 +353,17 @@ def _slide_from_dict(raw_slide: dict[str, Any], index: int) -> SlideSpec:
         slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
         title=str(raw_slide.get("title") or f"Slide {index}"),
         layout=str(raw_slide.get("layout") or "content"),
-        blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
+        blocks=_slide_blocks_from_dict(raw_slide),
         speaker_notes=str(raw_slide.get("speaker_notes") or ""),
     )
+
+
+def _slide_blocks_from_dict(raw_slide: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_blocks = raw_slide.get("blocks")
+    if isinstance(raw_blocks, list):
+        return raw_blocks
+    normalized = deck_from_outline({"slides": [raw_slide]}, deck_id="_slide")
+    return normalized.slides[0].blocks if normalized.slides else []
 
 
 def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
