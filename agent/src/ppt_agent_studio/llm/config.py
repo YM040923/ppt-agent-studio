@@ -148,7 +148,7 @@ def _read_env_file(env_file: str | os.PathLike[str] | None) -> dict[str, str]:
         if not stripped or stripped.startswith("#") or "=" not in stripped:
             continue
         name, value = stripped.split("=", 1)
-        name = name.strip()
+        name = name.strip().removeprefix("\ufeff")
         if name.startswith("export "):
             name = name.removeprefix("export ").strip()
         if not name:

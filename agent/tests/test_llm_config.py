@@ -117,6 +117,26 @@ def test_openai_compatible_config_reads_export_prefixed_env_file_values(monkeypa
     assert "export-secret-value" not in str(config.safe_summary())
 
 
+def test_openai_compatible_config_reads_bom_prefixed_env_file(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    env_file = tmp_path / ".env.local"
+    env_file.write_text(
+        "\ufeffOPENAI_BASE_URL=https://bom-provider.example/v1\n"
+        "OPENAI_API_KEY=bom-secret-value\n"
+        "OPENAI_MODEL=bom-compatible-model",
+        encoding="utf-8",
+    )
+
+    config = OpenAICompatibleConfig.from_env(env_file=env_file)
+
+    assert config.base_url == "https://bom-provider.example/v1"
+    assert config.model == "bom-compatible-model"
+    assert config.safe_summary()["source"]["base_url"] == "env_file"
+    assert "bom-secret-value" not in str(config.safe_summary())
+
+
 def test_openai_compatible_config_ignores_unquoted_inline_env_file_comments(monkeypatch, tmp_path):
     monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
