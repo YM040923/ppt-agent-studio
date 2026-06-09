@@ -58,6 +58,32 @@ def test_deck_from_outline_preserves_theme_tokens():
     assert payload["theme"]["accent"] == "#2563EB"
 
 
+def test_deck_from_outline_preserves_model_content_fields():
+    outline = {
+        "deck_title": "AI Strategy",
+        "slides": [
+            {
+                "title": "Decision",
+                "content": "Approve a phased rollout.",
+                "bullets": [
+                    {"text": "Start with finance"},
+                    {"body": "Measure adoption weekly"},
+                ],
+                "summary_items": [{"text": "Decision needed"}],
+            }
+        ],
+    }
+
+    deck = deck_from_outline(outline, deck_id="deck_content", revision=1)
+
+    assert deck.slides[0].blocks == [
+        {"type": "text", "text": "Approve a phased rollout."},
+        {"type": "bullet", "text": "Start with finance"},
+        {"type": "bullet", "text": "Measure adoption weekly"},
+        {"type": "summary_item", "text": "Decision needed"},
+    ]
+
+
 def test_slide_spec_rejects_empty_title():
     try:
         SlideSpec(slide_id="s1", title="   ", layout="content", blocks=[])

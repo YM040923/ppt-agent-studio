@@ -110,6 +110,10 @@ def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
     if subtitle:
         blocks.append({"type": "subtitle", "text": subtitle})
 
+    content = _first_text_value(slide, ("content",))
+    if content:
+        blocks.append({"type": "text", "text": content})
+
     toc_items = slide.get("toc_items") if isinstance(slide.get("toc_items"), list) else []
     for item in toc_items:
         text = str(item).strip()
@@ -127,13 +131,13 @@ def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
 
     bullets = slide.get("bullets") if isinstance(slide.get("bullets"), list) else []
     for bullet in bullets:
-        text = str(bullet).strip()
+        text = _outline_item_text(bullet)
         if text:
             blocks.append({"type": "bullet", "text": text})
 
     summary_items = slide.get("summary_items") if isinstance(slide.get("summary_items"), list) else []
     for item in summary_items:
-        text = str(item).strip()
+        text = _outline_item_text(item)
         if text:
             blocks.append({"type": "summary_item", "text": text})
     return blocks
@@ -169,3 +173,9 @@ def _first_text_value(source: dict[str, Any], keys: tuple[str, ...]) -> str:
         if isinstance(value, str) and value.strip():
             return value.strip()
     return ""
+
+
+def _outline_item_text(item: Any) -> str:
+    if isinstance(item, dict):
+        return _first_text_value(item, ("text", "body"))
+    return str(item).strip()
