@@ -116,7 +116,7 @@ def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
 
     toc_items = slide.get("toc_items") if isinstance(slide.get("toc_items"), list) else []
     for item in toc_items:
-        text = str(item).strip()
+        text = _outline_item_text(item)
         if text:
             blocks.append({"type": "toc_item", "text": text})
 
@@ -177,5 +177,5 @@ def _first_text_value(source: dict[str, Any], keys: tuple[str, ...]) -> str:
 
 def _outline_item_text(item: Any) -> str:
     if isinstance(item, dict):
-        return _first_text_value(item, ("text", "body"))
+        return _first_text_value(item, ("text", "body", "content", "value", "title", "label"))
     return str(item).strip()
