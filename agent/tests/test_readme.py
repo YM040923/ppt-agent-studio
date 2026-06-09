@@ -64,6 +64,12 @@ def test_readme_documents_env_file_expands_user_home():
     assert "expanded before the runtime reads configuration" in readme
 
 
+def test_readme_documents_blank_runtime_paths_are_ignored():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "Blank `PPT_AGENT_ENV_FILE` and `PPT_AGENT_ARTIFACTS_DIR` values are treated as unset" in readme
+
+
 def test_readme_documents_local_endpoint_classification():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 

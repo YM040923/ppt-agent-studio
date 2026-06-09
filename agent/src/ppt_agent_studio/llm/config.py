@@ -50,7 +50,7 @@ class OpenAICompatibleConfig:
 
     @classmethod
     def from_env(cls, env_file: str | os.PathLike[str] | None = None) -> "OpenAICompatibleConfig":
-        file_values = _read_env_file(env_file if env_file is not None else os.getenv("PPT_AGENT_ENV_FILE", ".env.local"))
+        file_values = _read_env_file(_env_file_path(env_file))
         return cls(
             base_url=_config_value("OPENAI_BASE_URL", "https://api.openai.com/v1", file_values).strip().rstrip("/"),
             api_key=_api_key_from_config(_config_value("OPENAI_API_KEY", "", file_values)),
@@ -128,11 +128,18 @@ def _is_placeholder_api_key(value: str) -> bool:
     return value.casefold() in {"replace-with-your-api-key", "your-secret-key", "your-api-key"}
 
 
+def _env_file_path(env_file: str | os.PathLike[str] | None) -> str | os.PathLike[str]:
+    if env_file is not None and str(env_file).strip():
+        return env_file
+    value = os.getenv("PPT_AGENT_ENV_FILE")
+    return value if value is not None and value.strip() else ".env.local"
+
+
 def _read_env_file(env_file: str | os.PathLike[str] | None) -> dict[str, str]:
     if env_file is None:
         return {}
     path = Path(env_file).expanduser()
-    if not path.exists():
+    if not path.is_file():
         return {}
 
     values: dict[str, str] = {}

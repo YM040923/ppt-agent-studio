@@ -60,6 +60,14 @@ def test_agent_session_expands_user_artifact_directory(monkeypatch, tmp_path):
     assert session._artifact_dir == Path("~/ppt-agent-decks").expanduser()
 
 
+def test_agent_session_ignores_blank_artifact_directory_env(monkeypatch):
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", "   ")
+
+    session = AgentSession(session_id="session_artifacts", deck_id="deck_artifacts")
+
+    assert session._artifact_dir == Path("artifacts/decks")
+
+
 def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
     session = AgentSession(session_id="session_001", deck_id="deck_001", artifact_dir=tmp_path)
 

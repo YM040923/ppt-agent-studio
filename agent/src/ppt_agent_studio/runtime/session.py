@@ -26,7 +26,7 @@ class AgentSession:
         self.deck_id = deck_id
         self._tool_registry = tool_registry or build_default_registry()
         self._outline_planner = outline_planner or FallbackOutlinePlanner()
-        self._artifact_dir = Path(artifact_dir or os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks")).expanduser()
+        self._artifact_dir = _artifact_directory_path(artifact_dir)
         self._seq = 0
         self._deck_revision = 0
         self.deck: DeckSpec | None = None
@@ -955,3 +955,10 @@ class AgentSession:
     def _safe_artifact_name(value: str) -> str:
         cleaned = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value.strip())
         return cleaned or "deck"
+
+
+def _artifact_directory_path(artifact_dir: str | os.PathLike[str] | None) -> Path:
+    if artifact_dir is not None and str(artifact_dir).strip():
+        return Path(artifact_dir).expanduser()
+    value = os.getenv("PPT_AGENT_ARTIFACTS_DIR")
+    return Path(value if value is not None and value.strip() else "artifacts/decks").expanduser()

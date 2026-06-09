@@ -105,7 +105,7 @@ PPT_AGENT_PLANNER=llm
 
 Desktop sidecar overrides such as `PPT_AGENT_RUNTIME_ROOT` and `PPT_AGENT_PYTHON` are read before Python starts, so set them in the shell that launches the WinUI app rather than inside `.env.local`.
 
-`PPT_AGENT_ENV_FILE` may also use `~`; it is expanded before the runtime reads configuration and before the Settings dialog reports the env file path.
+`PPT_AGENT_ENV_FILE` may also use `~`; it is expanded before the runtime reads configuration and before the Settings dialog reports the env file path. Blank `PPT_AGENT_ENV_FILE` and `PPT_AGENT_ARTIFACTS_DIR` values are treated as unset, so the runtime falls back to `.env.local` and `artifacts/decks`.
 
 The runtime exposes a safe configuration probe over WebSocket:
 

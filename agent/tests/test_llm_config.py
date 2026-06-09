@@ -116,6 +116,20 @@ def test_openai_compatible_config_expands_user_env_file_path(monkeypatch, tmp_pa
     assert "home-secret-value" not in str(config.safe_summary())
 
 
+def test_openai_compatible_config_ignores_blank_env_file_path(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", "")
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+
+    config = OpenAICompatibleConfig.from_env()
+
+    assert config.base_url == "https://api.openai.com/v1"
+    assert config.model == "gpt-4.1-mini"
+    assert config.safe_summary()["source"]["base_url"] == "default"
+
+
 def test_openai_compatible_config_prefers_env_over_env_file(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_BASE_URL", "https://env-provider.example/v1")
     monkeypatch.setenv("OPENAI_API_KEY", "env-secret-value")

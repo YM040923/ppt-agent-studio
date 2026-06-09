@@ -69,7 +69,7 @@ def _planner_summary(config: OpenAICompatibleConfig) -> dict[str, str]:
 
 def _artifact_summary() -> dict[str, str]:
     return {
-        "directory": str(Path(os.getenv("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks")).expanduser()),
+        "directory": str(_runtime_path("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks")),
     }
 
 
@@ -81,7 +81,7 @@ def _runtime_summary() -> dict[str, str]:
 
 
 def _env_file_summary() -> dict[str, object]:
-    path = Path(os.getenv("PPT_AGENT_ENV_FILE", ".env.local")).expanduser()
+    path = _runtime_path("PPT_AGENT_ENV_FILE", ".env.local")
     if not path.is_absolute():
         path = Path.cwd() / path
     resolved = path.resolve()
@@ -97,6 +97,11 @@ def _tool_catalog_summary() -> list[dict[str, object]]:
 
 def _requested_planner_mode() -> str:
     return os.getenv("PPT_AGENT_PLANNER", "fallback").strip().lower() or "fallback"
+
+
+def _runtime_path(name: str, default: str) -> Path:
+    value = os.getenv(name)
+    return Path(value if value is not None and value.strip() else default).expanduser()
 
 
 def _active_planner_mode(config: OpenAICompatibleConfig) -> str:

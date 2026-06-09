@@ -591,6 +591,35 @@ def test_handle_runtime_config_reads_expanded_user_env_file(monkeypatch, tmp_pat
     assert "home-secret-value" not in messages[0]
 
 
+def test_handle_runtime_config_treats_blank_runtime_paths_as_default(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PPT_AGENT_ENV_FILE", "")
+    monkeypatch.setenv("PPT_AGENT_ARTIFACTS_DIR", "   ")
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "runtime.config",
+                    "session_id": "session_001",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["type"] == "runtime.config"
+    assert payload["payload"]["artifacts"]["directory"] == str(Path("artifacts/decks"))
+    assert payload["payload"]["env_file"] == {
+        "path": str(tmp_path / ".env.local"),
+        "exists": False,
+    }
+
+
 def test_handle_runtime_config_reports_extra_headers_without_values(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_BASE_URL", "https://provider.example/v1/")
     monkeypatch.setenv("OPENAI_API_KEY", "secret-value")
