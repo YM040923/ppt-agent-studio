@@ -35,7 +35,7 @@ try {
 
     Invoke-NativeStep "Python tests" { python -m pytest agent\tests -q }
     Invoke-NativeStep "Offline demo smoke" {
-        python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\verify-demo --follow-up "Add a risk mitigation slide"
+        python -m ppt_agent_studio.runtime.demo --artifact-dir artifacts\verify-demo --follow-up "Create an executive summary slide at the beginning"
     }
     Invoke-NativeStep "Desktop tests" { dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj }
     Invoke-NativeStep "Desktop build" { dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj }

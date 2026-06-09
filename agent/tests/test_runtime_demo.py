@@ -47,10 +47,12 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
 
 
 def test_run_demo_can_apply_follow_up_turn(tmp_path):
+    follow_up = "Create an executive summary slide at the beginning"
+
     async def run():
         return await run_demo(
             prompt="Make a 5 slide board AI strategy deck in McKinsey style",
-            follow_up="Add a risk mitigation slide",
+            follow_up=follow_up,
             artifact_dir=tmp_path,
             session_id="demo-session",
             deck_id="demo-deck",
@@ -59,10 +61,13 @@ def test_run_demo_can_apply_follow_up_turn(tmp_path):
     summary = asyncio.run(run())
 
     assert summary.deck_revision == 2
-    assert summary.follow_up == "Add a risk mitigation slide"
+    assert summary.follow_up == follow_up
     assert summary.slide_count == 6
     assert summary.event_count == 20
     assert summary.preview_html_path.name == "demo-deck-r2.html"
+    preview_html = summary.preview_html_path.read_text(encoding="utf-8")
+    assert "Executive Summary" in preview_html
+    assert "At The Beginning" not in preview_html
     assert summary.pptx_path.name == "demo-deck-r2.pptx"
     assert summary.summary_json_path.name == "demo-deck-r2-summary.json"
-    assert "Follow-up: Add a risk mitigation slide" in format_summary(summary)
+    assert f"Follow-up: {follow_up}" in format_summary(summary)

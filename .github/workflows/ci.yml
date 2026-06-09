@@ -26,7 +26,7 @@ jobs:
         run: >
           python -m ppt_agent_studio.runtime.demo
           --artifact-dir artifacts\ci-demo
-          --follow-up "Add a risk mitigation slide"
+          --follow-up "Create an executive summary slide at the beginning"
       - name: Upload demo deck artifact
         uses: actions/upload-artifact@v7
         with:

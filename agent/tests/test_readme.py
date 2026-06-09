@@ -12,6 +12,7 @@ def test_readme_documents_demo_summary_json():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
     assert "summary JSON" in readme
+    assert "Create an executive summary slide at the beginning" in readme
     assert "demo-deck-r2-summary.json" in readme
     assert "deck_title" in readme
     assert "theme_name" in readme
