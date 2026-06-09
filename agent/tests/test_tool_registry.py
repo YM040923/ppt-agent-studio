@@ -430,6 +430,41 @@ def test_default_registry_adds_slide_from_outline_content_fields():
     assert added_slide["speaker_notes"] == "Ask for the board decision."
 
 
+def test_default_registry_adds_slide_with_block_text_aliases():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_add_block_aliases",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [{"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []}],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s2",
+                    "title": "Decision",
+                    "layout": "content",
+                    "blocks": [
+                        {"type": "bullet", "content": "Start with finance"},
+                        {"type": "summary_item", "value": "Decision needed"},
+                    ],
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+    added_slide = result.payload["deck"]["slides"][1]
+
+    assert added_slide["blocks"] == [
+        {"type": "bullet", "content": "Start with finance", "text": "Start with finance"},
+        {"type": "summary_item", "value": "Decision needed", "text": "Decision needed"},
+    ]
+
+
 def test_default_registry_rejects_ambiguous_add_slide_position():
     registry = build_default_registry()
     deck = {

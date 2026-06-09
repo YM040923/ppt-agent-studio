@@ -361,7 +361,7 @@ def _slide_from_dict(raw_slide: dict[str, Any], index: int) -> SlideSpec:
 def _slide_blocks_from_dict(raw_slide: dict[str, Any]) -> list[dict[str, Any]]:
     raw_blocks = raw_slide.get("blocks")
     if isinstance(raw_blocks, list):
-        return raw_blocks
+        return _normalized_blocks(raw_blocks)
     normalized = deck_from_outline({"slides": [raw_slide]}, deck_id="_slide")
     return normalized.slides[0].blocks if normalized.slides else []
 
@@ -369,10 +369,33 @@ def _slide_blocks_from_dict(raw_slide: dict[str, Any]) -> list[dict[str, Any]]:
 def _slide_patch_blocks(patch: dict[str, Any], slide: SlideSpec) -> list[dict[str, Any]]:
     raw_blocks = patch.get("blocks")
     if isinstance(raw_blocks, list):
-        return raw_blocks
+        return _normalized_blocks(raw_blocks)
     if _has_outline_content_fields(patch):
         return _slide_blocks_from_dict(patch)
     return slide.blocks
+
+
+def _normalized_blocks(raw_blocks: list[Any]) -> list[dict[str, Any]]:
+    return [_normalized_block(block) for block in raw_blocks if isinstance(block, dict)]
+
+
+def _normalized_block(block: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(block)
+    block_type = str(normalized.get("type") or "text")
+    text = str(normalized.get("text") or "").strip()
+    if block_type != "point" and not text:
+        alias = _block_text_alias(normalized)
+        if alias:
+            normalized["text"] = alias
+    return normalized
+
+
+def _block_text_alias(block: dict[str, Any]) -> str:
+    for key in ("content", "value", "body", "label", "title"):
+        value = block.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
 
 
 def _has_outline_content_fields(source: dict[str, Any]) -> bool:
