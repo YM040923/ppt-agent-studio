@@ -47,6 +47,28 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void RuntimeConfigProbeSurvivesRuntimeToolsFailure()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+        var initializeStart = source.IndexOf("public async Task InitializeRuntimeAsync()", StringComparison.Ordinal);
+        var stopRuntimeStart = source.IndexOf("public void StopRuntime()", initializeStart, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, initializeStart);
+        Assert.IsGreaterThan(initializeStart, stopRuntimeStart);
+
+        var initializeBody = source[initializeStart..stopRuntimeStart];
+        var configProbe = initializeBody.IndexOf("var runtimeConfig = await _agentClient.GetRuntimeConfigAsync();", StringComparison.Ordinal);
+        var configAssignment = initializeBody.IndexOf("RuntimeConfig = runtimeConfig;", StringComparison.Ordinal);
+        var toolsProbe = initializeBody.IndexOf("var runtimeTools = await _agentClient.GetRuntimeToolsAsync();", StringComparison.Ordinal);
+
+        Assert.IsGreaterThan(-1, configProbe);
+        Assert.IsGreaterThan(configProbe, configAssignment);
+        Assert.IsGreaterThan(configAssignment, toolsProbe);
+        StringAssert.Contains(initializeBody, "Tools probe failed");
+        StringAssert.Contains(initializeBody, "Config probe failed");
+    }
+
+    [TestMethod]
     public void SettingsDialogOffersEnvFileLocationAction()
     {
         var viewModelSource = File.ReadAllText(FindMainPageViewModel());

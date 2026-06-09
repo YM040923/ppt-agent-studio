@@ -113,13 +113,23 @@ public partial class MainPageViewModel : ObservableObject
         try
         {
             var runtimeConfig = await _agentClient.GetRuntimeConfigAsync();
-            var runtimeTools = await _agentClient.GetRuntimeToolsAsync();
             RuntimeConfig = runtimeConfig;
-            RuntimeTools = runtimeTools;
-            SessionStatus = $"{runtimeConfig.ToStatusText()} Tools: {runtimeTools.ToolCount}.";
+            SessionStatus = runtimeConfig.ToStatusText();
             OnPropertyChanged(nameof(SettingsText));
             OpenEnvFileLocationCommand.NotifyCanExecuteChanged();
             CreateEnvFileCommand.NotifyCanExecuteChanged();
+            try
+            {
+                var runtimeTools = await _agentClient.GetRuntimeToolsAsync();
+                RuntimeTools = runtimeTools;
+                SessionStatus = $"{runtimeConfig.ToStatusText()} Tools: {runtimeTools.ToolCount}.";
+                OnPropertyChanged(nameof(SettingsText));
+            }
+            catch (Exception ex)
+            {
+                SessionStatus = $"{runtimeConfig.ToStatusText()} Tools probe failed: {ex.Message}";
+                OnPropertyChanged(nameof(SettingsText));
+            }
         }
         catch (Exception ex)
         {
