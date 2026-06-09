@@ -79,9 +79,23 @@ def _content_to_text(content: Any) -> str:
         if isinstance(block, str) and block.strip():
             parts.append(block.strip())
         elif isinstance(block, dict):
-            text = block.get("text")
-            if isinstance(text, str) and text.strip():
-                parts.append(text.strip())
+            text = _content_block_text(block)
+            if text:
+                parts.append(text)
     if not parts:
         raise ValueError("OpenAI-compatible response did not include text content")
     return "\n".join(parts)
+
+
+def _content_block_text(block: dict[str, Any]) -> str:
+    text = block.get("text")
+    if isinstance(text, str) and text.strip():
+        return text.strip()
+    if isinstance(text, dict):
+        value = text.get("value")
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    content = block.get("content")
+    if isinstance(content, str) and content.strip():
+        return content.strip()
+    return ""

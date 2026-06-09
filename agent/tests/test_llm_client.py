@@ -95,6 +95,38 @@ def test_chat_client_parses_content_blocks_from_compatible_provider():
     assert asyncio.run(run()) == "First paragraph.\nSecond paragraph."
 
 
+def test_chat_client_parses_nested_text_content_blocks_from_compatible_provider():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": [
+                                {"type": "text", "text": {"value": "Nested paragraph."}},
+                                {"type": "output_text", "content": "Provider content field."},
+                            ]
+                        }
+                    }
+                ]
+            },
+        )
+
+    config = OpenAICompatibleConfig(
+        base_url="https://provider.example/v1",
+        api_key="secret-value",
+        model="gpt-compatible-model",
+    )
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = OpenAICompatibleChatClient(config=config, http_client=http_client)
+            return await client.complete(messages=[{"role": "user", "content": "Draft"}])
+
+    assert asyncio.run(run()) == "Nested paragraph.\nProvider content field."
+
+
 def test_chat_client_parses_legacy_text_choice_from_compatible_provider():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
