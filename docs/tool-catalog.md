@@ -76,6 +76,8 @@ Required input:
 }
 ```
 
+`deck.update_slide` accepts explicit `blocks` or outline-style content fields in `patch`.
+
 Output:
 
 ```json

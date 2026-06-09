@@ -91,7 +91,7 @@ def update_slide(arguments: dict[str, Any]) -> ToolResult:
                 slide_id=str(patch.get("slide_id") or slide.slide_id),
                 title=str(patch.get("title") or slide.title),
                 layout=str(patch.get("layout") or slide.layout),
-                blocks=patch.get("blocks") if isinstance(patch.get("blocks"), list) else slide.blocks,
+                blocks=_slide_patch_blocks(patch, slide),
                 speaker_notes=str(patch.get("speaker_notes") or slide.speaker_notes),
             )
         )
@@ -364,6 +364,19 @@ def _slide_blocks_from_dict(raw_slide: dict[str, Any]) -> list[dict[str, Any]]:
         return raw_blocks
     normalized = deck_from_outline({"slides": [raw_slide]}, deck_id="_slide")
     return normalized.slides[0].blocks if normalized.slides else []
+
+
+def _slide_patch_blocks(patch: dict[str, Any], slide: SlideSpec) -> list[dict[str, Any]]:
+    raw_blocks = patch.get("blocks")
+    if isinstance(raw_blocks, list):
+        return raw_blocks
+    if _has_outline_content_fields(patch):
+        return _slide_blocks_from_dict(patch)
+    return slide.blocks
+
+
+def _has_outline_content_fields(source: dict[str, Any]) -> bool:
+    return any(key in source for key in ("subtitle", "content", "toc_items", "points", "bullets", "summary_items"))
 
 
 def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:

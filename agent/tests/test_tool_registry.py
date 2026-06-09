@@ -57,6 +57,12 @@ def test_tool_catalog_documents_add_slide_outline_fields():
     assert "`deck.add_slide` accepts DeckSpec `blocks` or outline-style `content`/`bullets` fields" in docs
 
 
+def test_tool_catalog_documents_update_slide_outline_fields():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`deck.update_slide` accepts explicit `blocks` or outline-style content fields in `patch`" in docs
+
+
 def test_tool_registry_rejects_duplicate_tools():
     definition = ToolDefinition(
         name="demo.echo",
@@ -297,6 +303,46 @@ def test_default_registry_updates_adds_and_removes_slides():
     assert removed["revision"] == 6
     assert [slide["slide_id"] for slide in removed["slides"]] == ["s3", "s2"]
     assert removed["metadata"] == {"audience": "board", "style": "consulting"}
+
+
+def test_default_registry_updates_slide_from_outline_content_fields():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_update_outline_fields",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Decision",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Old recommendation"}],
+            }
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s1",
+                "patch": {
+                    "content": "Approve a phased rollout.",
+                    "bullets": [{"text": "Start with finance"}],
+                    "speaker_notes": "Ask for the decision.",
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+    updated_slide = result.payload["deck"]["slides"][0]
+
+    assert updated_slide["blocks"] == [
+        {"type": "text", "text": "Approve a phased rollout."},
+        {"type": "bullet", "text": "Start with finance"},
+    ]
+    assert updated_slide["speaker_notes"] == "Ask for the decision."
 
 
 def test_default_registry_adds_slide_before_target():
