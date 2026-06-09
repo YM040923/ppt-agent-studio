@@ -190,7 +190,8 @@ def export_pptx(arguments: dict[str, Any]) -> ToolResult:
     raw_deck = arguments.get("deck")
     if not isinstance(raw_deck, dict):
         raise ValueError("deck must be an object")
-    output_path = Path(str(arguments.get("output_path") or "")).expanduser()
+    output_path_text = str(arguments.get("output_path") or "").strip()
+    output_path = Path(output_path_text).expanduser()
     if not output_path.name:
         raise ValueError("output_path is required")
 

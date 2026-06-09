@@ -103,3 +103,24 @@ def test_pptx_export_tool_applies_theme_to_editable_shapes(tmp_path):
     assert str(slide.background.fill.fore_color.rgb) == "111827"
     assert str(slide.shapes[0].fill.fore_color.rgb) == "22C55E"
     assert str(title_shape.text_frame.paragraphs[0].runs[0].font.color.rgb) == "F8FAFC"
+
+
+def test_pptx_export_tool_rejects_blank_output_path(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_blank_path",
+        "title": "Blank Path",
+        "revision": 1,
+        "slides": [],
+    }
+
+    async def run():
+        return await registry.run("pptx.export", {"deck": deck, "output_path": "   "})
+
+    try:
+        asyncio.run(run())
+    except ValueError as exc:
+        assert "output_path is required" in str(exc)
+    else:
+        raise AssertionError("pptx.export accepted a blank output_path")
