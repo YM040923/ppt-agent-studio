@@ -283,6 +283,8 @@ public partial class MainPageViewModel : ObservableObject
         }
 
         Messages.Add(new ChatMessageItem { Role = "You", Content = text });
+        _workspaceDeckState.Reset();
+        ExportLatestCommand.NotifyCanExecuteChanged();
         InputText = "";
         IsSending = true;
         using var turnCancellation = new CancellationTokenSource();

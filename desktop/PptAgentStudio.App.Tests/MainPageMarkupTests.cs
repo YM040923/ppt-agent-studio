@@ -232,6 +232,27 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelClearsStaleExportWhenSendingNewTurn()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+        var sendStart = source.IndexOf("private async Task Send()", StringComparison.Ordinal);
+        var nextMemberStart = source.IndexOf("private void ApplyRuntimeEvent", sendStart, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, sendStart);
+        Assert.IsGreaterThan(sendStart, nextMemberStart);
+
+        var sendBody = source[sendStart..nextMemberStart];
+        var userMessage = sendBody.IndexOf("Messages.Add(new ChatMessageItem { Role = \"You\", Content = text });", StringComparison.Ordinal);
+        var reset = sendBody.IndexOf("_workspaceDeckState.Reset();", StringComparison.Ordinal);
+        var notifyExport = sendBody.IndexOf("ExportLatestCommand.NotifyCanExecuteChanged();", StringComparison.Ordinal);
+        var sendState = sendBody.IndexOf("IsSending = true;", StringComparison.Ordinal);
+
+        Assert.IsGreaterThan(userMessage, reset, "The stale export state should clear after the user message is accepted.");
+        Assert.IsGreaterThan(reset, notifyExport, "The export command should be refreshed after clearing stale export state.");
+        Assert.IsLessThan(sendState, notifyExport, "The stale export command should disappear before the new turn starts sending.");
+    }
+
+    [TestMethod]
     public void InitialMessageOffersDemoDeckAction()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
