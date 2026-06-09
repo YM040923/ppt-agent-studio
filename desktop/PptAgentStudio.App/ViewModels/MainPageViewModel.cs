@@ -190,6 +190,8 @@ public partial class MainPageViewModel : ObservableObject
         var pptxPath = _workspaceDeckState.LastPptxPath;
         if (!File.Exists(pptxPath))
         {
+            _workspaceDeckState.Reset();
+            ExportLatestCommand.NotifyCanExecuteChanged();
             SessionStatus = $"Latest editable PPTX export was not found: {pptxPath}";
             Messages.Add(new ChatMessageItem
             {

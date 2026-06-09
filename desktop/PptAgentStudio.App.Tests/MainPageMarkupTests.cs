@@ -291,6 +291,28 @@ public sealed class MainPageMarkupTests
     }
 
     [TestMethod]
+    public void ViewModelClearsMissingExportPathWhenOpenFails()
+    {
+        var source = File.ReadAllText(FindMainPageViewModel());
+        var exportStart = source.IndexOf("private void ExportLatest()", StringComparison.Ordinal);
+        var nextMemberStart = source.IndexOf("private void OpenEnvFileLocation()", exportStart, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, exportStart);
+        Assert.IsGreaterThan(exportStart, nextMemberStart);
+
+        var exportBody = source[exportStart..nextMemberStart];
+        var missingFileGuard = exportBody.IndexOf("if (!File.Exists(pptxPath))", StringComparison.Ordinal);
+        var reset = exportBody.IndexOf("_workspaceDeckState.Reset();", missingFileGuard, StringComparison.Ordinal);
+        var notifyExport = exportBody.IndexOf("ExportLatestCommand.NotifyCanExecuteChanged();", missingFileGuard, StringComparison.Ordinal);
+        var missingReturn = exportBody.IndexOf("return;", missingFileGuard, StringComparison.Ordinal);
+
+        Assert.IsGreaterThan(-1, missingFileGuard);
+        Assert.IsGreaterThan(missingFileGuard, reset);
+        Assert.IsGreaterThan(reset, notifyExport);
+        Assert.IsLessThan(missingReturn, notifyExport);
+    }
+
+    [TestMethod]
     public void NewDeckStartsFreshRuntimeDeckIdentity()
     {
         var source = File.ReadAllText(FindMainPageViewModel());
