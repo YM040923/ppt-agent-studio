@@ -92,29 +92,40 @@ class OpenAICompatibleConfig:
 
 def _config_value(name: str, default: str, file_values: dict[str, str]) -> str:
     value = os.environ.get(name)
-    if value is not None and value.strip():
+    if value is not None and _is_configured_value(name, value):
         return value
     file_value = file_values.get(name)
-    if file_value is not None and file_value.strip():
+    if file_value is not None and _is_configured_value(name, file_value):
         return file_value
     return default
 
 
 def _config_source(name: str, file_values: dict[str, str]) -> str:
     value = os.environ.get(name)
-    if value is not None and value.strip():
+    if value is not None and _is_configured_value(name, value):
         return "environment"
     file_value = file_values.get(name)
-    if file_value is not None and file_value.strip():
+    if file_value is not None and _is_configured_value(name, file_value):
         return "env_file"
     return "default"
 
 
 def _api_key_from_config(value: str) -> str:
     key = value.strip()
-    if key.casefold() in {"replace-with-your-api-key", "your-secret-key", "your-api-key"}:
+    if _is_placeholder_api_key(key):
         return ""
     return key
+
+
+def _is_configured_value(name: str, value: str) -> bool:
+    stripped = value.strip()
+    if not stripped:
+        return False
+    return name != "OPENAI_API_KEY" or not _is_placeholder_api_key(stripped)
+
+
+def _is_placeholder_api_key(value: str) -> bool:
+    return value.casefold() in {"replace-with-your-api-key", "your-secret-key", "your-api-key"}
 
 
 def _read_env_file(env_file: str | os.PathLike[str] | None) -> dict[str, str]:

@@ -172,6 +172,20 @@ def test_openai_compatible_config_treats_example_placeholder_key_as_missing(monk
     assert config.api_key == ""
     assert config.has_api_key is False
     assert config.safe_summary()["has_api_key"] is False
+    assert config.safe_summary()["source"]["api_key"] == "default"
+
+
+def test_openai_compatible_config_treats_env_file_placeholder_key_as_missing(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    env_file = tmp_path / ".env.local"
+    env_file.write_text("OPENAI_API_KEY=your-secret-key", encoding="utf-8")
+
+    config = OpenAICompatibleConfig.from_env(env_file=env_file)
+
+    assert config.api_key == ""
+    assert config.has_api_key is False
+    assert config.safe_summary()["has_api_key"] is False
+    assert config.safe_summary()["source"]["api_key"] == "default"
 
 
 def test_openai_compatible_config_rejects_invalid_extra_headers_without_value(monkeypatch):

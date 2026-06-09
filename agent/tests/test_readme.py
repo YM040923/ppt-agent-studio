@@ -69,6 +69,12 @@ def test_readme_documents_blank_model_config_values_are_ignored():
     assert "Blank `OPENAI_BASE_URL`, `OPENAI_MODEL`, and `OPENAI_EXTRA_HEADERS` values are treated as unset" in readme
 
 
+def test_readme_documents_placeholder_api_keys_are_ignored():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "Placeholder API keys from `.env.example` are also treated as unset" in readme
+
+
 def test_readme_documents_settings_env_folder_action():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
