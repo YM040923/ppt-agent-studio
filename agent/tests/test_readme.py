@@ -75,6 +75,14 @@ def test_readme_documents_settings_env_file_template_action():
     assert "does not overwrite" in readme
 
 
+def test_readme_documents_export_action_state_guards():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "only appears when `pptx.ready` includes a usable export path" in readme
+    assert "clears stale export actions when a newer Agent turn or deck revision starts" in readme
+    assert "clears the missing path if the exported file was moved or deleted" in readme
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
