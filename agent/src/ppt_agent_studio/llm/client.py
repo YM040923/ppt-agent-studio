@@ -53,10 +53,21 @@ def _extract_choice_text(data: Any) -> str:
         raise ValueError("OpenAI-compatible response did not include text content")
 
     choices = data.get("choices")
-    if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+    if not isinstance(choices, list) or not choices:
         raise ValueError("OpenAI-compatible response did not include text content")
 
-    choice = choices[0]
+    for choice in choices:
+        if not isinstance(choice, dict):
+            continue
+        try:
+            return _choice_text(choice)
+        except ValueError:
+            continue
+
+    raise ValueError("OpenAI-compatible response did not include text content")
+
+
+def _choice_text(choice: dict[str, Any]) -> str:
     message = choice.get("message")
     if isinstance(message, dict) and "content" in message:
         return _content_to_text(message["content"])

@@ -73,6 +73,12 @@ def test_architecture_documents_dict_message_content():
     assert "dictionary-shaped message content" in architecture
 
 
+def test_architecture_documents_choice_fallback_parsing():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "first choice with usable text" in architecture
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:
