@@ -237,6 +237,38 @@ def test_default_registry_updates_deck_metadata():
     }
 
 
+def test_default_registry_updates_deck_metadata_from_text_aliases():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_metadata_aliases",
+        "title": "AI Strategy",
+        "revision": 1,
+        "metadata": {"audience": "board", "style": "consulting"},
+        "slides": [],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {
+                    "metadata": {
+                        "audience": {"text": "CFO leadership"},
+                        "style": {"value": "investor narrative"},
+                    }
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["metadata"] == {
+        "audience": "CFO leadership",
+        "style": "investor narrative",
+    }
+
+
 def test_default_registry_updates_adds_and_removes_slides():
     registry = build_default_registry()
     deck = {

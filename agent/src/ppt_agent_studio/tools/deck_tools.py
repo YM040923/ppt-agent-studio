@@ -56,7 +56,7 @@ def update_deck(arguments: dict[str, Any]) -> ToolResult:
     patch_metadata = patch.get("metadata")
     if isinstance(patch_metadata, dict):
         for key, value in patch_metadata.items():
-            text = str(value).strip()
+            text = _metadata_patch_text(value)
             if text:
                 metadata[str(key)] = text
     updated = DeckSpec(
@@ -417,6 +417,17 @@ def _slide_patch_speaker_notes(patch: dict[str, Any], slide: SlideSpec) -> str:
     if any(key in patch for key in ("speaker_notes", "notes", "talk_track")):
         return _slide_speaker_notes(patch)
     return slide.speaker_notes
+
+
+def _metadata_patch_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        for key in ("text", "value", "content", "label", "title"):
+            text = value.get(key)
+            if isinstance(text, str) and text.strip():
+                return text.strip()
+    return ""
 
 
 def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
