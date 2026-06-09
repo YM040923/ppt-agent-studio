@@ -110,7 +110,7 @@ def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:
     if subtitle:
         blocks.append({"type": "subtitle", "text": subtitle})
 
-    content = _first_text_value(slide, ("content",))
+    content = _first_text_value(slide, ("content", "body", "key_message"))
     if content:
         blocks.append({"type": "text", "text": content})
 

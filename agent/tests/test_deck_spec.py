@@ -84,6 +84,21 @@ def test_deck_from_outline_preserves_model_content_fields():
     ]
 
 
+def test_deck_from_outline_preserves_model_body_content_aliases():
+    outline = {
+        "deck_title": "AI Strategy",
+        "slides": [
+            {"title": "Decision", "body": "Approve a phased rollout."},
+            {"title": "Message", "key_message": "Adoption risk is manageable."},
+        ],
+    }
+
+    deck = deck_from_outline(outline, deck_id="deck_content_aliases", revision=1)
+
+    assert deck.slides[0].blocks == [{"type": "text", "text": "Approve a phased rollout."}]
+    assert deck.slides[1].blocks == [{"type": "text", "text": "Adoption risk is manageable."}]
+
+
 def test_slide_spec_rejects_empty_title():
     try:
         SlideSpec(slide_id="s1", title="   ", layout="content", blocks=[])

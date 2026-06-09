@@ -376,7 +376,10 @@ def _slide_patch_blocks(patch: dict[str, Any], slide: SlideSpec) -> list[dict[st
 
 
 def _has_outline_content_fields(source: dict[str, Any]) -> bool:
-    return any(key in source for key in ("subtitle", "content", "toc_items", "points", "bullets", "summary_items"))
+    return any(
+        key in source
+        for key in ("subtitle", "content", "body", "key_message", "toc_items", "points", "bullets", "summary_items")
+    )
 
 
 def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
