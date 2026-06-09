@@ -28,6 +28,7 @@ class DemoRunSummary:
     preview_html_path: Path
     pptx_path: Path
     summary_json_path: Path
+    summary_markdown_path: Path
 
 
 async def run_demo(
@@ -78,6 +79,7 @@ async def run_demo(
     preview_html_path = output_dir / f"{_safe_artifact_name(deck_id)}-r{deck_revision}.html"
     preview_html_path.write_text(preview_html, encoding="utf-8")
     summary_json_path = output_dir / f"{_safe_artifact_name(deck_id)}-r{deck_revision}-summary.json"
+    summary_markdown_path = output_dir / f"{_safe_artifact_name(deck_id)}-r{deck_revision}-summary.md"
 
     summary = DemoRunSummary(
         session_id=session_id,
@@ -92,6 +94,7 @@ async def run_demo(
         preview_html_path=preview_html_path,
         pptx_path=pptx_path,
         summary_json_path=summary_json_path,
+        summary_markdown_path=summary_markdown_path,
     )
     summary_json_path.write_text(
         json.dumps(
@@ -108,12 +111,14 @@ async def run_demo(
                 "preview_html_path": str(summary.preview_html_path),
                 "pptx_path": str(summary.pptx_path),
                 "summary_json_path": str(summary.summary_json_path),
+                "summary_markdown_path": str(summary.summary_markdown_path),
             },
             indent=2,
         )
         + "\n",
         encoding="utf-8",
     )
+    summary_markdown_path.write_text(format_markdown_summary(summary), encoding="utf-8")
     return summary
 
 
@@ -137,9 +142,36 @@ def format_summary(summary: DemoRunSummary) -> str:
             f"Preview HTML: {summary.preview_html_path}",
             f"Editable PPTX: {summary.pptx_path}",
             f"Run summary: {summary.summary_json_path}",
+            f"Markdown summary: {summary.summary_markdown_path}",
         ]
     )
     return "\n".join(lines)
+
+
+def format_markdown_summary(summary: DemoRunSummary) -> str:
+    lines = [
+        "# PPT Agent Studio Demo Summary",
+        "",
+        f"- Session: {summary.session_id}",
+        f"- Deck: {summary.deck_id} r{summary.deck_revision}",
+        f"- Prompt: {summary.prompt}",
+    ]
+    if summary.follow_up:
+        lines.append(f"- Follow-up: {summary.follow_up}")
+    if summary.deck_title:
+        lines.append(f"- Title: {summary.deck_title}")
+    if summary.theme_name:
+        lines.append(f"- Theme: {summary.theme_name}")
+    lines.extend(
+        [
+            f"- Slides: {summary.slide_count}",
+            f"- Events: {summary.event_count}",
+            f"- Preview HTML: {summary.preview_html_path}",
+            f"- Editable PPTX: {summary.pptx_path}",
+            f"- Summary JSON: {summary.summary_json_path}",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def main(argv: Iterable[str] | None = None) -> None:

@@ -27,6 +27,9 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
     assert summary.pptx_path.exists()
     assert summary.pptx_path.name == "demo-deck-r1.pptx"
     assert summary.summary_json_path.name == "demo-deck-r1-summary.json"
+    assert summary.summary_markdown_path.name == "demo-deck-r1-summary.md"
+    assert summary.summary_markdown_path.exists()
+    assert "# PPT Agent Studio Demo Summary" in summary.summary_markdown_path.read_text(encoding="utf-8")
     assert json.loads(summary.summary_json_path.read_text(encoding="utf-8")) == {
         "session_id": "demo-session",
         "deck_id": "demo-deck",
@@ -40,6 +43,7 @@ def test_run_demo_writes_preview_and_pptx(tmp_path):
         "preview_html_path": str(summary.preview_html_path),
         "pptx_path": str(summary.pptx_path),
         "summary_json_path": str(summary.summary_json_path),
+        "summary_markdown_path": str(summary.summary_markdown_path),
     }
     assert "Title: Board AI Strategy" in format_summary(summary)
     assert "Theme: executive-consulting" in format_summary(summary)
@@ -70,4 +74,9 @@ def test_run_demo_can_apply_follow_up_turn(tmp_path):
     assert "At The Beginning" not in preview_html
     assert summary.pptx_path.name == "demo-deck-r2.pptx"
     assert summary.summary_json_path.name == "demo-deck-r2-summary.json"
+    assert summary.summary_markdown_path.name == "demo-deck-r2-summary.md"
+    summary_markdown = summary.summary_markdown_path.read_text(encoding="utf-8")
+    assert "Follow-up: Create an executive summary slide at the beginning" in summary_markdown
+    assert "Preview HTML:" in summary_markdown
+    assert "Editable PPTX:" in summary_markdown
     assert f"Follow-up: {follow_up}" in format_summary(summary)
