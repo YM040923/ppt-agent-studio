@@ -115,6 +115,40 @@ def test_openai_compatible_config_prefers_env_over_env_file(monkeypatch, tmp_pat
     }
 
 
+def test_openai_compatible_config_ignores_blank_env_values(monkeypatch):
+    monkeypatch.setenv("OPENAI_BASE_URL", "   ")
+    monkeypatch.setenv("OPENAI_MODEL", "")
+
+    config = OpenAICompatibleConfig.from_env()
+
+    assert config.base_url == "https://api.openai.com/v1"
+    assert config.model == "gpt-4.1-mini"
+    assert config.safe_summary()["source"]["base_url"] == "default"
+    assert config.safe_summary()["source"]["model"] == "default"
+
+
+def test_openai_compatible_config_ignores_blank_env_file_values(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    env_file = tmp_path / ".env.local"
+    env_file.write_text(
+        "\n".join(
+            [
+                "OPENAI_BASE_URL=   ",
+                "OPENAI_MODEL=",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    config = OpenAICompatibleConfig.from_env(env_file=env_file)
+
+    assert config.base_url == "https://api.openai.com/v1"
+    assert config.model == "gpt-4.1-mini"
+    assert config.safe_summary()["source"]["base_url"] == "default"
+    assert config.safe_summary()["source"]["model"] == "default"
+
+
 def test_openai_compatible_config_redacts_key():
     config = OpenAICompatibleConfig(
         base_url="https://provider.example/v1",

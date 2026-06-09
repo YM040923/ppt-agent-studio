@@ -92,15 +92,20 @@ class OpenAICompatibleConfig:
 
 def _config_value(name: str, default: str, file_values: dict[str, str]) -> str:
     value = os.environ.get(name)
-    if value is not None:
+    if value is not None and value.strip():
         return value
-    return file_values.get(name, default)
+    file_value = file_values.get(name)
+    if file_value is not None and file_value.strip():
+        return file_value
+    return default
 
 
 def _config_source(name: str, file_values: dict[str, str]) -> str:
-    if os.environ.get(name) is not None:
+    value = os.environ.get(name)
+    if value is not None and value.strip():
         return "environment"
-    if name in file_values:
+    file_value = file_values.get(name)
+    if file_value is not None and file_value.strip():
         return "env_file"
     return "default"
 

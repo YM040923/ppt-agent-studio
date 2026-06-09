@@ -101,7 +101,7 @@ OPENAI_EXTRA_HEADERS={"X-Provider":"tenant-id"}
 PPT_AGENT_PLANNER=llm
 ```
 
-`OPENAI_EXTRA_HEADERS` is optional and must be a JSON object. It is sent to the model provider, but runtime status only reports whether extra headers are configured; names and values are not displayed. Do not commit `.env.local`.
+`OPENAI_EXTRA_HEADERS` is optional and must be a JSON object. It is sent to the model provider, but runtime status only reports whether extra headers are configured; names and values are not displayed. Blank `OPENAI_BASE_URL`, `OPENAI_MODEL`, and `OPENAI_EXTRA_HEADERS` values are treated as unset so the runtime can fall back to safe defaults. Do not commit `.env.local`.
 
 Desktop sidecar overrides such as `PPT_AGENT_RUNTIME_ROOT` and `PPT_AGENT_PYTHON` are read before Python starts, so set them in the shell that launches the WinUI app rather than inside `.env.local`.
 
