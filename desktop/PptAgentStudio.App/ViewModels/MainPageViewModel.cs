@@ -426,7 +426,7 @@ public partial class MainPageViewModel : ObservableObject
 
     private static bool IsDeckScopedEvent(string eventType)
     {
-        return eventType is "deck.updated" or "tool.completed" or "pptx.ready" or "preview.ready";
+        return eventType is "plan.updated" or "deck.updated" or "tool.completed" or "pptx.ready" or "preview.ready";
     }
 
     private static ChatMessageItem CreateInitialMessage()

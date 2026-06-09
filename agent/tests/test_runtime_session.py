@@ -67,6 +67,7 @@ def test_agent_session_turn_emits_ordered_preview_and_pptx_events(tmp_path):
         "plan.updated",
     ]
     assert [event.seq for event in events] == list(range(1, 12))
+    assert all(event.deck_id == "deck_001" for event in events)
     assert events[1].payload["plan"]["plan_id"] == "deck_001-r1-plan"
     assert events[1].payload["plan"]["status"] == "running"
     assert events[1].payload["plan"]["slide_count"] == 5

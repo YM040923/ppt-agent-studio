@@ -583,6 +583,7 @@ class AgentSession:
             seq=self._seq,
             session_id=self.session_id,
             type=event_type,
+            deck_id=self.deck_id,
             payload=payload,
         )
 

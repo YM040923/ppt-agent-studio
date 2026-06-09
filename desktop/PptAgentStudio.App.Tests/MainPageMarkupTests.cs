@@ -372,7 +372,7 @@ public sealed class MainPageMarkupTests
 
         Assert.IsGreaterThan(-1, missingDeckGuard);
         Assert.IsGreaterThan(missingDeckGuard, staleDeckGuard);
-        StringAssert.Contains(source, "return eventType is \"deck.updated\" or \"tool.completed\" or \"pptx.ready\" or \"preview.ready\";");
+        StringAssert.Contains(source, "return eventType is \"plan.updated\" or \"deck.updated\" or \"tool.completed\" or \"pptx.ready\" or \"preview.ready\";");
     }
 
     private static string FindMainPageXaml()
