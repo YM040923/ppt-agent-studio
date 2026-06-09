@@ -44,6 +44,12 @@ def test_tool_catalog_documents_deck_metadata_patch():
     assert '"style": "consulting"' in docs
 
 
+def test_tool_catalog_documents_blank_deck_title_patches_are_ignored():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `patch.title` values are ignored for `deck.update_deck`" in docs
+
+
 def test_tool_catalog_documents_slide_position_constraints():
     docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
 
@@ -283,6 +289,33 @@ def test_default_registry_updates_deck_title():
     assert result.payload["deck"]["revision"] == 2
     assert result.payload["deck"]["title"] == "AI Operating Model"
     assert result.payload["deck"]["slides"][0]["title"] == "Cover"
+
+
+def test_default_registry_update_deck_ignores_blank_title_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_blank_title",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "metadata": {"audience": "board"},
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {"title": "   ", "metadata": {"style": "consulting"}},
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["title"] == "Board AI Strategy"
+    assert result.payload["deck"]["metadata"] == {"audience": "board", "style": "consulting"}
 
 
 def test_default_registry_updates_deck_metadata():

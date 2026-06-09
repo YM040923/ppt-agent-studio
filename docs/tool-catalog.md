@@ -38,6 +38,7 @@ Output:
 ## `deck.update_deck`
 
 Updates deck-level fields in the current `DeckSpec`.
+Blank `patch.title` values are ignored for `deck.update_deck`.
 
 Required input:
 

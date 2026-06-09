@@ -51,7 +51,7 @@ def update_deck(arguments: dict[str, Any]) -> ToolResult:
     patch = arguments.get("patch")
     if not isinstance(patch, dict):
         raise ValueError("patch must be an object")
-    title = str(patch.get("title") or deck.title)
+    title = _title_patch_text(patch.get("title")) or deck.title
     metadata = dict(deck.metadata)
     patch_metadata = patch.get("metadata")
     if isinstance(patch_metadata, dict):
@@ -446,6 +446,10 @@ def _metadata_patch_text(value: Any) -> str:
             if isinstance(text, str) and text.strip():
                 return text.strip()
     return ""
+
+
+def _title_patch_text(value: Any) -> str:
+    return value.strip() if isinstance(value, str) and value.strip() else ""
 
 
 def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
