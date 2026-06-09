@@ -58,6 +58,21 @@ def test_deck_from_outline_preserves_theme_tokens():
     assert payload["theme"]["accent"] == "#2563EB"
 
 
+def test_deck_from_outline_preserves_metadata_text_aliases():
+    outline = {
+        "deck_title": "AI Strategy",
+        "metadata": {
+            "audience": {"text": "CFO leadership"},
+            "style": {"value": "investor narrative"},
+        },
+        "slides": [],
+    }
+
+    deck = deck_from_outline(outline, deck_id="deck_metadata_aliases", revision=1)
+
+    assert deck.metadata == {"audience": "CFO leadership", "style": "investor narrative"}
+
+
 def test_deck_from_outline_preserves_model_content_fields():
     outline = {
         "deck_title": "AI Strategy",

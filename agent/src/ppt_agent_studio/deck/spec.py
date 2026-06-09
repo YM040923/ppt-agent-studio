@@ -169,6 +169,10 @@ def _first_text_value(source: dict[str, Any], keys: tuple[str, ...]) -> str:
         value = source.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
+        if isinstance(value, dict):
+            nested = _first_text_value(value, ("text", "value", "content", "body", "label", "title"))
+            if nested:
+                return nested
     return ""
 
 
