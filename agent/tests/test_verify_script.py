@@ -102,6 +102,27 @@ def test_sign_msix_package_creates_matching_test_certificate_and_verifies_signat
     assert "PFX" not in script
 
 
+def test_package_release_msix_runs_full_local_packaging_pipeline():
+    script_path = _repo_root().joinpath("scripts", "package-release-msix.ps1")
+
+    assert script_path.exists()
+
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "stage-agent-runtime.ps1" in script
+    assert "test-staged-agent-runtime.ps1" in script
+    assert "GenerateAppxPackageOnBuild=true" in script
+    assert "AppxPackageSigningEnabled=false" in script
+    assert "UapAppxPackageBuildMode=SideloadOnly" in script
+    assert "test-msix-package.ps1" in script
+    assert "sign-msix-package.ps1" in script
+    assert "Compress-Archive" in script
+    assert "artifacts\\msix\\ppt-agent-studio-msix.zip" in script
+    assert "package-release: archive ready" in script
+    assert "Sign" in script
+    assert "TrustCertificate" in script
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

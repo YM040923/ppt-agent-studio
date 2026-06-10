@@ -81,6 +81,18 @@ The demo writes preview HTML, editable PPTX, a summary JSON file, and a Markdown
 
 ## Packaging
 
+Create and verify a local unsigned sideload MSIX archive with one command:
+
+```powershell
+.\scripts\package-release-msix.ps1
+```
+
+This stages the bundled runtime, smokes the staged runtime, builds the Release MSIX, verifies package contents, and archives the AppPackages directory to `artifacts\msix\ppt-agent-studio-msix.zip`. To also apply the local testing certificate and verify the signature on the current machine:
+
+```powershell
+.\scripts\package-release-msix.ps1 -Sign -TrustCertificate
+```
+
 Create an unsigned sideload MSIX package locally:
 
 ```powershell

@@ -20,6 +20,15 @@ def test_readme_documents_local_msix_signing_script():
     assert "not a production release certificate" in readme
 
 
+def test_readme_documents_one_command_release_packaging_script():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert ".\\scripts\\package-release-msix.ps1" in readme
+    assert ".\\scripts\\package-release-msix.ps1 -Sign -TrustCertificate" in readme
+    assert "stages the bundled runtime" in readme
+    assert "archives the AppPackages directory" in readme
+
+
 def test_readme_documents_demo_summary_json():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
