@@ -73,10 +73,16 @@ public sealed class RuntimeSidecarService : IDisposable
         {
             ["PPT_AGENT_RUNTIME_ROOT"] = Environment.GetEnvironmentVariable("PPT_AGENT_RUNTIME_ROOT"),
             ["PPT_AGENT_PYTHON"] = Environment.GetEnvironmentVariable("PPT_AGENT_PYTHON"),
+            ["PPT_AGENT_ARTIFACTS_DIR"] = Environment.GetEnvironmentVariable("PPT_AGENT_ARTIFACTS_DIR"),
         };
         var agentSourceRoot = RuntimeSidecarLocator.FindAgentSourceRoot(AppContext.BaseDirectory, env);
         var python = RuntimeSidecarLocator.FindPythonExecutable(AppContext.BaseDirectory, env);
-        var plan = RuntimeSidecarLaunchPlan.Create(python, agentSourceRoot, Host, Port);
+        var artifactDirectory = RuntimeSidecarLocator.FindArtifactDirectory(
+            AppContext.BaseDirectory,
+            agentSourceRoot,
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            env);
+        var plan = RuntimeSidecarLaunchPlan.Create(python, agentSourceRoot, artifactDirectory, Host, Port);
         var startInfo = new ProcessStartInfo
         {
             FileName = plan.FileName,

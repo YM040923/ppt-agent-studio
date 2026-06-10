@@ -52,4 +52,32 @@ public static class RuntimeSidecarLocator
 
         return "python";
     }
+
+    public static string FindArtifactDirectory(
+        string appBaseDirectory,
+        string agentSourceRoot,
+        string localAppDataDirectory,
+        IReadOnlyDictionary<string, string?> environment)
+    {
+        if (environment.TryGetValue("PPT_AGENT_ARTIFACTS_DIR", out var overrideDirectory)
+            && !string.IsNullOrWhiteSpace(overrideDirectory))
+        {
+            return overrideDirectory.Trim();
+        }
+
+        if (IsBundledAgentSourceRoot(appBaseDirectory, agentSourceRoot))
+        {
+            return Path.Combine(localAppDataDirectory, "PPT Agent Studio", "artifacts", "decks");
+        }
+
+        var repositoryRoot = Path.GetFullPath(Path.Combine(agentSourceRoot, "..", ".."));
+        return Path.Combine(repositoryRoot, "artifacts", "decks");
+    }
+
+    private static bool IsBundledAgentSourceRoot(string appBaseDirectory, string agentSourceRoot)
+    {
+        var bundledAgentSourceRoot = Path.GetFullPath(Path.Combine(appBaseDirectory, BundledRuntimeDirectory, "agent", "src"));
+        var fullAgentSourceRoot = Path.GetFullPath(agentSourceRoot);
+        return string.Equals(bundledAgentSourceRoot, fullAgentSourceRoot, StringComparison.OrdinalIgnoreCase);
+    }
 }

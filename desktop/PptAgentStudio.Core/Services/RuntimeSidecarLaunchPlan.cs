@@ -21,12 +21,10 @@ public sealed class RuntimeSidecarLaunchPlan
     public static RuntimeSidecarLaunchPlan Create(
         string pythonExecutable,
         string agentSourceRoot,
+        string artifactDirectory,
         string host,
         int port)
     {
-        var repositoryRoot = Path.GetFullPath(Path.Combine(agentSourceRoot, "..", ".."));
-        var artifactDirectory = Path.Combine(repositoryRoot, "artifacts", "decks");
-
         return new RuntimeSidecarLaunchPlan(
             fileName: pythonExecutable,
             arguments: $"-m ppt_agent_studio.runtime.websocket_server --host {host} --port {port}",

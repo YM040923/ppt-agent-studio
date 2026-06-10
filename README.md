@@ -39,7 +39,7 @@ The Python runtime keeps Agent session state by `session_id` and `deck_id`, so r
 
 The desktop app filters deck-scoped runtime events by the active deck id. This keeps delayed messages from an older deck from overwriting the current preview or latest PPTX export after a reset.
 
-When the desktop app starts the runtime sidecar, it pins `PPT_AGENT_ARTIFACTS_DIR` to the repository `artifacts/decks` directory so generated PPTX files land in a predictable project-local location.
+When the desktop app starts the runtime sidecar from a development checkout, it pins `PPT_AGENT_ARTIFACTS_DIR` to the repository `artifacts/decks` directory so generated PPTX files land in a predictable project-local location. A packaged runtime writes generated decks under `%LOCALAPPDATA%\PPT Agent Studio\artifacts\decks` because the installed app directory may be read-only.
 
 After a deck is generated, the `Open PPTX` command locates the latest editable PowerPoint export in File Explorer. The same action is also surfaced as an inline chat button on the export-ready assistant message, but only appears when `pptx.ready` includes a usable export path. The desktop app clears stale export actions when a newer Agent turn or deck revision starts, and clears the missing path if the exported file was moved or deleted.
 

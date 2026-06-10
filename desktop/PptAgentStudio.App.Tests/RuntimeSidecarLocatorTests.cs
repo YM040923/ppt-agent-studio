@@ -97,11 +97,53 @@ public sealed class RuntimeSidecarLocatorTests
     }
 
     [TestMethod]
+    public void FindArtifactDirectoryUsesEnvironmentOverride()
+    {
+        var env = new Dictionary<string, string?>
+        {
+            ["PPT_AGENT_ARTIFACTS_DIR"] = @"E:\Decks"
+        };
+
+        var directory = RuntimeSidecarLocator.FindArtifactDirectory(
+            appBaseDirectory: @"E:\App",
+            agentSourceRoot: @"E:\Repo\agent\src",
+            localAppDataDirectory: @"C:\Users\Ada\AppData\Local",
+            env);
+
+        Assert.AreEqual(@"E:\Decks", directory);
+    }
+
+    [TestMethod]
+    public void FindArtifactDirectoryUsesLocalAppDataForBundledRuntime()
+    {
+        var directory = RuntimeSidecarLocator.FindArtifactDirectory(
+            appBaseDirectory: @"C:\Program Files\WindowsApps\PptAgentStudio",
+            agentSourceRoot: @"C:\Program Files\WindowsApps\PptAgentStudio\AgentRuntime\agent\src",
+            localAppDataDirectory: @"C:\Users\Ada\AppData\Local",
+            new Dictionary<string, string?>());
+
+        Assert.AreEqual(@"C:\Users\Ada\AppData\Local\PPT Agent Studio\artifacts\decks", directory);
+    }
+
+    [TestMethod]
+    public void FindArtifactDirectoryKeepsRepositoryArtifactsForDevelopmentRuntime()
+    {
+        var directory = RuntimeSidecarLocator.FindArtifactDirectory(
+            appBaseDirectory: @"E:\Repo\desktop\PptAgentStudio.App\bin\Debug",
+            agentSourceRoot: @"E:\Repo\agent\src",
+            localAppDataDirectory: @"C:\Users\Ada\AppData\Local",
+            new Dictionary<string, string?>());
+
+        Assert.AreEqual(@"E:\Repo\artifacts\decks", directory);
+    }
+
+    [TestMethod]
     public void CreateLaunchPlanUsesPythonModuleAndAgentSourcePath()
     {
         var plan = RuntimeSidecarLaunchPlan.Create(
             pythonExecutable: "python",
             agentSourceRoot: @"E:\Repo\agent\src",
+            artifactDirectory: @"E:\Repo\artifacts\decks",
             host: "127.0.0.1",
             port: 8765);
 

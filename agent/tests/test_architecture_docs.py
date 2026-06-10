@@ -57,6 +57,12 @@ def test_architecture_documents_bundled_runtime_sidecar_layout():
     assert "`AgentRuntime/python/python.exe`" in architecture
 
 
+def test_architecture_documents_packaged_artifacts_use_local_app_data():
+    architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
+
+    assert "packaged runtime writes generated decks under `%LOCALAPPDATA%/PPT Agent Studio/artifacts/decks`" in architecture
+
+
 def test_architecture_documents_stable_preview_slide_ids():
     architecture = _repo_root().joinpath("docs", "architecture.md").read_text(encoding="utf-8")
 

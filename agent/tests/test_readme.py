@@ -102,6 +102,12 @@ def test_readme_documents_bundled_runtime_sidecar_layout():
     assert "`AgentRuntime\\python\\python.exe`" in readme
 
 
+def test_readme_documents_packaged_artifacts_use_local_app_data():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "packaged runtime writes generated decks under `%LOCALAPPDATA%\\PPT Agent Studio\\artifacts\\decks`" in readme
+
+
 def test_readme_documents_export_prefixed_env_file_values():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
