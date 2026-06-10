@@ -88,6 +88,7 @@ dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj -c Release -p:
 ```
 
 The package is written under `desktop\PptAgentStudio.App\AppPackages`. CI runs the same packaging smoke and uploads a zipped AppPackages artifact named `ppt-agent-studio-msix.zip`.
+Run `.\scripts\test-msix-package.ps1` after packaging to verify the bundled Python runtime and Agent source are present and cache/build metadata is absent. CI runs the same package content smoke before uploading the artifact.
 
 ## Configuration
 

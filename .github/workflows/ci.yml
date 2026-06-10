@@ -58,6 +58,8 @@ jobs:
           -p:UapAppxPackageBuildMode=SideloadOnly
           -p:AppxBundle=Never
           -p:PublishTrimmed=false
+      - name: Verify unsigned MSIX contents
+        run: .\scripts\test-msix-package.ps1
       - name: Archive unsigned MSIX package
         run: |
           New-Item -ItemType Directory -Force artifacts\msix

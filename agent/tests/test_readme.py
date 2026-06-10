@@ -6,6 +6,8 @@ def test_readme_documents_zipped_msix_ci_artifact():
 
     assert "uploads a zipped AppPackages artifact" in readme
     assert "ppt-agent-studio-msix.zip" in readme
+    assert ".\\scripts\\test-msix-package.ps1" in readme
+    assert "bundled Python runtime and Agent source are present" in readme
 
 
 def test_readme_documents_demo_summary_json():

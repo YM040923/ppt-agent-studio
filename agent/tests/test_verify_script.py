@@ -59,6 +59,27 @@ def test_staged_agent_runtime_smoke_uses_embedded_python():
     assert '-c "' not in script
 
 
+def test_msix_package_smoke_checks_bundled_runtime_contents():
+    script_path = _repo_root().joinpath("scripts", "test-msix-package.ps1")
+
+    assert script_path.exists()
+
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "System.IO.Compression.ZipFile" in script
+    assert "AgentRuntime/python/python.exe" in script
+    assert "AgentRuntime/python/Lib/site-packages/httpx/" in script
+    assert "AgentRuntime/python/Lib/site-packages/pptx/" in script
+    assert "AgentRuntime/python/Lib/site-packages/websockets/" in script
+    assert "AgentRuntime/agent/src/ppt_agent_studio/runtime/websocket_server.py" in script
+    assert "__pycache__" in script
+    assert "*.pyc" in script
+    assert "*.dist-info" in script
+    assert "cp313" in script
+    assert "cpython" in script
+    assert "msix-package-smoke: bundled runtime contents ok" in script
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

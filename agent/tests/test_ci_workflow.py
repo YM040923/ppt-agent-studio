@@ -31,6 +31,8 @@ def test_ci_packages_and_uploads_unsigned_msix():
     assert "-p:GenerateAppxPackageOnBuild=true" in workflow
     assert "-p:AppxPackageSigningEnabled=false" in workflow
     assert "-p:UapAppxPackageBuildMode=SideloadOnly" in workflow
+    assert "Verify unsigned MSIX contents" in workflow
+    assert ".\\scripts\\test-msix-package.ps1" in workflow
     assert "Archive unsigned MSIX package" in workflow
     assert "Compress-Archive" in workflow
     assert "artifacts/msix/ppt-agent-studio-msix.zip" in workflow
