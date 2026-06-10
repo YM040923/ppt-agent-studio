@@ -296,7 +296,7 @@ def test_default_registry_preview_normalizes_blank_and_duplicate_slide_ids():
 def test_default_registry_preview_defaults_blank_outline_title_and_layout():
     registry = build_default_registry()
     deck = {
-        "deck_id": "deck_preview_defaults",
+        "deck_id": "   ",
         "title": "AI Strategy",
         "revision": "   ",
         "slides": [
@@ -310,6 +310,7 @@ def test_default_registry_preview_defaults_blank_outline_title_and_layout():
     result = asyncio.run(run())
     html = result.payload["html"]
 
+    assert 'data-deck-id="deck"' in html
     assert '<h1>Slide 1</h1>' in html
     assert 'slide-content' in html
 

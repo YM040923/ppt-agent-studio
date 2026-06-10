@@ -659,7 +659,7 @@ class AgentSession:
                 )
             )
         return DeckSpec(
-            deck_id=str(payload.get("deck_id") or "deck"),
+            deck_id=str(payload.get("deck_id") or "").strip() or "deck",
             title=str(payload.get("title") or "Untitled Deck"),
             revision=int(str(payload.get("revision") or 0).strip() or 0),
             slides=slides,

@@ -999,7 +999,7 @@ def test_agent_session_defaults_blank_tool_deck_slide_title_and_layout(tmp_path)
         return ToolResult(
             payload={
                 "deck": {
-                    "deck_id": args["deck_id"],
+                    "deck_id": "   ",
                     "title": "Tool Deck",
                     "revision": "   ",
                     "slides": [
@@ -1058,6 +1058,7 @@ def test_agent_session_defaults_blank_tool_deck_slide_title_and_layout(tmp_path)
     events = asyncio.run(collect())
 
     slide = events[5].payload["deck"]["slides"][0]
+    assert events[5].payload["deck"]["deck_id"] == "deck"
     assert slide["title"] == "Slide 1"
     assert slide["layout"] == "content"
     assert events[5].payload["deck"]["revision"] == 0
