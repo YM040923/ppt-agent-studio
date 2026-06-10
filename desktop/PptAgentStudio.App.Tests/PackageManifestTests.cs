@@ -57,6 +57,22 @@ public sealed class PackageManifestTests
         Assert.AreEqual(@"..\..\agent\src\**\__pycache__\**;..\..\agent\src\**\*.pyc", agentRuntimeContent.Attribute("Exclude")?.Value);
     }
 
+    [TestMethod]
+    public void AppProjectPackagesStagedPythonRuntimeUnderBundledRuntimeLayout()
+    {
+        var project = XDocument.Load(FindAppProject());
+        var ns = project.Root?.Name.Namespace ?? XNamespace.None;
+        var contentItems = project.Descendants(ns + "Content");
+
+        var pythonRuntimeContent = contentItems.SingleOrDefault(element =>
+            element.Attribute("Include")?.Value == @"AgentRuntime\python\**\*");
+
+        Assert.IsNotNull(pythonRuntimeContent);
+        Assert.AreEqual(@"AgentRuntime\python\%(RecursiveDir)%(Filename)%(Extension)", pythonRuntimeContent.Attribute("Link")?.Value);
+        Assert.AreEqual("PreserveNewest", pythonRuntimeContent.Attribute("CopyToOutputDirectory")?.Value);
+        Assert.AreEqual("PreserveNewest", pythonRuntimeContent.Attribute("CopyToPublishDirectory")?.Value);
+    }
+
     private static string FindPackageManifest()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

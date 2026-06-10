@@ -45,6 +45,8 @@ jobs:
         run: dotnet build PptAgentStudio.slnx
       - name: Run .NET tests
         run: dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj
+      - name: Stage bundled runtime
+        run: .\scripts\stage-agent-runtime.ps1
       - name: Package unsigned MSIX
         run: >
           dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj

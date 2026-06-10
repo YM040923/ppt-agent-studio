@@ -20,6 +20,28 @@ def test_verify_script_runs_core_local_checks():
     assert "startup-smoke: process stayed alive for 8 seconds" in script
 
 
+def test_stage_agent_runtime_downloads_wheels_for_embedded_python():
+    script_path = _repo_root().joinpath("scripts", "stage-agent-runtime.ps1")
+
+    assert script_path.exists()
+
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "pip download" in script
+    assert "--python-version" in script
+    assert '$platformTag = "win_$Architecture"' in script
+    assert "--platform $platformTag" in script
+    assert 'Copy-Item -LiteralPath $wheel.FullName -Destination $wheelZip' in script
+    assert "Expand-Archive -Path $wheelZip" in script
+    assert "Rename-Item" in script
+    assert '".pyd"' in script
+    assert "PYTHONDONTWRITEBYTECODE" in script
+    assert "__pycache__" in script
+    assert "*.pyc" in script
+    assert "*.dist-info" in script
+    assert "bootstrap.pypa.io" not in script
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

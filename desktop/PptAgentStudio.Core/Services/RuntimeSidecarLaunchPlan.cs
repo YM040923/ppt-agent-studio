@@ -32,6 +32,7 @@ public sealed class RuntimeSidecarLaunchPlan
             {
                 ["PYTHONPATH"] = agentSourceRoot,
                 ["PPT_AGENT_ARTIFACTS_DIR"] = artifactDirectory,
+                ["PYTHONDONTWRITEBYTECODE"] = "1",
             });
     }
 }

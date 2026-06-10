@@ -42,6 +42,7 @@ BundleArtifacts/
 publish/
 *.pubxml
 PublishScripts/
+AgentRuntime/python/
 
 # Code analysis and tooling
 _ReSharper*/

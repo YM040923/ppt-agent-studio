@@ -150,6 +150,7 @@ public sealed class RuntimeSidecarLocatorTests
         Assert.AreEqual("python", plan.FileName);
         Assert.AreEqual(@"E:\Repo\agent\src", plan.Environment["PYTHONPATH"]);
         Assert.AreEqual(@"E:\Repo\artifacts\decks", plan.Environment["PPT_AGENT_ARTIFACTS_DIR"]);
+        Assert.AreEqual("1", plan.Environment["PYTHONDONTWRITEBYTECODE"]);
         StringAssert.Contains(plan.Arguments, "-m ppt_agent_studio.runtime.websocket_server");
         StringAssert.Contains(plan.Arguments, "--host 127.0.0.1");
         StringAssert.Contains(plan.Arguments, "--port 8765");

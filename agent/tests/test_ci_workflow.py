@@ -23,6 +23,8 @@ def test_ci_avoids_duplicate_pr_branch_push_runs():
 def test_ci_packages_and_uploads_unsigned_msix():
     workflow = _repo_root().joinpath(".github", "workflows", "ci.yml").read_text(encoding="utf-8")
 
+    assert "Stage bundled runtime" in workflow
+    assert ".\\scripts\\stage-agent-runtime.ps1" in workflow
     assert "Package unsigned MSIX" in workflow
     assert "-p:GenerateAppxPackageOnBuild=true" in workflow
     assert "-p:AppxPackageSigningEnabled=false" in workflow
