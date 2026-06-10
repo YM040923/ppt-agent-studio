@@ -65,6 +65,7 @@ Add and duplicate follow-ups allocate non-reused slide ids so stable `data-slide
 
 Model-provided blank or duplicate slide ids are replaced during DeckSpec conversion and tool-boundary deck hydration before preview HTML is rendered.
 Model-provided blank slide titles and layouts are defaulted during DeckSpec conversion before preview HTML is rendered.
+Tool-boundary deck hydration also defaults blank slide titles and layouts before preview, export, or follow-up tools consume the deck payload.
 
 The `pptx.ready` payload includes the exported PowerPoint `path`, `deck_title`, `slide_count`, and `theme_name` so the desktop export-ready message can match the active preview title and theme without inspecting the PPTX file.
 

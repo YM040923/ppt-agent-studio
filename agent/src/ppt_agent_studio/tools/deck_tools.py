@@ -342,8 +342,8 @@ def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
         slides.append(
             SlideSpec(
                 slide_id=slide_id,
-                title=str(raw_slide.get("title") or f"Slide {index}"),
-                layout=str(raw_slide.get("layout") or "content"),
+                title=_title_patch_text(raw_slide.get("title")) or f"Slide {index}",
+                layout=_layout_patch_text(raw_slide.get("layout")) or "content",
                 blocks=_slide_blocks_from_dict(raw_slide),
                 speaker_notes=_slide_speaker_notes(raw_slide),
             )

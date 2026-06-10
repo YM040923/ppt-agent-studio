@@ -293,6 +293,27 @@ def test_default_registry_preview_normalizes_blank_and_duplicate_slide_ids():
     assert html.count('data-slide-id="intro"') == 1
 
 
+def test_default_registry_preview_defaults_blank_outline_title_and_layout():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_preview_defaults",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "intro", "title": "   ", "layout": "   ", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run("preview.render_html", {"deck": deck})
+
+    result = asyncio.run(run())
+    html = result.payload["html"]
+
+    assert '<h1>Slide 1</h1>' in html
+    assert 'slide-content' in html
+
+
 def test_default_registry_updates_deck_title():
     registry = build_default_registry()
     deck = {
