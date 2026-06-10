@@ -93,6 +93,12 @@ def test_tool_catalog_documents_blank_speaker_notes_patches_are_ignored():
     assert "Blank `speaker_notes` values are ignored for `deck.update_slide`" in docs
 
 
+def test_tool_catalog_documents_blank_layout_patches_are_ignored():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `layout` values are ignored for `deck.update_slide`" in docs
+
+
 def test_tool_catalog_documents_apply_theme_keeps_slide_identity_unique():
     docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
 
@@ -553,6 +559,38 @@ def test_default_registry_update_slide_ignores_blank_speaker_notes_patch():
     slide = result.payload["deck"]["slides"][0]
 
     assert slide["speaker_notes"] == "Keep the narrative tight."
+
+
+def test_default_registry_update_slide_ignores_blank_layout_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_update_blank_slide_layout",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Risks",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Old risk"}],
+            },
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s1",
+                "patch": {"layout": "   ", "title": "Risks"},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][0]
+
+    assert slide["layout"] == "content"
 
 
 def test_default_registry_add_slide_replaces_duplicate_slide_id():

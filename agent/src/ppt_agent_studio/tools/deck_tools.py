@@ -90,7 +90,7 @@ def update_slide(arguments: dict[str, Any]) -> ToolResult:
             SlideSpec(
                 slide_id=slide.slide_id,
                 title=_title_patch_text(patch.get("title")) or slide.title,
-                layout=str(patch.get("layout") or slide.layout),
+                layout=_layout_patch_text(patch.get("layout")) or slide.layout,
                 blocks=_slide_patch_blocks(patch, slide),
                 speaker_notes=_slide_patch_speaker_notes(patch, slide),
             )
@@ -449,6 +449,10 @@ def _metadata_patch_text(value: Any) -> str:
 
 
 def _title_patch_text(value: Any) -> str:
+    return value.strip() if isinstance(value, str) and value.strip() else ""
+
+
+def _layout_patch_text(value: Any) -> str:
     return value.strip() if isinstance(value, str) and value.strip() else ""
 
 

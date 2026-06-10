@@ -81,6 +81,7 @@ Required input:
 `patch.slide_id` is ignored so stable slide identity is preserved.
 Blank `patch.title` values are ignored for `deck.update_slide`.
 Blank `speaker_notes` values are ignored for `deck.update_slide`.
+Blank `layout` values are ignored for `deck.update_slide`.
 
 Output:
 
