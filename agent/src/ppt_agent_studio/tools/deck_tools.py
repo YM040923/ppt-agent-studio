@@ -433,7 +433,7 @@ def _slide_speaker_notes(raw_slide: dict[str, Any]) -> str:
 
 def _slide_patch_speaker_notes(patch: dict[str, Any], slide: SlideSpec) -> str:
     if any(key in patch for key in ("speaker_notes", "notes", "talk_track")):
-        return _slide_speaker_notes(patch)
+        return _speaker_notes_patch_text(patch) or slide.speaker_notes
     return slide.speaker_notes
 
 
@@ -450,6 +450,14 @@ def _metadata_patch_text(value: Any) -> str:
 
 def _title_patch_text(value: Any) -> str:
     return value.strip() if isinstance(value, str) and value.strip() else ""
+
+
+def _speaker_notes_patch_text(source: dict[str, Any]) -> str:
+    for key in ("speaker_notes", "notes", "talk_track"):
+        value = source.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
 
 
 def _deck_with_slides(deck: DeckSpec, slides: list[SlideSpec]) -> DeckSpec:
