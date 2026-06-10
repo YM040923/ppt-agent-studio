@@ -19,6 +19,29 @@ public sealed class RuntimeSidecarLocatorTests
     }
 
     [TestMethod]
+    public void FindAgentSourceRootPrefersBundledRuntimeNextToApp()
+    {
+        var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var appOutput = Path.Combine(temp, "app");
+        var bundledAgentSrc = Path.Combine(appOutput, "AgentRuntime", "agent", "src");
+        var repoAgentSrc = Path.Combine(temp, "agent", "src");
+        Directory.CreateDirectory(appOutput);
+        Directory.CreateDirectory(bundledAgentSrc);
+        Directory.CreateDirectory(repoAgentSrc);
+
+        try
+        {
+            var root = RuntimeSidecarLocator.FindAgentSourceRoot(appOutput, new Dictionary<string, string?>());
+
+            Assert.AreEqual(bundledAgentSrc, root);
+        }
+        finally
+        {
+            Directory.Delete(temp, recursive: true);
+        }
+    }
+
+    [TestMethod]
     public void FindAgentSourceRootWalksUpToRepoRoot()
     {
         var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -32,6 +55,40 @@ public sealed class RuntimeSidecarLocatorTests
             var root = RuntimeSidecarLocator.FindAgentSourceRoot(appOutput, new Dictionary<string, string?>());
 
             Assert.AreEqual(agentSrc, root);
+        }
+        finally
+        {
+            Directory.Delete(temp, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void FindPythonExecutableUsesEnvironmentOverride()
+    {
+        var env = new Dictionary<string, string?>
+        {
+            ["PPT_AGENT_PYTHON"] = @"E:\Python\python.exe"
+        };
+
+        var python = RuntimeSidecarLocator.FindPythonExecutable(@"E:\App", env);
+
+        Assert.AreEqual(@"E:\Python\python.exe", python);
+    }
+
+    [TestMethod]
+    public void FindPythonExecutablePrefersBundledRuntimePython()
+    {
+        var temp = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var appOutput = Path.Combine(temp, "app");
+        var bundledPython = Path.Combine(appOutput, "AgentRuntime", "python", "python.exe");
+        Directory.CreateDirectory(Path.GetDirectoryName(bundledPython)!);
+        File.WriteAllText(bundledPython, "");
+
+        try
+        {
+            var python = RuntimeSidecarLocator.FindPythonExecutable(appOutput, new Dictionary<string, string?>());
+
+            Assert.AreEqual(bundledPython, python);
         }
         finally
         {

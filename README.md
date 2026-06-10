@@ -106,6 +106,7 @@ PPT_AGENT_PLANNER=llm
 UTF-8 BOM-prefixed `.env.local` files are accepted. Lines may optionally start with `export `, so shell-style `.env.local` entries such as `export OPENAI_API_KEY=...` are accepted. Inline comments after unquoted values are ignored. Quoted values can appear before inline comments, such as `OPENAI_MODEL="gpt-4.1-mini" # local override`.
 
 Desktop sidecar overrides such as `PPT_AGENT_RUNTIME_ROOT` and `PPT_AGENT_PYTHON` are read before Python starts, so set them in the shell that launches the WinUI app rather than inside `.env.local`.
+When no override is set, the desktop app first looks beside the packaged app for `AgentRuntime\agent\src` and `AgentRuntime\python\python.exe`; if they are missing, it falls back to the development repository layout and system `python`.
 
 `PPT_AGENT_ENV_FILE` may also use `~`; it is expanded before the runtime reads configuration and before the Settings dialog reports the env file path. Blank `PPT_AGENT_ENV_FILE` and `PPT_AGENT_ARTIFACTS_DIR` values are treated as unset, so the runtime falls back to `.env.local` and `artifacts/decks`.
 

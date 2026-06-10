@@ -95,6 +95,13 @@ def test_readme_documents_placeholder_api_keys_are_ignored():
     assert "Placeholder API keys from `.env.example` are also treated as unset" in readme
 
 
+def test_readme_documents_bundled_runtime_sidecar_layout():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "`AgentRuntime\\agent\\src`" in readme
+    assert "`AgentRuntime\\python\\python.exe`" in readme
+
+
 def test_readme_documents_export_prefixed_env_file_values():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 

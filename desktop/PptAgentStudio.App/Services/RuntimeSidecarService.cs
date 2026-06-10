@@ -72,13 +72,10 @@ public sealed class RuntimeSidecarService : IDisposable
         var env = new Dictionary<string, string?>
         {
             ["PPT_AGENT_RUNTIME_ROOT"] = Environment.GetEnvironmentVariable("PPT_AGENT_RUNTIME_ROOT"),
+            ["PPT_AGENT_PYTHON"] = Environment.GetEnvironmentVariable("PPT_AGENT_PYTHON"),
         };
         var agentSourceRoot = RuntimeSidecarLocator.FindAgentSourceRoot(AppContext.BaseDirectory, env);
-        var python = Environment.GetEnvironmentVariable("PPT_AGENT_PYTHON");
-        if (string.IsNullOrWhiteSpace(python))
-        {
-            python = "python";
-        }
+        var python = RuntimeSidecarLocator.FindPythonExecutable(AppContext.BaseDirectory, env);
         var plan = RuntimeSidecarLaunchPlan.Create(python, agentSourceRoot, Host, Port);
         var startInfo = new ProcessStartInfo
         {
