@@ -80,6 +80,28 @@ def test_msix_package_smoke_checks_bundled_runtime_contents():
     assert "msix-package-smoke: bundled runtime contents ok" in script
 
 
+def test_sign_msix_package_creates_matching_test_certificate_and_verifies_signature():
+    script_path = _repo_root().joinpath("scripts", "sign-msix-package.ps1")
+
+    assert script_path.exists()
+
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "Package.appxmanifest" in script
+    assert "Publisher" in script
+    assert "New-SelfSignedCertificate" in script
+    assert "Export-Certificate" in script
+    assert "TrustCertificate" in script
+    assert "Import-Certificate" in script
+    assert "Cert:\\CurrentUser\\Root" in script
+    assert "signtool.exe" in script
+    assert "sign /fd SHA256" in script
+    assert "/a" not in script
+    assert "verify /pa" in script
+    assert "msix-signing: signed package ok" in script
+    assert "PFX" not in script
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

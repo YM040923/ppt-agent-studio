@@ -10,6 +10,16 @@ def test_readme_documents_zipped_msix_ci_artifact():
     assert "bundled Python runtime and Agent source are present" in readme
 
 
+def test_readme_documents_local_msix_signing_script():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert ".\\scripts\\sign-msix-package.ps1" in readme
+    assert "-TrustCertificate" in readme
+    assert "PPT Agent Studio Open Source.cer" in readme
+    assert "testing only" in readme
+    assert "not a production release certificate" in readme
+
+
 def test_readme_documents_demo_summary_json():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 
