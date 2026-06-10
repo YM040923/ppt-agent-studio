@@ -69,6 +69,18 @@ def test_tool_catalog_documents_add_slide_identity_is_unique():
     assert "`deck.add_slide` replaces blank or duplicate new slide ids with an unused stable id" in docs
 
 
+def test_tool_catalog_documents_blank_add_slide_layout_defaults_to_content():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `slide.layout` values default to `content` for `deck.add_slide`" in docs
+
+
+def test_tool_catalog_documents_blank_add_slide_title_defaults_to_slide_number():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `slide.title` values default to `Slide N` for `deck.add_slide`" in docs
+
+
 def test_tool_catalog_documents_update_slide_outline_fields():
     docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
 
@@ -620,6 +632,58 @@ def test_default_registry_add_slide_replaces_duplicate_slide_id():
 
     assert [slide["slide_id"] for slide in slides] == ["s1", "s4", "s3"]
     assert slides[1]["title"] == "Roadmap"
+
+
+def test_default_registry_add_slide_defaults_blank_layout():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_add_blank_layout",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {"slide_id": "s2", "title": "Roadmap", "layout": "   ", "blocks": []},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][1]
+
+    assert slide["layout"] == "content"
+
+
+def test_default_registry_add_slide_defaults_blank_title():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_add_blank_title",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {"slide_id": "s2", "title": "   ", "layout": "content", "blocks": []},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][1]
+
+    assert slide["title"] == "Slide 2"
 
 
 def test_default_registry_updates_slide_from_outline_content_fields():

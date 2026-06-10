@@ -369,8 +369,8 @@ def _slide_from_dict(raw_slide: dict[str, Any], index: int, used_slide_ids: set[
     slide_id = unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids or set())
     return SlideSpec(
         slide_id=slide_id,
-        title=str(raw_slide.get("title") or f"Slide {index}"),
-        layout=str(raw_slide.get("layout") or "content"),
+        title=_title_patch_text(raw_slide.get("title")) or f"Slide {index}",
+        layout=_layout_patch_text(raw_slide.get("layout")) or "content",
         blocks=_slide_blocks_from_dict(raw_slide),
         speaker_notes=_slide_speaker_notes(raw_slide),
     )
