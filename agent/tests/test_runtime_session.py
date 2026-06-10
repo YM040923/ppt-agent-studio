@@ -1001,7 +1001,7 @@ def test_agent_session_defaults_blank_tool_deck_slide_title_and_layout(tmp_path)
                 "deck": {
                     "deck_id": args["deck_id"],
                     "title": "Tool Deck",
-                    "revision": args["revision"],
+                    "revision": "   ",
                     "slides": [
                         {"slide_id": "intro", "title": "   ", "layout": "   ", "blocks": []},
                     ],
@@ -1060,9 +1060,11 @@ def test_agent_session_defaults_blank_tool_deck_slide_title_and_layout(tmp_path)
     slide = events[5].payload["deck"]["slides"][0]
     assert slide["title"] == "Slide 1"
     assert slide["layout"] == "content"
+    assert events[5].payload["deck"]["revision"] == 0
     assert preview_decks[0]["slides"][0]["title"] == "Slide 1"
     assert preview_decks[0]["slides"][0]["layout"] == "content"
     assert events[9].payload["slide_count"] == 1
+    assert events[9].payload["path"].endswith("deck_blank_payload-r1.pptx")
 
 
 def test_agent_session_payload_hydration_normalizes_blank_and_duplicate_slide_ids():

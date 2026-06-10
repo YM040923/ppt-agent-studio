@@ -298,7 +298,7 @@ def test_default_registry_preview_defaults_blank_outline_title_and_layout():
     deck = {
         "deck_id": "deck_preview_defaults",
         "title": "AI Strategy",
-        "revision": 1,
+        "revision": "   ",
         "slides": [
             {"slide_id": "intro", "title": "   ", "layout": "   ", "blocks": []},
         ],

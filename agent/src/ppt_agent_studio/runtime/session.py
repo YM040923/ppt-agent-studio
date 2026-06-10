@@ -661,7 +661,7 @@ class AgentSession:
         return DeckSpec(
             deck_id=str(payload.get("deck_id") or "deck"),
             title=str(payload.get("title") or "Untitled Deck"),
-            revision=int(payload.get("revision") or 0),
+            revision=int(str(payload.get("revision") or 0).strip() or 0),
             slides=slides,
             theme=payload.get("theme") if isinstance(payload.get("theme"), dict) else {},
             metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {},

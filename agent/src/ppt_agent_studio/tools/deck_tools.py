@@ -351,7 +351,7 @@ def _deck_from_dict(raw_deck: dict[str, Any]) -> DeckSpec:
     return DeckSpec(
         deck_id=str(raw_deck.get("deck_id") or "deck"),
         title=str(raw_deck.get("title") or "Untitled Deck"),
-        revision=int(raw_deck.get("revision") or 0),
+        revision=int(str(raw_deck.get("revision") or 0).strip() or 0),
         slides=slides,
         theme=raw_deck.get("theme") if isinstance(raw_deck.get("theme"), dict) else {},
         metadata=raw_deck.get("metadata") if isinstance(raw_deck.get("metadata"), dict) else {},
