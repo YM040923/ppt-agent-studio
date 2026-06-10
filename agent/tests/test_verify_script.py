@@ -42,6 +42,23 @@ def test_stage_agent_runtime_downloads_wheels_for_embedded_python():
     assert "bootstrap.pypa.io" not in script
 
 
+def test_staged_agent_runtime_smoke_uses_embedded_python():
+    script_path = _repo_root().joinpath("scripts", "test-staged-agent-runtime.ps1")
+
+    assert script_path.exists()
+
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "AgentRuntime" in script
+    assert "python\\python.exe" in script
+    assert "handle_client_message" in script
+    assert "runtime.config" in script
+    assert "staged-runtime-smoke: runtime.config ok" in script
+    assert "New-TemporaryFile" in script
+    assert "Set-Content -LiteralPath" in script
+    assert '-c "' not in script
+
+
 def _repo_root() -> Path:
     directory = Path(__file__).resolve()
     while directory != directory.parent:

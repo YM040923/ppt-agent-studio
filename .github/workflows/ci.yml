@@ -47,6 +47,8 @@ jobs:
         run: dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj
       - name: Stage bundled runtime
         run: .\scripts\stage-agent-runtime.ps1
+      - name: Smoke bundled runtime
+        run: .\scripts\test-staged-agent-runtime.ps1
       - name: Package unsigned MSIX
         run: >
           dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
