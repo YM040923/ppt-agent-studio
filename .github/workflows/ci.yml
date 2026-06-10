@@ -1,30 +1,72 @@
-name: 测试
+name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  test:
-    name: Python 单元测试
+  python:
     runs-on: windows-latest
-
     steps:
-      - name: 拉取代码
-        uses: actions/checkout@v4
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e agent[dev]
+      - name: Run tests
+        run: python -m pytest agent\tests -q
+      - name: Run offline demo smoke
+        run: >
+          python -m ppt_agent_studio.runtime.demo
+          --artifact-dir artifacts\ci-demo
+          --follow-up "Create an executive summary slide at the beginning"
+      - name: Upload demo deck artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ppt-agent-studio-demo
+          path: artifacts/ci-demo/**
+          if-no-files-found: error
 
-      - name: 安装依赖
-        run: pip install -r requirements.txt
-
-      - name: 运行测试
-        run: python -m unittest discover -s tests -p "test_*.py" -v
-
-      - name: 检查前端脚本语法
-        run: node --check app\static\app.js
+  desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+      - name: Build WinUI app
+        run: dotnet build PptAgentStudio.slnx
+      - name: Run .NET tests
+        run: dotnet test desktop\PptAgentStudio.App.Tests\PptAgentStudio.App.Tests.csproj
+      - name: Stage bundled runtime
+        run: .\scripts\stage-agent-runtime.ps1
+      - name: Smoke bundled runtime
+        run: .\scripts\test-staged-agent-runtime.ps1
+      - name: Package unsigned MSIX
+        run: >
+          dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj
+          -c Release
+          -p:GenerateAppxPackageOnBuild=true
+          -p:AppxPackageSigningEnabled=false
+          -p:UapAppxPackageBuildMode=SideloadOnly
+          -p:AppxBundle=Never
+          -p:PublishTrimmed=false
+      - name: Verify unsigned MSIX contents
+        run: .\scripts\test-msix-package.ps1
+      - name: Archive unsigned MSIX package
+        run: |
+          New-Item -ItemType Directory -Force artifacts\msix
+          Compress-Archive -Path desktop\PptAgentStudio.App\AppPackages\* -DestinationPath artifacts\msix\ppt-agent-studio-msix.zip -Force
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ppt-agent-studio-msix
+          path: artifacts/msix/ppt-agent-studio-msix.zip
+          if-no-files-found: error

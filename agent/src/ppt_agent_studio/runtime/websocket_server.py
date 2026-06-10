@@ -1,0 +1,244 @@
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import os
+from collections.abc import AsyncIterator, Iterable
+from pathlib import Path
+from typing import Any
+
+from ppt_agent_studio import __version__
+from ppt_agent_studio.llm.config import OpenAICompatibleConfig
+from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, LLMOutlinePlanner, OutlinePlanner
+from ppt_agent_studio.planning.plan import DeckPlan
+from ppt_agent_studio.protocol.events import AgentEvent
+from ppt_agent_studio.runtime.session import AgentSession
+from ppt_agent_studio.tools.catalog import core_tool_definitions
+
+
+_AGENT_SESSIONS: dict[tuple[str, str], AgentSession] = {}
+
+
+def _event_json(event: AgentEvent) -> str:
+    return json.dumps(event.to_dict(), ensure_ascii=False)
+
+
+def _error_json(message: str, seq: int = 1, session_id: str = "session") -> str:
+    event = AgentEvent(seq=seq, session_id=session_id, type="error", payload={"message": message})
+    return _event_json(event)
+
+
+def _failed_plan_json(message: str, seq: int, session_id: str, deck_id: str) -> str:
+    outline = {"deck_title": "Agent turn", "slides": []}
+    plan = DeckPlan.from_outline(outline, plan_id=f"{_safe_plan_id(deck_id)}-failed-plan")
+    plan.status = "failed"
+    plan.update_step_status("research_context", "failed")
+    event = AgentEvent(
+        seq=seq,
+        session_id=session_id,
+        type="plan.updated",
+        deck_id=deck_id,
+        payload={
+            "outline": outline,
+            "plan": plan.to_dict(),
+            "failure_message": message,
+        },
+    )
+    return _event_json(event)
+
+
+def _safe_plan_id(value: str) -> str:
+    cleaned = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value.strip())
+    return cleaned or "deck"
+
+
+def _build_outline_planner() -> OutlinePlanner:
+    config = OpenAICompatibleConfig.from_env()
+    if _active_planner_mode(config) == "llm":
+        return LLMOutlinePlanner()
+    return FallbackOutlinePlanner()
+
+
+def _planner_summary(config: OpenAICompatibleConfig) -> dict[str, str]:
+    return {
+        "requested": _requested_planner_mode(),
+        "active": _active_planner_mode(config),
+    }
+
+
+def _artifact_summary() -> dict[str, str]:
+    return {
+        "directory": str(_runtime_path("PPT_AGENT_ARTIFACTS_DIR", "artifacts/decks")),
+    }
+
+
+def _runtime_summary() -> dict[str, str]:
+    return {
+        "name": "ppt-agent-studio",
+        "version": __version__,
+    }
+
+
+def _env_file_summary() -> dict[str, object]:
+    path = _runtime_path("PPT_AGENT_ENV_FILE", ".env.local")
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    resolved = path.resolve()
+    return {
+        "path": str(resolved),
+        "exists": resolved.exists(),
+    }
+
+
+def _tool_catalog_summary() -> list[dict[str, object]]:
+    return [definition.to_dict() for definition in core_tool_definitions()]
+
+
+def _requested_planner_mode() -> str:
+    return os.getenv("PPT_AGENT_PLANNER", "fallback").strip().lower() or "fallback"
+
+
+def _runtime_path(name: str, default: str) -> Path:
+    value = os.getenv(name)
+    return Path(value if value is not None and value.strip() else default).expanduser()
+
+
+def _active_planner_mode(config: OpenAICompatibleConfig) -> str:
+    can_use_llm = config.has_api_key or not config.requires_api_key
+    return "llm" if _requested_planner_mode() == "llm" and can_use_llm else "fallback"
+
+
+def _agent_error_message(error: Exception) -> str:
+    return f"Agent turn failed: {type(error).__name__}"
+
+
+async def handle_client_message(raw_message: str) -> list[str]:
+    return [response async for response in iter_client_responses(raw_message)]
+
+
+async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
+    try:
+        message = json.loads(raw_message)
+    except json.JSONDecodeError:
+        yield _error_json("Invalid JSON")
+        return
+    if not isinstance(message, dict):
+        yield _error_json("Message must be a JSON object")
+        return
+
+    message_type = str(message.get("type") or "").strip()
+    session_id = _message_text(message, "session_id", "session")
+
+    if message_type == "session.reset":
+        deck_id = _message_text(message, "deck_id", "deck")
+        event = AgentEvent(
+            seq=1,
+            session_id=session_id,
+            type="session.reset",
+            payload={
+                "deck_id": deck_id,
+                "cleared": _reset_agent_session(session_id, deck_id),
+            },
+        )
+        yield _event_json(event)
+        return
+
+    if message_type == "runtime.config":
+        try:
+            config = OpenAICompatibleConfig.from_env()
+        except ValueError as error:
+            yield _error_json(f"Invalid runtime configuration: {error}", session_id=session_id)
+            return
+        event = AgentEvent(
+            seq=1,
+            session_id=session_id,
+            type="runtime.config",
+            payload={
+                "llm": config.safe_summary(),
+                "runtime": _runtime_summary(),
+                "planner": _planner_summary(config),
+                "artifacts": _artifact_summary(),
+                "env_file": _env_file_summary(),
+            },
+        )
+        yield _event_json(event)
+        return
+
+    if message_type == "runtime.tools":
+        event = AgentEvent(
+            seq=1,
+            session_id=session_id,
+            type="runtime.tools",
+            payload={"tools": _tool_catalog_summary()},
+        )
+        yield _event_json(event)
+        return
+
+    if message_type != "user.message":
+        yield _error_json(f"Unsupported message type: {message_type or '<empty>'}")
+        return
+
+    payload = message.get("payload") if isinstance(message.get("payload"), dict) else {}
+    text = str(payload.get("text") or "")
+    deck_id = _message_text(message, "deck_id", "deck")
+    session = _build_agent_session(session_id=session_id, deck_id=deck_id)
+
+    response_count = 0
+    try:
+        async for event in session.submit_user_message(text):
+            response_count += 1
+            yield _event_json(event)
+    except Exception as error:
+        yield _failed_plan_json(
+            _agent_error_message(error),
+            seq=response_count + 1,
+            session_id=session_id,
+            deck_id=deck_id,
+        )
+
+
+def _build_agent_session(session_id: str, deck_id: str) -> AgentSession:
+    key = (session_id, deck_id)
+    session = _AGENT_SESSIONS.get(key)
+    if session is None:
+        session = AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
+        _AGENT_SESSIONS[key] = session
+    return session
+
+
+def _message_text(message: dict[str, object], key: str, default: str) -> str:
+    return str(message.get(key) or default).strip() or default
+
+
+def _reset_agent_session(session_id: str, deck_id: str) -> bool:
+    return _AGENT_SESSIONS.pop((session_id, deck_id), None) is not None
+
+
+def _clear_agent_sessions() -> None:
+    _AGENT_SESSIONS.clear()
+
+
+async def websocket_handler(websocket: Any) -> None:
+    async for raw_message in websocket:
+        async for response in iter_client_responses(str(raw_message)):
+            await websocket.send(response)
+
+
+async def serve(host: str = "127.0.0.1", port: int = 8765) -> None:
+    import websockets
+
+    async with websockets.serve(websocket_handler, host, port):
+        await asyncio.Future()
+
+
+def main(argv: Iterable[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Run the PPT Agent Studio runtime WebSocket server.")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8765)
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    asyncio.run(serve(host=args.host, port=args.port))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,32 +1,22 @@
-# Python
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.mypy_cache/
 .ruff_cache/
-.coverage
-htmlcov/
-
-# Virtual environments
+.mypy_cache/
 .venv/
 venv/
-env/
 
-# Local runtime data and secrets
-data/
-work/
-outputs/
 .env
-.env.*
-*.log
-
-# Generated presentation artifacts
+.env.local
+data/
+artifacts/
+dist/
+build/
 *.pptx
-*.ppt
-*.tmp
-
-# OS and editor files
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
+!samples/**/*.pptx

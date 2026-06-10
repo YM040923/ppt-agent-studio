@@ -1,0 +1,117 @@
+using System.Text.Json;
+using PptAgentStudio_App.Services;
+
+namespace PptAgentStudio.App.Tests;
+
+[TestClass]
+public sealed class RuntimePlanSummaryTests
+{
+    [TestMethod]
+    public void FromPayloadReadsDeckPlanSummary()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "plan": {
+                "title": "AI Strategy",
+                "slide_count": 3,
+                "steps": [
+                  { "title": "Research context", "status": "pending" },
+                  { "title": "Structure story", "status": "pending" },
+                  { "title": "Draft 3 slides", "status": "running" },
+                  { "title": "Render preview", "status": "pending" }
+                ]
+              }
+            }
+            """);
+
+        var summary = RuntimePlanSummary.FromPayload(document.RootElement);
+
+        Assert.AreEqual("AI Strategy", summary.Title);
+        Assert.AreEqual(3, summary.SlideCount);
+        CollectionAssert.AreEqual(
+            new[] { "Research context", "Structure story", "Draft 3 slides" },
+            summary.FirstSteps.ToArray());
+        Assert.AreEqual("Draft 3 slides", summary.ActiveStepTitle);
+    }
+
+    [TestMethod]
+    public void ToChatMessageShowsCompactPlan()
+    {
+        var summary = new RuntimePlanSummary(
+            Title: "AI Strategy",
+            SlideCount: 3,
+            FirstSteps: ["Research context", "Structure story", "Draft 3 slides"]);
+
+        Assert.AreEqual(
+            "**Plan ready:** AI Strategy (3 slides). **Next:** Research context, Structure story, Draft 3 slides.",
+            summary.ToChatMessage());
+    }
+
+    [TestMethod]
+    public void ToChatMessageIncludesActiveStepWhenPresent()
+    {
+        var summary = new RuntimePlanSummary(
+            Title: "AI Strategy",
+            SlideCount: 3,
+            FirstSteps: ["Research context", "Structure story", "Draft 3 slides"],
+            ActiveStepTitle: "Draft 3 slides");
+
+        Assert.AreEqual(
+            "**Plan ready:** AI Strategy (3 slides). **Active:** Draft 3 slides. **Next:** Research context, Structure story, Draft 3 slides.",
+            summary.ToChatMessage());
+    }
+
+    [TestMethod]
+    public void ToChatMessageShowsCompletedPlanStatus()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "plan": {
+                "title": "AI Strategy",
+                "status": "completed",
+                "slide_count": 3,
+                "steps": [
+                  { "title": "Research context", "status": "completed" },
+                  { "title": "Structure story", "status": "completed" },
+                  { "title": "Draft 3 slides", "status": "completed" }
+                ]
+              }
+            }
+            """);
+
+        var summary = RuntimePlanSummary.FromPayload(document.RootElement);
+
+        Assert.AreEqual("completed", summary.Status);
+        Assert.AreEqual("**Plan completed:** AI Strategy (3 slides).", summary.ToChatMessage());
+    }
+
+    [TestMethod]
+    public void ToChatMessageShowsFailedPlanStatus()
+    {
+        using var document = JsonDocument.Parse(
+            """
+            {
+              "plan": {
+                "title": "AI Strategy",
+                "status": "failed",
+                "slide_count": 3,
+                "steps": [
+                  { "title": "Research context", "status": "completed" },
+                  { "title": "Structure story", "status": "failed" },
+                  { "title": "Draft 3 slides", "status": "pending" }
+                ]
+              },
+              "failure_message": "Slide 99 is not available. Deck has 5 slides."
+            }
+            """);
+
+        var summary = RuntimePlanSummary.FromPayload(document.RootElement);
+
+        Assert.AreEqual("failed", summary.Status);
+        Assert.AreEqual(
+            "**Plan failed:** AI Strategy (3 slides). Slide 99 is not available. Deck has 5 slides.",
+            summary.ToChatMessage());
+    }
+}

@@ -1,0 +1,1155 @@
+import asyncio
+from pathlib import Path
+
+import pytest
+
+from ppt_agent_studio.tools.base import ToolDefinition, ToolRegistry, ToolResult
+from ppt_agent_studio.tools.catalog import core_tool_definitions
+from ppt_agent_studio.tools.deck_tools import build_default_registry
+
+
+def test_core_tool_catalog_lists_mvp_interfaces():
+    definitions = core_tool_definitions()
+    names = [definition.name for definition in definitions]
+
+    assert len(definitions) >= 8
+    assert len(names) == len(set(names))
+    assert {
+        "deck.create_from_outline",
+        "deck.update_deck",
+        "deck.update_slide",
+        "deck.add_slide",
+        "deck.move_slide",
+        "deck.remove_slide",
+        "preview.render_html",
+        "pptx.export",
+        "research.collect_brief",
+        "design.apply_theme",
+    }.issubset(set(names))
+    assert all(definition.input_schema.get("type") == "object" for definition in definitions)
+
+
+def test_tool_catalog_document_lists_core_tools():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    for definition in core_tool_definitions():
+        assert f"## `{definition.name}`" in docs
+
+
+def test_tool_catalog_documents_deck_metadata_patch():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert '"metadata": {' in docs
+    assert '"audience": "CFO leadership"' in docs
+    assert '"style": "consulting"' in docs
+
+
+def test_tool_catalog_documents_blank_deck_title_patches_are_ignored():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `patch.title` values are ignored for `deck.update_deck`" in docs
+
+
+def test_tool_catalog_documents_slide_position_constraints():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`before_slide_id` and `after_slide_id` are mutually exclusive" in docs
+    assert "`deck.move_slide` requires exactly one of them" in docs
+
+
+def test_tool_catalog_documents_add_slide_outline_fields():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`deck.add_slide` accepts DeckSpec `blocks` or outline-style `content`/`bullets` fields" in docs
+
+
+def test_tool_catalog_documents_add_slide_identity_is_unique():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`deck.add_slide` replaces blank or duplicate new slide ids with an unused stable id" in docs
+
+
+def test_tool_catalog_documents_blank_add_slide_layout_defaults_to_content():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `slide.layout` values default to `content` for `deck.add_slide`" in docs
+
+
+def test_tool_catalog_documents_blank_add_slide_title_defaults_to_slide_number():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `slide.title` values default to `Slide N` for `deck.add_slide`" in docs
+
+
+def test_tool_catalog_documents_update_slide_outline_fields():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`deck.update_slide` accepts explicit `blocks` or outline-style content fields in `patch`" in docs
+
+
+def test_tool_catalog_documents_update_slide_identity_is_stable():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`patch.slide_id` is ignored so stable slide identity is preserved" in docs
+
+
+def test_tool_catalog_documents_blank_slide_title_patches_are_ignored():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `patch.title` values are ignored for `deck.update_slide`" in docs
+
+
+def test_tool_catalog_documents_blank_speaker_notes_patches_are_ignored():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `speaker_notes` values are ignored for `deck.update_slide`" in docs
+
+
+def test_tool_catalog_documents_blank_layout_patches_are_ignored():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "Blank `layout` values are ignored for `deck.update_slide`" in docs
+
+
+def test_tool_catalog_documents_apply_theme_keeps_slide_identity_unique():
+    docs = _repo_root().joinpath("docs", "tool-catalog.md").read_text(encoding="utf-8")
+
+    assert "`design.apply_theme` hydrates DeckSpec before applying theme tokens" in docs
+
+
+def test_tool_registry_rejects_duplicate_tools():
+    definition = ToolDefinition(
+        name="demo.echo",
+        description="Echo test arguments.",
+        input_schema={"type": "object"},
+    )
+    registry = ToolRegistry()
+    registry.register(definition, lambda args: ToolResult(payload=dict(args)))
+
+    with pytest.raises(ValueError, match="already registered"):
+        registry.register(definition, lambda args: ToolResult(payload=dict(args)))
+
+
+def test_tool_registry_runs_sync_and_async_handlers():
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.sync",
+            description="Return a synchronous result.",
+            input_schema={"type": "object"},
+        ),
+        lambda args: ToolResult(payload={"kind": "sync", "value": args["value"]}),
+    )
+
+    async def async_handler(args):
+        return ToolResult(payload={"kind": "async", "value": args["value"]})
+
+    registry.register(
+        ToolDefinition(
+            name="demo.async",
+            description="Return an asynchronous result.",
+            input_schema={"type": "object"},
+        ),
+        async_handler,
+    )
+
+    async def run():
+        return [
+            await registry.run("demo.sync", {"value": 1}),
+            await registry.run("demo.async", {"value": 2}),
+        ]
+
+    results = asyncio.run(run())
+
+    assert [result.payload for result in results] == [
+        {"kind": "sync", "value": 1},
+        {"kind": "async", "value": 2},
+    ]
+
+
+def test_tool_registry_validates_required_arguments_before_running_handler():
+    calls = []
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.required",
+            description="Require an argument.",
+            input_schema={"type": "object", "required": ["value"]},
+        ),
+        lambda args: calls.append(args) or ToolResult(),
+    )
+
+    async def run():
+        return await registry.run("demo.required", {})
+
+    with pytest.raises(ValueError, match="missing required tool argument: value"):
+        asyncio.run(run())
+    assert calls == []
+
+
+def test_tool_registry_rejects_non_object_arguments_before_running_handler():
+    calls = []
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.required",
+            description="Require an object argument.",
+            input_schema={"type": "object", "required": ["value"]},
+        ),
+        lambda args: calls.append(args) or ToolResult(),
+    )
+
+    async def run():
+        return await registry.run("demo.required", ["value"])
+
+    with pytest.raises(ValueError, match="tool arguments must be an object: demo.required"):
+        asyncio.run(run())
+    assert calls == []
+
+
+def test_tool_registry_validates_declared_argument_types_before_running_handler():
+    calls = []
+    registry = ToolRegistry()
+    registry.register(
+        ToolDefinition(
+            name="demo.typed",
+            description="Validate declared top-level argument types.",
+            input_schema={
+                "type": "object",
+                "required": ["deck", "output_path"],
+                "properties": {
+                    "deck": {"type": "object"},
+                    "output_path": {"type": "string"},
+                    "revision": {"type": "integer"},
+                },
+            },
+        ),
+        lambda args: calls.append(args) or ToolResult(),
+    )
+
+    async def run():
+        return await registry.run(
+            "demo.typed",
+            {
+                "deck": "not-a-deck",
+                "output_path": "artifacts/deck.pptx",
+                "revision": 1,
+            },
+        )
+
+    with pytest.raises(ValueError, match="invalid tool argument type: deck"):
+        asyncio.run(run())
+    assert calls == []
+
+
+def test_default_registry_creates_deck_and_preview_html():
+    registry = build_default_registry()
+    outline = {
+        "deck_title": "AI Strategy",
+        "slides": [
+            {"title": "AI Strategy", "subtitle": "Board briefing", "prototype_hint": "cover"},
+            {"title": "Priorities", "bullets": ["Focus", "Sequence"], "prototype_hint": "content"},
+        ],
+    }
+
+    async def run():
+        deck_result = await registry.run(
+            "deck.create_from_outline",
+            {"outline": outline, "deck_id": "deck_001", "revision": 2},
+        )
+        preview_result = await registry.run("preview.render_html", {"deck": deck_result.payload["deck"]})
+        return deck_result, preview_result
+
+    deck_result, preview_result = asyncio.run(run())
+
+    assert deck_result.payload["deck"]["title"] == "AI Strategy"
+    assert deck_result.payload["deck"]["revision"] == 2
+    assert preview_result.payload["html"].startswith("<!doctype html>")
+    assert "AI Strategy" in preview_result.payload["html"]
+
+
+def test_default_registry_preview_normalizes_blank_and_duplicate_slide_ids():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_preview_ids",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "intro", "title": "Intro", "layout": "cover", "blocks": []},
+            {"slide_id": "   ", "title": "Decision", "layout": "content", "blocks": []},
+            {"slide_id": "intro", "title": "Roadmap", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run("preview.render_html", {"deck": deck})
+
+    result = asyncio.run(run())
+    html = result.payload["html"]
+
+    assert 'data-slide-id="intro"' in html
+    assert 'data-slide-id="s2"' in html
+    assert 'data-slide-id="s3"' in html
+    assert html.count('data-slide-id="intro"') == 1
+
+
+def test_default_registry_preview_defaults_blank_outline_title_and_layout():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "   ",
+        "title": "AI Strategy",
+        "revision": "   ",
+        "slides": [
+            {"slide_id": "intro", "title": "   ", "layout": "   ", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run("preview.render_html", {"deck": deck})
+
+    result = asyncio.run(run())
+    html = result.payload["html"]
+
+    assert 'data-deck-id="deck"' in html
+    assert '<h1>Slide 1</h1>' in html
+    assert 'slide-content' in html
+
+
+def test_default_registry_updates_deck_title():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_title",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {"title": "AI Operating Model"},
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert result.payload["deck"]["title"] == "AI Operating Model"
+    assert result.payload["deck"]["slides"][0]["title"] == "Cover"
+
+
+def test_default_registry_update_deck_ignores_blank_title_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_blank_title",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "metadata": {"audience": "board"},
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {"title": "   ", "metadata": {"style": "consulting"}},
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["title"] == "Board AI Strategy"
+    assert result.payload["deck"]["metadata"] == {"audience": "board", "style": "consulting"}
+
+
+def test_default_registry_updates_deck_metadata():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_metadata",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "metadata": {"audience": "board", "style": "consulting"},
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {"metadata": {"audience": "CFO leadership"}},
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert result.payload["deck"]["metadata"] == {
+        "audience": "CFO leadership",
+        "style": "consulting",
+    }
+
+
+def test_default_registry_updates_deck_metadata_from_text_aliases():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_metadata_aliases",
+        "title": "AI Strategy",
+        "revision": 1,
+        "metadata": {"audience": "board", "style": "consulting"},
+        "slides": [],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_deck",
+            {
+                "deck": deck,
+                "patch": {
+                    "metadata": {
+                        "audience": {"text": "CFO leadership"},
+                        "style": {"value": "investor narrative"},
+                    }
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["metadata"] == {
+        "audience": "CFO leadership",
+        "style": "investor narrative",
+    }
+
+
+def test_default_registry_updates_adds_and_removes_slides():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_001",
+        "title": "AI Strategy",
+        "revision": 3,
+        "metadata": {"audience": "board", "style": "consulting"},
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Cover",
+                "layout": "cover",
+                "blocks": [{"type": "subtitle", "text": "Board briefing"}],
+            },
+            {
+                "slide_id": "s2",
+                "title": "Priorities",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Focus"}],
+            },
+        ],
+    }
+
+    async def run():
+        updated = await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "patch": {
+                    "title": "Strategic Priorities",
+                    "blocks": [{"type": "bullet", "text": "Sequence the rollout"}],
+                },
+            },
+        )
+        added = await registry.run(
+            "deck.add_slide",
+            {
+                "deck": updated.payload["deck"],
+                "slide": {
+                    "slide_id": "s3",
+                    "title": "Roadmap",
+                    "layout": "content",
+                    "blocks": [{"type": "bullet", "text": "90 day launch"}],
+                },
+                "after_slide_id": "s1",
+            },
+        )
+        removed = await registry.run(
+            "deck.remove_slide",
+            {"deck": added.payload["deck"], "slide_id": "s1"},
+        )
+        return updated.payload["deck"], added.payload["deck"], removed.payload["deck"]
+
+    updated, added, removed = asyncio.run(run())
+
+    assert updated["revision"] == 4
+    assert updated["slides"][1]["title"] == "Strategic Priorities"
+    assert updated["slides"][1]["blocks"][0]["text"] == "Sequence the rollout"
+
+    assert added["revision"] == 5
+    assert [slide["slide_id"] for slide in added["slides"]] == ["s1", "s3", "s2"]
+
+    assert removed["revision"] == 6
+    assert [slide["slide_id"] for slide in removed["slides"]] == ["s3", "s2"]
+    assert removed["metadata"] == {"audience": "board", "style": "consulting"}
+
+
+def test_default_registry_update_slide_preserves_slide_identity_from_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_update_identity",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "patch": {"slide_id": "s1", "title": "Risk Controls"},
+            },
+        )
+
+    result = asyncio.run(run())
+    slides = result.payload["deck"]["slides"]
+
+    assert [slide["slide_id"] for slide in slides] == ["s1", "s2"]
+    assert slides[1]["title"] == "Risk Controls"
+
+
+def test_default_registry_update_slide_ignores_blank_title_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_update_blank_slide_title",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Risks",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Old risk"}],
+            },
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s1",
+                "patch": {"title": "   ", "blocks": [{"type": "bullet", "text": "New risk"}]},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][0]
+
+    assert slide["title"] == "Risks"
+    assert slide["blocks"] == [{"type": "bullet", "text": "New risk"}]
+
+
+def test_default_registry_update_slide_ignores_blank_speaker_notes_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_update_blank_slide_notes",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Risks",
+                "layout": "content",
+                "blocks": [],
+                "speaker_notes": "Keep the narrative tight.",
+            },
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s1",
+                "patch": {"speaker_notes": "   ", "title": "Risks"},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][0]
+
+    assert slide["speaker_notes"] == "Keep the narrative tight."
+
+
+def test_default_registry_update_slide_ignores_blank_layout_patch():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_update_blank_slide_layout",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Risks",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Old risk"}],
+            },
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s1",
+                "patch": {"layout": "   ", "title": "Risks"},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][0]
+
+    assert slide["layout"] == "content"
+
+
+def test_default_registry_add_slide_replaces_duplicate_slide_id():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_add_identity",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s3", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {"slide_id": "s1", "title": "Roadmap", "layout": "content", "blocks": []},
+                "after_slide_id": "s1",
+            },
+        )
+
+    result = asyncio.run(run())
+    slides = result.payload["deck"]["slides"]
+
+    assert [slide["slide_id"] for slide in slides] == ["s1", "s4", "s3"]
+    assert slides[1]["title"] == "Roadmap"
+
+
+def test_default_registry_add_slide_defaults_blank_layout():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_add_blank_layout",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {"slide_id": "s2", "title": "Roadmap", "layout": "   ", "blocks": []},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][1]
+
+    assert slide["layout"] == "content"
+
+
+def test_default_registry_add_slide_defaults_blank_title():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_add_blank_title",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {"slide_id": "s2", "title": "   ", "layout": "content", "blocks": []},
+            },
+        )
+
+    result = asyncio.run(run())
+    slide = result.payload["deck"]["slides"][1]
+
+    assert slide["title"] == "Slide 2"
+
+
+def test_default_registry_updates_slide_from_outline_content_fields():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_update_outline_fields",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Decision",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Old recommendation"}],
+            }
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.update_slide",
+            {
+                "deck": deck,
+                "slide_id": "s1",
+                "patch": {
+                    "content": "Approve a phased rollout.",
+                    "bullets": [{"text": "Start with finance"}],
+                    "speaker_notes": "Ask for the decision.",
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+    updated_slide = result.payload["deck"]["slides"][0]
+
+    assert updated_slide["blocks"] == [
+        {"type": "text", "text": "Approve a phased rollout."},
+        {"type": "bullet", "text": "Start with finance"},
+    ]
+    assert updated_slide["speaker_notes"] == "Ask for the decision."
+
+
+def test_default_registry_adds_and_updates_slide_speaker_note_aliases():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_note_aliases",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Decision",
+                "layout": "content",
+                "blocks": [],
+                "speaker_notes": "Old talk track.",
+            }
+        ],
+    }
+
+    async def run():
+        added = await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s2",
+                    "title": "Risks",
+                    "layout": "content",
+                    "blocks": [],
+                    "notes": "Frame the risk conversation.",
+                },
+            },
+        )
+        updated = await registry.run(
+            "deck.update_slide",
+            {
+                "deck": added.payload["deck"],
+                "slide_id": "s1",
+                "patch": {"talk_track": "Ask for the board decision."},
+            },
+        )
+        return added.payload["deck"], updated.payload["deck"]
+
+    added, updated = asyncio.run(run())
+
+    assert added["slides"][1]["speaker_notes"] == "Frame the risk conversation."
+    assert updated["slides"][0]["speaker_notes"] == "Ask for the board decision."
+
+
+def test_default_registry_adds_slide_before_target():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_before",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {
+                "slide_id": "s1",
+                "title": "Executive Context",
+                "layout": "title",
+                "blocks": [{"type": "subtitle", "text": "Board briefing"}],
+            },
+            {
+                "slide_id": "s2",
+                "title": "Priorities",
+                "layout": "content",
+                "blocks": [{"type": "bullet", "text": "Focus"}],
+            },
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s3",
+                    "title": "Risks",
+                    "layout": "content",
+                    "blocks": [{"type": "bullet", "text": "Budget exposure"}],
+                },
+                "before_slide_id": "s2",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s2"]
+
+
+def test_default_registry_adds_slide_from_outline_content_fields():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_add_outline_fields",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [{"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []}],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s2",
+                    "title": "Decision",
+                    "layout": "content",
+                    "content": "Approve a phased rollout.",
+                    "bullets": [
+                        {"text": "Start with finance"},
+                        {"body": "Measure adoption weekly"},
+                    ],
+                    "summary_items": [{"text": "Decision needed"}],
+                    "speaker_notes": "Ask for the board decision.",
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+    added_slide = result.payload["deck"]["slides"][1]
+
+    assert added_slide["blocks"] == [
+        {"type": "text", "text": "Approve a phased rollout."},
+        {"type": "bullet", "text": "Start with finance"},
+        {"type": "bullet", "text": "Measure adoption weekly"},
+        {"type": "summary_item", "text": "Decision needed"},
+    ]
+    assert added_slide["speaker_notes"] == "Ask for the board decision."
+
+
+def test_default_registry_adds_slide_with_block_text_aliases():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_add_block_aliases",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "slides": [{"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []}],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s2",
+                    "title": "Decision",
+                    "layout": "content",
+                    "blocks": [
+                        {"type": "bullet", "content": "Start with finance"},
+                        {"type": "summary_item", "value": "Decision needed"},
+                    ],
+                },
+            },
+        )
+
+    result = asyncio.run(run())
+    added_slide = result.payload["deck"]["slides"][1]
+
+    assert added_slide["blocks"] == [
+        {"type": "bullet", "content": "Start with finance", "text": "Start with finance"},
+        {"type": "summary_item", "value": "Decision needed", "text": "Decision needed"},
+    ]
+
+
+def test_default_registry_rejects_ambiguous_add_slide_position():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_add_ambiguous",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.add_slide",
+            {
+                "deck": deck,
+                "slide": {
+                    "slide_id": "s3",
+                    "title": "Roadmap",
+                    "layout": "content",
+                    "blocks": [],
+                },
+                "before_slide_id": "s1",
+                "after_slide_id": "s2",
+            },
+        )
+
+    with pytest.raises(ValueError, match="before_slide_id and after_slide_id cannot both be provided"):
+        asyncio.run(run())
+
+
+def test_default_registry_moves_slide_after_target():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_move",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+            {"slide_id": "s3", "title": "Roadmap", "layout": "content", "blocks": []},
+            {"slide_id": "s4", "title": "Appendix", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.move_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "after_slide_id": "s4",
+            },
+        )
+
+    result = asyncio.run(run())
+
+    assert result.payload["deck"]["revision"] == 2
+    assert [slide["slide_id"] for slide in result.payload["deck"]["slides"]] == ["s1", "s3", "s4", "s2"]
+
+
+def test_default_registry_rejects_ambiguous_move_slide_position():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_move_ambiguous",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+            {"slide_id": "s3", "title": "Roadmap", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.move_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                "before_slide_id": "s1",
+                "after_slide_id": "s3",
+            },
+        )
+
+    with pytest.raises(ValueError, match="before_slide_id and after_slide_id cannot both be provided"):
+        asyncio.run(run())
+
+
+@pytest.mark.parametrize("position_key", ["after_slide_id", "before_slide_id"])
+def test_default_registry_rejects_moving_slide_relative_to_itself(position_key):
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_tools_move_self",
+        "title": "Board AI Strategy",
+        "revision": 1,
+        "theme": "default",
+        "slides": [
+            {"slide_id": "s1", "title": "Cover", "layout": "cover", "blocks": []},
+            {"slide_id": "s2", "title": "Risks", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "deck.move_slide",
+            {
+                "deck": deck,
+                "slide_id": "s2",
+                position_key: "s2",
+            },
+        )
+
+    with pytest.raises(ValueError, match="cannot move slide relative to itself"):
+        asyncio.run(run())
+
+
+def test_default_registry_runs_research_and_theme_tools():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_001",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [],
+    }
+
+    async def run():
+        brief = await registry.run(
+            "research.collect_brief",
+            {
+                "topic": "AI operating model",
+                "audience": "executive committee",
+                "constraints": ["McKinsey style", "20 slides"],
+            },
+        )
+        themed = await registry.run(
+            "design.apply_theme",
+            {
+                "deck": deck,
+                "theme": {
+                    "name": "executive-dark",
+                    "background": "#111827",
+                    "slide_background": "#F8FAFC",
+                    "accent": "#2563EB",
+                },
+            },
+        )
+        preview = await registry.run("preview.render_html", {"deck": themed.payload["deck"]})
+        return brief.payload["brief"], themed.payload["deck"], preview.payload["html"]
+
+    brief, themed_deck, preview_html = asyncio.run(run())
+
+    assert brief["topic"] == "AI operating model"
+    assert brief["audience"] == "executive committee"
+    assert brief["constraints"] == ["McKinsey style", "20 slides"]
+    assert "Clarify the decision the deck must support." in brief["questions"]
+
+    assert themed_deck["revision"] == 2
+    assert themed_deck["theme"] == {
+        "name": "executive-dark",
+        "background": "#111827",
+        "slide_background": "#F8FAFC",
+        "accent": "#2563EB",
+    }
+    assert "--preview-background: #111827;" in preview_html
+    assert "--slide-background: #F8FAFC;" in preview_html
+
+
+def test_default_registry_apply_theme_normalizes_slide_ids():
+    registry = build_default_registry()
+    deck = {
+        "deck_id": "deck_theme_ids",
+        "title": "AI Strategy",
+        "revision": 1,
+        "slides": [
+            {"slide_id": "intro", "title": "Intro", "layout": "cover", "blocks": []},
+            {"slide_id": "   ", "title": "Decision", "layout": "content", "blocks": []},
+            {"slide_id": "intro", "title": "Roadmap", "layout": "content", "blocks": []},
+        ],
+    }
+
+    async def run():
+        return await registry.run(
+            "design.apply_theme",
+            {
+                "deck": deck,
+                "theme": {"name": "executive-dark", "background": "#111827"},
+            },
+        )
+
+    result = asyncio.run(run())
+    themed_deck = result.payload["deck"]
+
+    assert [slide["slide_id"] for slide in themed_deck["slides"]] == ["intro", "s2", "s3"]
+    assert themed_deck["revision"] == 2
+    assert themed_deck["theme"]["name"] == "executive-dark"
+
+
+def test_research_brief_includes_sources_and_evidence_needs():
+    registry = build_default_registry()
+
+    async def run():
+        result = await registry.run(
+            "research.collect_brief",
+            {
+                "topic": "AI operating model",
+                "audience": "executive committee",
+                "constraints": ["McKinsey style", "20 slides"],
+            },
+        )
+        return result.payload["brief"]
+
+    brief = asyncio.run(run())
+
+    assert brief["source_suggestions"] == [
+        "Recent reports, filings, and investor materials related to AI operating model.",
+        "Industry benchmarks and analyst research tailored to executive committee.",
+        "Internal performance, customer, financial, and operating metrics.",
+    ]
+    assert brief["evidence_needs"] == [
+        "Market context and size of the opportunity.",
+        "Current-state baseline, pain points, and root causes.",
+        "Decision options with value, risk, timing, and ownership implications.",
+        "Evidence that satisfies constraints: McKinsey style, 20 slides.",
+    ]
+
+
+def _repo_root() -> Path:
+    directory = Path(__file__).resolve()
+    while directory != directory.parent:
+        if directory.joinpath("docs").exists() and directory.joinpath("agent").exists():
+            return directory
+        directory = directory.parent
+    raise FileNotFoundError("repository root was not found")
