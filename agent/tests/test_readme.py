@@ -29,6 +29,19 @@ def test_readme_documents_one_command_release_packaging_script():
     assert "archives the AppPackages directory" in readme
 
 
+def test_readme_documents_msix_install_smoke_options():
+    readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
+
+    assert "-InstallSmoke" in readme
+    assert "-ReplaceExisting" in readme
+    assert "-CleanupInstall" in readme
+    assert "-TrustMachineCertificate" in readme
+    assert "elevated PowerShell" in readme
+    assert ".\\scripts\\package-release-msix.ps1 -Sign -TrustMachineCertificate -InstallSmoke -ReplaceExisting -CleanupInstall" in readme
+    assert "installs the signed MSIX" in readme
+    assert "launches it from shell:AppsFolder" in readme
+
+
 def test_readme_documents_demo_summary_json():
     readme = _repo_root().joinpath("README.md").read_text(encoding="utf-8")
 

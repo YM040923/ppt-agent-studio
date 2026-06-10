@@ -93,6 +93,12 @@ This stages the bundled runtime, smokes the staged runtime, builds the Release M
 .\scripts\package-release-msix.ps1 -Sign -TrustCertificate
 ```
 
+From an elevated PowerShell session, the install smoke installs the signed MSIX, launches it from shell:AppsFolder, verifies the process stays alive, and then removes that test install:
+
+```powershell
+.\scripts\package-release-msix.ps1 -Sign -TrustMachineCertificate -InstallSmoke -ReplaceExisting -CleanupInstall
+```
+
 Create an unsigned sideload MSIX package locally:
 
 ```powershell
@@ -101,7 +107,7 @@ dotnet build desktop\PptAgentStudio.App\PptAgentStudio.App.csproj -c Release -p:
 
 The package is written under `desktop\PptAgentStudio.App\AppPackages`. CI runs the same packaging smoke and uploads a zipped AppPackages artifact named `ppt-agent-studio-msix.zip`.
 Run `.\scripts\test-msix-package.ps1` after packaging to verify the bundled Python runtime and Agent source are present and cache/build metadata is absent. CI runs the same package content smoke before uploading the artifact.
-For local sideload testing, run `.\scripts\sign-msix-package.ps1` after packaging. The script creates or reuses a CurrentUser test signing certificate whose subject matches the manifest publisher, signs the newest MSIX, and exports `artifacts\certificates\PPT Agent Studio Open Source.cer` for trusting on test machines. Pass `-TrustCertificate` to import that test certificate into `Cert:\CurrentUser\Root` and verify the signature on the current machine. This certificate is for testing only and is not a production release certificate.
+For local sideload testing, run `.\scripts\sign-msix-package.ps1` after packaging. The script creates or reuses a CurrentUser test signing certificate whose subject matches the manifest publisher, signs the newest MSIX, and exports `artifacts\certificates\PPT Agent Studio Open Source.cer` for trusting on test machines. Pass `-TrustCertificate` to import that test certificate into CurrentUser trust stores and verify the signature on the current machine. Pass `-TrustMachineCertificate` from an elevated PowerShell session before install smoke because Windows app deployment requires the self-signed MSIX root in LocalMachine trust stores. This certificate is for testing only and is not a production release certificate.
 
 ## Configuration
 

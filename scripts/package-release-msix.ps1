@@ -1,7 +1,11 @@
 [CmdletBinding()]
 param(
     [switch]$Sign,
-    [switch]$TrustCertificate
+    [switch]$TrustCertificate,
+    [switch]$TrustMachineCertificate,
+    [switch]$InstallSmoke,
+    [switch]$ReplaceExisting,
+    [switch]$CleanupInstall
 )
 
 Set-StrictMode -Version Latest
@@ -46,11 +50,33 @@ try {
     Invoke-NativeStep "Verify unsigned MSIX contents" { & .\scripts\test-msix-package.ps1 }
 
     if ($Sign) {
-        if ($TrustCertificate) {
+        if ($TrustMachineCertificate) {
+            Invoke-NativeStep "Sign MSIX package" { & .\scripts\sign-msix-package.ps1 -TrustMachineCertificate }
+        }
+        elseif ($TrustCertificate) {
             Invoke-NativeStep "Sign MSIX package" { & .\scripts\sign-msix-package.ps1 -TrustCertificate }
         }
         else {
             Invoke-NativeStep "Sign MSIX package" { & .\scripts\sign-msix-package.ps1 }
+        }
+    }
+
+    if ($InstallSmoke) {
+        if (-not $Sign -or -not $TrustMachineCertificate) {
+            throw "Install smoke requires -Sign -TrustMachineCertificate so Windows can install the MSIX."
+        }
+
+        $installSmokeArguments = @{}
+        if ($ReplaceExisting) {
+            $installSmokeArguments.ReplaceExisting = $true
+        }
+
+        if ($CleanupInstall) {
+            $installSmokeArguments.Cleanup = $true
+        }
+
+        Invoke-NativeStep "Install MSIX smoke" {
+            & .\scripts\install-msix-smoke.ps1 @installSmokeArguments
         }
     }
 

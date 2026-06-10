@@ -2,7 +2,8 @@
 param(
     [string]$PackagePath,
     [string]$CertificateOutputPath,
-    [switch]$TrustCertificate
+    [switch]$TrustCertificate,
+    [switch]$TrustMachineCertificate
 )
 
 Set-StrictMode -Version Latest
@@ -57,6 +58,17 @@ Export-Certificate -Cert $certificate -FilePath $CertificateOutputPath -Force | 
 
 if ($TrustCertificate) {
     Import-Certificate -FilePath $CertificateOutputPath -CertStoreLocation "Cert:\CurrentUser\Root" | Out-Null
+    Import-Certificate -FilePath $CertificateOutputPath -CertStoreLocation "Cert:\CurrentUser\TrustedPeople" | Out-Null
+}
+
+if ($TrustMachineCertificate) {
+    $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw "Trusting the test certificate for MSIX install smoke requires an elevated PowerShell session."
+    }
+
+    Import-Certificate -FilePath $CertificateOutputPath -CertStoreLocation "Cert:\LocalMachine\Root" | Out-Null
+    Import-Certificate -FilePath $CertificateOutputPath -CertStoreLocation "Cert:\LocalMachine\TrustedPeople" | Out-Null
 }
 
 $signtool = Get-Command "signtool.exe" -ErrorAction SilentlyContinue |
@@ -79,7 +91,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "signtool sign failed with exit code $LASTEXITCODE."
 }
 
-if ($TrustCertificate) {
+if ($TrustCertificate -or $TrustMachineCertificate) {
     & $signtool verify /pa $resolvedPackage
     if ($LASTEXITCODE -ne 0) {
         throw "signtool verify failed with exit code $LASTEXITCODE."
@@ -87,7 +99,10 @@ if ($TrustCertificate) {
 }
 
 Write-Host "msix-signing: signed package ok"
-if ($TrustCertificate) {
+if ($TrustMachineCertificate) {
+    Write-Host "msix-signing: signature verified with trusted machine test certificate"
+}
+elseif ($TrustCertificate) {
     Write-Host "msix-signing: signature verified with trusted test certificate"
 }
 else {

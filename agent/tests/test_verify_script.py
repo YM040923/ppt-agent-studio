@@ -92,8 +92,13 @@ def test_sign_msix_package_creates_matching_test_certificate_and_verifies_signat
     assert "New-SelfSignedCertificate" in script
     assert "Export-Certificate" in script
     assert "TrustCertificate" in script
+    assert "TrustMachineCertificate" in script
     assert "Import-Certificate" in script
     assert "Cert:\\CurrentUser\\Root" in script
+    assert "Cert:\\CurrentUser\\TrustedPeople" in script
+    assert "Cert:\\LocalMachine\\Root" in script
+    assert "Cert:\\LocalMachine\\TrustedPeople" in script
+    assert "WindowsPrincipal" in script
     assert "signtool.exe" in script
     assert "sign /fd SHA256" in script
     assert "/a" not in script
@@ -121,6 +126,44 @@ def test_package_release_msix_runs_full_local_packaging_pipeline():
     assert "package-release: archive ready" in script
     assert "Sign" in script
     assert "TrustCertificate" in script
+
+
+def test_install_msix_smoke_installs_launches_and_optionally_cleans_up_package():
+    script_path = _repo_root().joinpath("scripts", "install-msix-smoke.ps1")
+
+    assert script_path.exists()
+
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "Package.appxmanifest" in script
+    assert "Add-AppxPackage" in script
+    assert "Get-AppxPackage" in script
+    assert "Remove-AppxPackage" in script
+    assert "shell:AppsFolder" in script
+    assert "PackageFamilyName" in script
+    assert "ReplaceExisting" in script
+    assert "Cleanup" in script
+    assert "Cert:\\LocalMachine\\Root" in script
+    assert "Cert:\\LocalMachine\\TrustedPeople" in script
+    assert "requires an elevated PowerShell session" in script
+    assert "StartupTimeoutSeconds" in script
+    assert "PptAgentStudio.App" in script
+    assert "msix-install-smoke: process stayed alive" in script
+
+
+def test_package_release_msix_can_run_install_smoke_after_signed_package():
+    script_path = _repo_root().joinpath("scripts", "package-release-msix.ps1")
+
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "InstallSmoke" in script
+    assert "install-msix-smoke.ps1" in script
+    assert "ReplaceExisting" in script
+    assert "CleanupInstall" in script
+    assert "TrustMachineCertificate" in script
+    assert "installSmokeArguments = @{}" in script
+    assert "ReplaceExisting = $true" in script
+    assert "Cleanup = $true" in script
 
 
 def _repo_root() -> Path:
