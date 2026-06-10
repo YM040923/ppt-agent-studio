@@ -27,6 +27,36 @@ public sealed class PackageManifestTests
         Assert.AreEqual("Presentation-focused AI Agent for Windows", visualElements?.Attribute("Description")?.Value);
     }
 
+    [TestMethod]
+    public void AppProjectPackagesAgentSourceUnderBundledRuntimeLayout()
+    {
+        var project = XDocument.Load(FindAppProject());
+        var ns = project.Root?.Name.Namespace ?? XNamespace.None;
+        var contentItems = project.Descendants(ns + "Content");
+
+        var agentRuntimeContent = contentItems.SingleOrDefault(element =>
+            element.Attribute("Include")?.Value == @"..\..\agent\src\**\*");
+
+        Assert.IsNotNull(agentRuntimeContent);
+        Assert.AreEqual(@"AgentRuntime\agent\src\%(RecursiveDir)%(Filename)%(Extension)", agentRuntimeContent.Attribute("Link")?.Value);
+        Assert.AreEqual("PreserveNewest", agentRuntimeContent.Attribute("CopyToOutputDirectory")?.Value);
+        Assert.AreEqual("PreserveNewest", agentRuntimeContent.Attribute("CopyToPublishDirectory")?.Value);
+    }
+
+    [TestMethod]
+    public void AppProjectExcludesPythonCacheFilesFromBundledRuntime()
+    {
+        var project = XDocument.Load(FindAppProject());
+        var ns = project.Root?.Name.Namespace ?? XNamespace.None;
+        var contentItems = project.Descendants(ns + "Content");
+
+        var agentRuntimeContent = contentItems.SingleOrDefault(element =>
+            element.Attribute("Include")?.Value == @"..\..\agent\src\**\*");
+
+        Assert.IsNotNull(agentRuntimeContent);
+        Assert.AreEqual(@"..\..\agent\src\**\__pycache__\**;..\..\agent\src\**\*.pyc", agentRuntimeContent.Attribute("Exclude")?.Value);
+    }
+
     private static string FindPackageManifest()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -42,5 +72,22 @@ public sealed class PackageManifestTests
         }
 
         throw new FileNotFoundException("Package.appxmanifest was not found.");
+    }
+
+    private static string FindAppProject()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "desktop", "PptAgentStudio.App", "PptAgentStudio.App.csproj");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new FileNotFoundException("PptAgentStudio.App.csproj was not found.");
     }
 }

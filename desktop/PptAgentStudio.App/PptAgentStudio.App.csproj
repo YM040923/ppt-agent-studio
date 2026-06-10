@@ -25,6 +25,11 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\AppIcon.ico" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="..\..\agent\src\**\*"
+             Exclude="..\..\agent\src\**\__pycache__\**;..\..\agent\src\**\*.pyc"
+             Link="AgentRuntime\agent\src\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
