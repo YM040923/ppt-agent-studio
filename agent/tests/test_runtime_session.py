@@ -1063,3 +1063,20 @@ def test_agent_session_defaults_blank_tool_deck_slide_title_and_layout(tmp_path)
     assert preview_decks[0]["slides"][0]["title"] == "Slide 1"
     assert preview_decks[0]["slides"][0]["layout"] == "content"
     assert events[9].payload["slide_count"] == 1
+
+
+def test_agent_session_payload_hydration_normalizes_blank_and_duplicate_slide_ids():
+    deck = AgentSession._deck_from_payload(
+        {
+            "deck_id": "deck_payload_ids",
+            "title": "Tool Deck",
+            "revision": 1,
+            "slides": [
+                {"slide_id": "intro", "title": "Intro", "layout": "cover", "blocks": []},
+                {"slide_id": "   ", "title": "Decision", "layout": "content", "blocks": []},
+                {"slide_id": "intro", "title": "Roadmap", "layout": "content", "blocks": []},
+            ],
+        }
+    )
+
+    assert [slide.slide_id for slide in deck.slides] == ["intro", "s2", "s3"]

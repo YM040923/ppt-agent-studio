@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from collections.abc import AsyncIterator
 
-from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec
+from ppt_agent_studio.deck.spec import DeckSpec, SlideSpec, unique_slide_id
 from ppt_agent_studio.planning.outline import FallbackOutlinePlanner, OutlinePlanner
 from ppt_agent_studio.planning.plan import DeckPlan
 from ppt_agent_studio.protocol.events import AgentEvent
@@ -642,17 +642,22 @@ class AgentSession:
         if not isinstance(payload, dict):
             raise ValueError("deck tool must return a deck object")
         raw_slides = payload.get("slides") if isinstance(payload.get("slides"), list) else []
-        slides = [
-            SlideSpec(
-                slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
-                title=str(raw_slide.get("title") or "").strip() or f"Slide {index}",
-                layout=str(raw_slide.get("layout") or "").strip() or "content",
-                blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
-                speaker_notes=str(raw_slide.get("speaker_notes") or ""),
+        slides = []
+        used_slide_ids: set[str] = set()
+        for index, raw_slide in enumerate(raw_slides, start=1):
+            if not isinstance(raw_slide, dict):
+                continue
+            slide_id = unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids)
+            used_slide_ids.add(slide_id)
+            slides.append(
+                SlideSpec(
+                    slide_id=slide_id,
+                    title=str(raw_slide.get("title") or "").strip() or f"Slide {index}",
+                    layout=str(raw_slide.get("layout") or "").strip() or "content",
+                    blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
+                    speaker_notes=str(raw_slide.get("speaker_notes") or ""),
+                )
             )
-            for index, raw_slide in enumerate(raw_slides, start=1)
-            if isinstance(raw_slide, dict)
-        ]
         return DeckSpec(
             deck_id=str(payload.get("deck_id") or "deck"),
             title=str(payload.get("title") or "Untitled Deck"),
