@@ -655,7 +655,7 @@ class AgentSession:
                     title=str(raw_slide.get("title") or "").strip() or f"Slide {index}",
                     layout=str(raw_slide.get("layout") or "").strip() or "content",
                     blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
-                    speaker_notes=str(raw_slide.get("speaker_notes") or ""),
+                    speaker_notes=AgentSession._slide_speaker_notes(raw_slide),
                 )
             )
         return DeckSpec(
@@ -666,6 +666,14 @@ class AgentSession:
             theme=payload.get("theme") if isinstance(payload.get("theme"), dict) else {},
             metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {},
         )
+
+    @staticmethod
+    def _slide_speaker_notes(raw_slide: dict[str, object]) -> str:
+        for key in ("speaker_notes", "notes", "talk_track"):
+            value = raw_slide.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return ""
 
     def _resolve_slide_target(self, target: int | str) -> tuple[SlideSpec | None, int, str]:
         if self.deck is None or not self.deck.slides:

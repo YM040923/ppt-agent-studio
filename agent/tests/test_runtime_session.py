@@ -1083,3 +1083,24 @@ def test_agent_session_payload_hydration_normalizes_blank_and_duplicate_slide_id
     )
 
     assert [slide.slide_id for slide in deck.slides] == ["intro", "s2", "s3"]
+
+
+def test_agent_session_payload_hydration_uses_speaker_note_aliases():
+    deck = AgentSession._deck_from_payload(
+        {
+            "deck_id": "deck_payload_notes",
+            "title": "Tool Deck",
+            "revision": 1,
+            "slides": [
+                {
+                    "slide_id": "intro",
+                    "title": "Intro",
+                    "layout": "cover",
+                    "blocks": [],
+                    "notes": "Frame the opening decision.",
+                },
+            ],
+        }
+    )
+
+    assert deck.slides[0].speaker_notes == "Frame the opening decision."
