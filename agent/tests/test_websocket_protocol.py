@@ -413,6 +413,25 @@ def test_handle_session_reset_clears_cached_deck(monkeypatch, tmp_path):
     assert second_turn[9]["payload"]["path"].endswith("deck_reset-r1.pptx")
 
 
+def test_handle_session_reset_defaults_blank_session_and_deck_ids():
+    async def run():
+        return await handle_client_message(
+            json.dumps(
+                {
+                    "type": "session.reset",
+                    "session_id": "   ",
+                    "deck_id": "   ",
+                }
+            )
+        )
+
+    messages = asyncio.run(run())
+    payload = json.loads(messages[0])
+
+    assert payload["session_id"] == "session"
+    assert payload["payload"]["deck_id"] == "deck"
+
+
 def test_handle_invalid_json_returns_error_event():
     async def run():
         return await handle_client_message("{")

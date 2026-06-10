@@ -128,10 +128,10 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
         return
 
     message_type = str(message.get("type") or "").strip()
-    session_id = str(message.get("session_id") or "session")
+    session_id = _message_text(message, "session_id", "session")
 
     if message_type == "session.reset":
-        deck_id = str(message.get("deck_id") or "deck")
+        deck_id = _message_text(message, "deck_id", "deck")
         event = AgentEvent(
             seq=1,
             session_id=session_id,
@@ -181,7 +181,7 @@ async def iter_client_responses(raw_message: str) -> AsyncIterator[str]:
 
     payload = message.get("payload") if isinstance(message.get("payload"), dict) else {}
     text = str(payload.get("text") or "")
-    deck_id = str(message.get("deck_id") or "deck")
+    deck_id = _message_text(message, "deck_id", "deck")
     session = _build_agent_session(session_id=session_id, deck_id=deck_id)
 
     response_count = 0
@@ -205,6 +205,10 @@ def _build_agent_session(session_id: str, deck_id: str) -> AgentSession:
         session = AgentSession(session_id=session_id, deck_id=deck_id, outline_planner=_build_outline_planner())
         _AGENT_SESSIONS[key] = session
     return session
+
+
+def _message_text(message: dict[str, object], key: str, default: str) -> str:
+    return str(message.get(key) or default).strip() or default
 
 
 def _reset_agent_session(session_id: str, deck_id: str) -> bool:
