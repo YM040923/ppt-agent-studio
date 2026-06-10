@@ -82,8 +82,12 @@ def deck_from_outline(outline: dict[str, Any], deck_id: str, revision: int = 0) 
     for index, raw_slide in enumerate(raw_slides, start=1):
         if not isinstance(raw_slide, dict):
             continue
-        slide_title = str(raw_slide.get("title") or raw_slide.get("section_title") or f"Slide {index}")
-        layout = str(raw_slide.get("prototype_hint") or raw_slide.get("layout") or "content")
+        slide_title = _outline_text_value(
+            raw_slide.get("title"),
+            raw_slide.get("section_title"),
+            default=f"Slide {index}",
+        )
+        layout = _outline_text_value(raw_slide.get("prototype_hint"), raw_slide.get("layout"), default="content")
         blocks = _blocks_from_outline_slide(raw_slide)
         slide_id = unique_slide_id(raw_slide.get("slide_id"), index, used_slide_ids)
         used_slide_ids.add(slide_id)
@@ -115,6 +119,15 @@ def unique_slide_id(raw_slide_id: Any, index: int, used_slide_ids: set[str]) -> 
         index += 1
         candidate = f"s{index}"
     return candidate
+
+
+def _outline_text_value(primary: Any, secondary: Any, default: str) -> str:
+    for value in (primary, secondary):
+        if isinstance(value, str):
+            text = value.strip()
+            if text:
+                return text
+    return default
 
 
 def _blocks_from_outline_slide(slide: dict[str, Any]) -> list[Block]:

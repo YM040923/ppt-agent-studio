@@ -58,6 +58,7 @@ def test_architecture_documents_stable_preview_slide_ids():
     assert "Add and duplicate follow-ups allocate non-reused slide ids" in architecture
     assert "Model-provided blank or duplicate slide ids are replaced" in architecture
     assert "tool-boundary deck hydration" in architecture
+    assert "Model-provided blank slide titles and layouts are defaulted during DeckSpec conversion" in architecture
 
 
 def test_architecture_documents_expanded_deck_tool_registry():

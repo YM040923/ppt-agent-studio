@@ -180,6 +180,22 @@ def test_deck_from_outline_replaces_blank_and_duplicate_slide_ids():
     assert [slide.slide_id for slide in deck.slides] == ["intro", "s2", "s3", "s4"]
 
 
+def test_deck_from_outline_defaults_blank_titles_and_layouts():
+    outline = {
+        "deck_title": "AI Strategy",
+        "slides": [
+            {"slide_id": "intro", "title": "   ", "layout": "   "},
+            {"title": "Roadmap", "layout": "content"},
+        ],
+    }
+
+    deck = deck_from_outline(outline, deck_id="deck_outline_defaults", revision=1)
+
+    assert deck.slides[0].title == "Slide 1"
+    assert deck.slides[0].layout == "content"
+    assert deck.slides[1].title == "Roadmap"
+
+
 def test_slide_spec_rejects_empty_title():
     try:
         SlideSpec(slide_id="s1", title="   ", layout="content", blocks=[])
