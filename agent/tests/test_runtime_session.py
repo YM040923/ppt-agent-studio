@@ -989,3 +989,77 @@ def test_agent_session_uses_tool_registry_for_deck_and_preview():
     assert events[5].payload["deck"]["title"] == "Custom Deck"
     assert events[7].payload["html"] == "<!doctype html><title>Custom</title>"
     assert events[9].payload["path"].endswith("deck_004-r1.pptx")
+
+
+def test_agent_session_defaults_blank_tool_deck_slide_title_and_layout(tmp_path):
+    preview_decks = []
+    registry = ToolRegistry()
+
+    def create_deck(args):
+        return ToolResult(
+            payload={
+                "deck": {
+                    "deck_id": args["deck_id"],
+                    "title": "Tool Deck",
+                    "revision": args["revision"],
+                    "slides": [
+                        {"slide_id": "intro", "title": "   ", "layout": "   ", "blocks": []},
+                    ],
+                }
+            }
+        )
+
+    def render_preview(args):
+        preview_decks.append(args["deck"])
+        return ToolResult(payload={"html": "<!doctype html><title>Tool Deck</title>"})
+
+    registry.register(
+        ToolDefinition(
+            name="deck.create_from_outline",
+            description="Create a deck.",
+            input_schema={"type": "object"},
+        ),
+        create_deck,
+    )
+    registry.register(
+        ToolDefinition(
+            name="preview.render_html",
+            description="Render preview HTML.",
+            input_schema={"type": "object"},
+        ),
+        render_preview,
+    )
+    registry.register(
+        ToolDefinition(
+            name="research.collect_brief",
+            description="Collect research brief.",
+            input_schema={"type": "object"},
+        ),
+        lambda args: ToolResult(payload={"brief": args}),
+    )
+    registry.register(
+        ToolDefinition(
+            name="pptx.export",
+            description="Export a deck.",
+            input_schema={"type": "object"},
+        ),
+        lambda args: ToolResult(payload={"path": args["output_path"], "slide_count": 1}),
+    )
+    session = AgentSession(
+        session_id="session_blank_payload",
+        deck_id="deck_blank_payload",
+        tool_registry=registry,
+        artifact_dir=tmp_path,
+    )
+
+    async def collect():
+        return [event async for event in session.submit_user_message("Make a sales deck")]
+
+    events = asyncio.run(collect())
+
+    slide = events[5].payload["deck"]["slides"][0]
+    assert slide["title"] == "Slide 1"
+    assert slide["layout"] == "content"
+    assert preview_decks[0]["slides"][0]["title"] == "Slide 1"
+    assert preview_decks[0]["slides"][0]["layout"] == "content"
+    assert events[9].payload["slide_count"] == 1

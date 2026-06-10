@@ -645,8 +645,8 @@ class AgentSession:
         slides = [
             SlideSpec(
                 slide_id=str(raw_slide.get("slide_id") or f"s{index}"),
-                title=str(raw_slide.get("title") or f"Slide {index}"),
-                layout=str(raw_slide.get("layout") or "content"),
+                title=str(raw_slide.get("title") or "").strip() or f"Slide {index}",
+                layout=str(raw_slide.get("layout") or "").strip() or "content",
                 blocks=raw_slide.get("blocks") if isinstance(raw_slide.get("blocks"), list) else [],
                 speaker_notes=str(raw_slide.get("speaker_notes") or ""),
             )
