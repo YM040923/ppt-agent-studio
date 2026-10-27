@@ -79,3 +79,7 @@ node --check app\static\app.js
 ## 许可
 
 当前暂未指定开源许可证。公开使用或二次分发前，请先补充合适的许可证文件。
+
+## 许可证
+
+本仓库采用 MIT License，见 [`LICENSE`](LICENSE)。
